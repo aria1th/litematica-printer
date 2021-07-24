@@ -7,6 +7,7 @@ import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.EASY_PLACE_MOD
 import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.EASY_PLACE_MODE_RANGE_X;
 import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.EASY_PLACE_MODE_RANGE_Y;
 import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.EASY_PLACE_MODE_RANGE_Z;
+import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.FLIPPIN_CACTUS; //now only applied for rail blocks, sometimes observer flipping can help redstone order too.
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -32,6 +33,7 @@ import fi.dy.masa.malilib.util.SubChunkPos;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.block.AbstractButtonBlock;
+import net.minecraft.block.AbstractRailBlock;
 import net.minecraft.block.BedBlock;
 import net.minecraft.block.BeehiveBlock;
 import net.minecraft.block.Block;
@@ -39,6 +41,7 @@ import net.minecraft.block.BlockState;
 import net.minecraft.block.CarvedPumpkinBlock;
 import net.minecraft.block.ChestBlock;
 import net.minecraft.block.ComparatorBlock;
+import net.minecraft.block.DetectorRailBlock;
 import net.minecraft.block.DispenserBlock;
 import net.minecraft.block.DoorBlock;
 import net.minecraft.block.DropperBlock;
@@ -57,7 +60,9 @@ import net.minecraft.block.NoteBlock;
 import net.minecraft.block.ObserverBlock;
 import net.minecraft.block.PillarBlock;
 import net.minecraft.block.PistonBlock;
+import net.minecraft.block.PoweredRailBlock;
 import net.minecraft.block.PumpkinBlock;
+import net.minecraft.block.RailBlock;
 import net.minecraft.block.RepeaterBlock;
 import net.minecraft.block.SandBlock;
 import net.minecraft.block.SnowBlock;
@@ -312,6 +317,11 @@ public class Printer {
         int rangeZ = EASY_PLACE_MODE_RANGE_Z.getIntegerValue();
         int MaxReach = Math.max(Math.max(rangeX,rangeY),rangeZ);
         boolean breakBlocks = EASY_PLACE_MODE_BREAK_BLOCKS.getBooleanValue();
+        boolean Flippincactus = FLIPPIN_CACTUS.getBooleanValue();
+        ItemStack Mainhandstack = mc.player.getMainHandStack();
+        boolean Cactus = Mainhandstack.getItem().getTranslationKey().contains((String) "cactus") && Flippincactus; 
+        int MaxFlip = 1;
+        if (!Flippincactus || !Cactus) {MaxFlip = 0;};
         Direction[] facingSides = Direction.getEntityFacingOrder(mc.player);
         Direction primaryFacing = facingSides[0];
         Direction horizontalFacing = primaryFacing; // For use in blocks with only horizontal rotation
@@ -357,6 +367,7 @@ public class Printer {
             for (int y = fromY; y <= toY; y++) {
                 for (int z = fromZ; z <= toZ; z++) {
 
+
                     double dx = mc.player.getX() - x - 0.5;
                     double dy = mc.player.getY() - y - 0.5;
                     double dz = mc.player.getZ() - z - 0.5;
@@ -391,14 +402,14 @@ public class Printer {
                     continue;
                     
                     // Abort if there is already a block in the target position
-                    if (printerCheckCancel(stateSchematic, stateClient, mc.player)) {
+                    if (MaxFlip>0 || printerCheckCancel(stateSchematic, stateClient, mc.player)) {
 
                         /*
                          * Sometimes, blocks have other states like the delay on a repeater. So, this
                          * code clicks the block until the state is the same I don't know if Schematica
                          * does this too, I just did it because I work with a lot of redstone
                          */
-                        if (!stateClient.isAir() && !mc.player.isSneaking() && !isPositionCached(pos, true)) {
+                        if (MaxFlip == 0 && !stateClient.isAir() && !mc.player.isSneaking() && !isPositionCached(pos, true)) {
                             Block cBlock = stateClient.getBlock();
                             Block sBlock = stateSchematic.getBlock();
 
@@ -494,11 +505,33 @@ public class Printer {
                                         cacheEasyPlacePosition(pos, true);
                                     }
                                   
-                                }
+                                }  
                             }
-                        }
+                        } else if (MaxFlip> 0) {
+                            Block cBlock = stateClient.getBlock();
+                            Block sBlock = stateSchematic.getBlock();
+                            if (cBlock.getName().equals(sBlock.getName())) {
+                                        for (int i=0; i<MaxFlip; i++) 
+                                        { 
+                                             boolean ShapeBoolean = true;
+                                             if (sBlock.getTranslationKey().contains((String) "rail")) {
+				if (sBlock instanceof RailBlock) { ShapeBoolean = stateSchematic.get(RailBlock.SHAPE) == stateClient.get(RailBlock.SHAPE) ; } else {
+                                                 ShapeBoolean = stateSchematic.get(PoweredRailBlock.SHAPE) == stateClient.get(PoweredRailBlock.SHAPE) ;}
+                                             }
+                                             Direction side = Direction.UP;
+                                             if (!ShapeBoolean) {
+                                                 Hand hand = Hand.MAIN_HAND;
+                                                 Vec3d hitPos = new Vec3d(pos.getX()+0.5,pos.getY()+0.3,pos.getZ()+0.5);
+                                                 BlockHitResult hitResult = new BlockHitResult(hitPos, side, pos, false);
+                                                 mc.interactionManager.interactBlock(mc.player, mc.world, hand, hitResult);
+                                                 interact++;
+                                             } else { continue ;}
+                                         };
+                                    };
+                             }
                         continue;
                     }
+                    if (MaxFlip>0) {continue;};
                     if (isPositionCached(pos, false)) {
                         continue;
                     }
