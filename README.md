@@ -29,7 +29,7 @@ To set this up just add the latest litematica version to your mods folder as wel
 <br/>
 `easyPlaceActivation`:&emsp;		"When the easyPlaceMode is enabled, this key must be held to enable placing the blocks when using the vanilla Use key"<br/>
 `easyPlaceToggle`:&emsp;			"Allows quickly toggling on/off the Easy Place mode"<br/>
-
+`easyPlaceModeFlippincactus`:&emsp;			"Allows Rotating incorrect blocks when carpet option is enabled and holding cactus on your mainhand"<br/>
 ## Support
 If you have any issues with this mod **DO NOT** contact and bother masa with it. Please message me in discord, I am usually around Scicraft, Mechanists, and Hekate. 
 
@@ -45,3 +45,4 @@ This template is available under the CC0 license. Feel free to learn from it and
 Breaking based by schematic verifier...maybe.
 Carpet protocol.
 Waterlogged blocks, water, lava, lavalogged(??) blocks placement(ohno, I can't do with wierd stair types).
+Quasiconnectivity and Automatic Flippincactus abusing to avoid observer update
