@@ -17,7 +17,7 @@ public class LitematicaMixinMod implements ModInitializer {
 	public static final ConfigBoolean EASY_PLACE_MODE_BREAK_BLOCKS 	= new ConfigBoolean("easyPlaceModeBreakBlocks", false, "Automatically breaks blocks.");
 	public static final ConfigDouble  EASY_PLACE_MODE_DELAY		   	= new ConfigDouble( "easyPlaceModeDelay", 0.2, 0.0, 1.0, "Delay between printing blocks.\nDo not set to 0 if you are playing on a server.");
     public static final ConfigBoolean EASY_PLACE_MODE_HOTBAR_ONLY	= new ConfigBoolean("easyPlaceModeHotbarOnly", false, "Only place blocks from your hotbar.");
-	
+    public static final ConfigBoolean FLIPPIN_CACTUS	= new ConfigBoolean("easyPlaceModeFlippincactus", false, "If FlippinCactus is enabled and cactus is on mainhand, will not place block and do rotations only.");
 	public static final ImmutableList<IConfigBase> betterList = ImmutableList.of(
 			Configs.Generic.AREAS_PER_WORLD,
 			//BETTER_RENDER_ORDER,
@@ -49,7 +49,8 @@ public class LitematicaMixinMod implements ModInitializer {
 			EASY_PLACE_MODE_MAX_BLOCKS,
 			EASY_PLACE_MODE_BREAK_BLOCKS,
 			EASY_PLACE_MODE_DELAY,
-			EASY_PLACE_MODE_HOTBAR_ONLY
+			EASY_PLACE_MODE_HOTBAR_ONLY,
+                                           FLIPPIN_CACTUS
 
 	);
 
