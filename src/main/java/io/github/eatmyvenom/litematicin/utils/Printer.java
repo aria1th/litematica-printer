@@ -514,10 +514,11 @@ public class Printer {
 					String SchematicRailShape = stateSchematic.get(RailBlock.SHAPE).toString();
 					String ClientRailShape = stateClient.get(RailBlock.SHAPE).toString();
 					ShouldFix =SchematicRailShape!=ClientRailShape;
-					ShapeBoolean =  SchematicRailShape!=ClientRailShape && (SchematicRailShape== "south_west" ||SchematicRailShape  == "north_west"||SchematicRailShape  == "south_east"||SchematicRailShape  == "north_east") &&(ClientRailShape == "south_west" ||ClientRailShape  == "north_west"||ClientRailShape  == "south_east"||ClientRailShape  == "north_east"); 
+					ShapeBoolean =  SchematicRailShape!=ClientRailShape && ((SchematicRailShape== "south_west" ||SchematicRailShape  == "north_west"||SchematicRailShape  == "south_east"||SchematicRailShape  == "north_east") &&(ClientRailShape == "south_west" ||ClientRailShape  == "north_west"||ClientRailShape  == "south_east"||ClientRailShape  == "north_east") || (SchematicRailShape== "east_west" || SchematicRailShape == "north_south") &&(ClientRailShape== "east_west" ||ClientRailShape=="north_south" )); 
 				} else {
 					String SchematicRailShape = stateSchematic.get(PoweredRailBlock.SHAPE).toString();
 					String ClientRailShape = stateClient.get(PoweredRailBlock.SHAPE).toString();
+					ShouldFix =SchematicRailShape!=ClientRailShape;
                                                  		ShapeBoolean = SchematicRailShape!=ClientRailShape &&(SchematicRailShape== "east_west" || SchematicRailShape == "north_south") &&(ClientRailShape== "east_west" ||ClientRailShape=="north_south" ) ;}
                                              	
                                              }
@@ -552,37 +553,13 @@ public class Printer {
                             Block sBlock = stateSchematic.getBlock();
                         if (stateSchematic == stateClient) {
                             continue;
-                        } else if (sBlock instanceof SandBlock) {
+                        } else if (sBlock instanceof SandBlock || sBlock instanceof DragonEggBlock || sBlock instanceof ConcretePowderBlock || sBlock instanceof GravelBlock || sBlock instanceof AnvilBlock) {
 			BlockPos Offsetpos = new BlockPos(x, y-1, z);
                     		BlockState OffsetstateSchematic = world.getBlockState(Offsetpos);
                     		BlockState OffsetstateClient = mc.world.getBlockState(Offsetpos);
                                         if (OffsetstateClient.isAir() || (breakBlocks && !OffsetstateClient.getBlock().getName().equals(OffsetstateSchematic.getBlock().getName())) )
                                             continue;
-                                    } else if (sBlock instanceof ConcretePowderBlock) {
-			BlockPos Offsetpos = new BlockPos(x, y-1, z);
-                    		BlockState OffsetstateSchematic = world.getBlockState(Offsetpos);
-                    		BlockState OffsetstateClient = mc.world.getBlockState(Offsetpos);
-                                        if (OffsetstateClient.isAir() || (breakBlocks && !OffsetstateClient.getBlock().getName().equals(OffsetstateSchematic.getBlock().getName())) )
-                                            continue;
-                                    } else if (sBlock instanceof GravelBlock) {
-			BlockPos Offsetpos = new BlockPos(x, y-1, z);
-                    		BlockState OffsetstateSchematic = world.getBlockState(Offsetpos);
-                    		BlockState OffsetstateClient = mc.world.getBlockState(Offsetpos);
-                                        if (OffsetstateClient.isAir() || (breakBlocks && !OffsetstateClient.getBlock().getName().equals(OffsetstateSchematic.getBlock().getName())) )
-                                            continue;
-                                    } else if (sBlock instanceof AnvilBlock) {
-			BlockPos Offsetpos = new BlockPos(x, y-1, z);
-                    		BlockState OffsetstateSchematic = world.getBlockState(Offsetpos);
-                    		BlockState OffsetstateClient = mc.world.getBlockState(Offsetpos);
-                                        if (OffsetstateClient.isAir() || (breakBlocks && !OffsetstateClient.getBlock().getName().equals(OffsetstateSchematic.getBlock().getName())) )
-                                            continue;
-                                    } else if (sBlock instanceof DragonEggBlock) {
-			BlockPos Offsetpos = new BlockPos(x, y-1, z);
-                    		BlockState OffsetstateSchematic = world.getBlockState(Offsetpos);
-                    		BlockState OffsetstateClient = mc.world.getBlockState(Offsetpos);
-                                        if (OffsetstateClient.isAir() || (breakBlocks && !OffsetstateClient.getBlock().getName().equals(OffsetstateSchematic.getBlock().getName())) )
-                                            continue;
-                                    }
+                        } 
 
                         Direction facing = fi.dy.masa.malilib.util.BlockUtils
                                 .getFirstPropertyFacingValue(stateSchematic);
