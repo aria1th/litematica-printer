@@ -320,8 +320,8 @@ public class Printer {
         boolean Flippincactus = FLIPPIN_CACTUS.getBooleanValue();
         ItemStack Mainhandstack = mc.player.getMainHandStack();
         boolean Cactus = Mainhandstack.getItem().getTranslationKey().contains((String) "cactus") && Flippincactus; 
-        int MaxFlip = 1;
-        if (!Flippincactus || !Cactus) {MaxFlip = 0;};
+        boolean MaxFlip = true;
+        if (!Flippincactus || !Cactus) {MaxFlip = false;};
         Direction[] facingSides = Direction.getEntityFacingOrder(mc.player);
         Direction primaryFacing = facingSides[0];
         Direction horizontalFacing = primaryFacing; // For use in blocks with only horizontal rotation
@@ -402,14 +402,15 @@ public class Printer {
                     continue;
                     
                     // Abort if there is already a block in the target position
-                    if (MaxFlip>0 || printerCheckCancel(stateSchematic, stateClient, mc.player)) {
+                    if (MaxFlip|| printerCheckCancel(stateSchematic, stateClient, mc.player)) {
+
 
                         /*
                          * Sometimes, blocks have other states like the delay on a repeater. So, this
                          * code clicks the block until the state is the same I don't know if Schematica
                          * does this too, I just did it because I work with a lot of redstone
                          */
-                        if (MaxFlip == 0 && !stateClient.isAir() && !mc.player.isSneaking() && !isPositionCached(pos, true)) {
+                        if (!MaxFlip && !stateClient.isAir() && !mc.player.isSneaking() && !isPositionCached(pos, true)) {
                             Block cBlock = stateClient.getBlock();
                             Block sBlock = stateSchematic.getBlock();
 
@@ -493,12 +494,6 @@ public class Printer {
 
                                         mc.interactionManager.interactBlock(mc.player, mc.world, hand, hitResult);
                                         interact++;
-
-                                        // Click the place block a few times to be sure he is placed
-                                        /*if (interact >= maxInteract) {
-                                        	lastPlaced = new Date().getTime();
-                                            return ActionResult.SUCCESS;
-                                        }*/
                                     }
  
                                     if (clickTimes > 0) {
@@ -507,31 +502,47 @@ public class Printer {
                                   
                                 }  
                             }
-                        } else if (MaxFlip> 0) {
+                        } else if (MaxFlip) {
                             Block cBlock = stateClient.getBlock();
                             Block sBlock = stateSchematic.getBlock();
                             if (cBlock.getName().equals(sBlock.getName())) {
-                                        for (int i=0; i<MaxFlip; i++) 
-                                        { 
-                                             boolean ShapeBoolean = true;
+                                             boolean ShapeBoolean = false;
+			  boolean ShouldFix = false;
                                              if (sBlock.getTranslationKey().contains((String) "rail")) {
-				if (sBlock instanceof RailBlock) { ShapeBoolean = stateSchematic.get(RailBlock.SHAPE) == stateClient.get(RailBlock.SHAPE) ; } else {
-                                                 ShapeBoolean = stateSchematic.get(PoweredRailBlock.SHAPE) == stateClient.get(PoweredRailBlock.SHAPE) ;}
+				
+				if (sBlock instanceof RailBlock) {
+					String SchematicRailShape = stateSchematic.get(RailBlock.SHAPE).toString();
+					String ClientRailShape = stateClient.get(RailBlock.SHAPE).toString();
+					ShouldFix =SchematicRailShape!=ClientRailShape;
+					ShapeBoolean =  SchematicRailShape!=ClientRailShape && (SchematicRailShape== "south_west" ||SchematicRailShape  == "north_west"||SchematicRailShape  == "south_east"||SchematicRailShape  == "north_east") &&(ClientRailShape == "south_west" ||ClientRailShape  == "north_west"||ClientRailShape  == "south_east"||ClientRailShape  == "north_east"); 
+				} else {
+					String SchematicRailShape = stateSchematic.get(PoweredRailBlock.SHAPE).toString();
+					String ClientRailShape = stateClient.get(PoweredRailBlock.SHAPE).toString();
+                                                 		ShapeBoolean = SchematicRailShape!=ClientRailShape &&(SchematicRailShape== "east_west" || SchematicRailShape == "north_south") &&(ClientRailShape== "east_west" ||ClientRailShape=="north_south" ) ;}
+                                             	
                                              }
+			else if (sBlock instanceof ObserverBlock || sBlock instanceof PistonBlock) {
+                                			String facingSchematicName = fi.dy.masa.malilib.util.BlockUtils.getFirstPropertyFacingValue(stateSchematic).getName();
+                               			String facingClientName = fi.dy.masa.malilib.util.BlockUtils.getFirstPropertyFacingValue(stateClient).getName();
+					ShouldFix =facingSchematicName!=facingClientName;
+					ShapeBoolean =  (facingSchematicName == "north" &&facingClientName == "south" ) || (facingSchematicName == "east" &&facingClientName == "west" ) ||(facingSchematicName == "up" &&facingClientName == "down" ) ||
+							(facingSchematicName == "south" &&facingClientName == "north" ) || (facingSchematicName == "west" &&facingClientName == "east" ) ||(facingSchematicName == "down" &&facingClientName == "up" ) ;
+				} 
                                              Direction side = Direction.UP;
-                                             if (!ShapeBoolean) {
+                                             if (ShapeBoolean) {
                                                  Hand hand = Hand.MAIN_HAND;
-                                                 Vec3d hitPos = new Vec3d(pos.getX()+0.5,pos.getY()+0.3,pos.getZ()+0.5);
+                                                 Vec3d hitPos = new Vec3d(pos.getX()+0.5,pos.getY()+0.5,pos.getZ()+0.5);
                                                  BlockHitResult hitResult = new BlockHitResult(hitPos, side, pos, false);
                                                  mc.interactionManager.interactBlock(mc.player, mc.world, hand, hitResult);
                                                  interact++;
-                                             } else { continue ;}
-                                         };
+                                             } else if(breakBlocks&& ShouldFix) {mc.interactionManager.attackBlock(pos, Direction.DOWN);
+						return ActionResult.SUCCESS ;} 
+			continue;
                                     };
-                             }
+                             } 
                         continue;
                     }
-                    if (MaxFlip>0) {continue;};
+                    if (MaxFlip) {continue;};
                     if (isPositionCached(pos, false)) {
                         continue;
                     }
