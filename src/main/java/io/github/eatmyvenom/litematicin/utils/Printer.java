@@ -562,6 +562,9 @@ public class Printer {
                                             continue;
                         }  if (sBlock instanceof RedstoneBlock) {
 		if(isQCable(mc,world, pos)){continue;}
+		} else
+	             if (sBlock instanceof ObserverBlock) {
+		if(ObserverUpdateOrder(mc,world, pos)){continue;}
 		}
                         Direction facing = fi.dy.masa.malilib.util.BlockUtils
                                 .getFirstPropertyFacingValue(stateSchematic);
@@ -767,7 +770,41 @@ public class Printer {
 		  if(stateClient.isAir() && stateSchematic.getBlock() instanceof PistonBlock &&  stateSchematic.get(PistonBlock.EXTENDED).toString().contains("false")) {return true;} 
 		 }
 	return false;};
+    private static boolean ObserverUpdateOrder(MinecraftClient mc,  World world, BlockPos pos) {
+	BlockState stateSchematic = world.getBlockState(pos);
+	BlockPos Posoffset = pos;
+	BlockState OffsetStateSchematic;
+	BlockState OffsetStateClient;
+	String facingSchematicName = fi.dy.masa.malilib.util.BlockUtils.getFirstPropertyFacingValue(stateSchematic).getName();
+	if (facingSchematicName.contains((String) "up")) { 
+			Posoffset = pos.up();
+			OffsetStateSchematic = world.getBlockState(Posoffset);
+			OffsetStateClient = mc.world.getBlockState(Posoffset);
+			if (OffsetStateSchematic.getBlock() instanceof ComparatorBlock ||OffsetStateSchematic.getBlock() instanceof RepeaterBlock ||
+			 OffsetStateSchematic.getBlock().getTranslationKey().contains((String) "rail") || OffsetStateSchematic.getBlock().getTranslationKey().contains((String) "water") || OffsetStateSchematic.getBlock().getTranslationKey().contains((String) "lava") ||
+			OffsetStateSchematic.getBlock().getTranslationKey().contains((String) "column") ||OffsetStateSchematic.getBlock().getTranslationKey().contains((String) "wire") ) {
+			return false;}} 
+	if (facingSchematicName.contains((String) "down")) {
+			Posoffset = pos.down();
+		} 
+	if (facingSchematicName.contains((String) "north")) {
+			Posoffset = pos.north();
+		}
+	if (facingSchematicName.contains((String) "south")) {
+			Posoffset = pos.south();
+		} 
+	 if (facingSchematicName.contains((String) "west")) {
+			Posoffset = pos.west();
+		}
+	 if (facingSchematicName.contains((String) "east")) {
+			Posoffset = pos.east();
+		}
 
+	OffsetStateSchematic = world.getBlockState(Posoffset);
+	OffsetStateClient = mc.world.getBlockState(Posoffset);
+	if (!OffsetStateSchematic.isAir() && (OffsetStateClient.isAir() || OffsetStateClient.getBlock().getTranslationKey().contains((String) "water") || OffsetStateClient.getBlock().getTranslationKey().contains((String) "lava")|| OffsetStateClient.getBlock().getTranslationKey().contains((String) "column")) )
+	{return true;}
+	return false;} //no problem to place
 
 
     /*
