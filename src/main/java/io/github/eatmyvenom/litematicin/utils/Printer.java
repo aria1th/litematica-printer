@@ -764,7 +764,7 @@ public class Printer {
 	for (BlockPos Position: OffsetIterable) 
 		{BlockState stateClient = mc.world.getBlockState(Position);
 		  BlockState stateSchematic = world.getBlockState(Position);
-		  if(stateClient.isAir() && stateSchematic.getBlock() instanceof PistonBlock) {return true;} 
+		  if(stateClient.isAir() && stateSchematic.getBlock() instanceof PistonBlock &&  stateSchematic.get(PistonBlock.EXTENDED).toString().contains("false")) {return true;} 
 		 }
 	return false;};
 
