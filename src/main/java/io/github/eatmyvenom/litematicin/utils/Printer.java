@@ -70,6 +70,7 @@ import net.minecraft.block.ConcretePowderBlock;
 import net.minecraft.block.GravelBlock;
 import net.minecraft.block.AnvilBlock;
 import net.minecraft.block.DragonEggBlock;
+import net.minecraft.block.RedstoneBlock;
 import net.minecraft.block.SeaPickleBlock;
 import net.minecraft.block.SignBlock;
 import net.minecraft.block.SlabBlock;
@@ -536,7 +537,7 @@ public class Printer {
                                                  BlockHitResult hitResult = new BlockHitResult(hitPos, side, pos, false);
                                                  mc.interactionManager.interactBlock(mc.player, mc.world, hand, hitResult);
                                                  interact++;
-                                             } else if(breakBlocks&& ShouldFix) {mc.interactionManager.attackBlock(pos, Direction.DOWN);
+                                             } else if(breakBlocks&& ShouldFix) {mc.interactionManager.attackBlock(pos, Direction.DOWN);breaker.startBreakingBlock(pos, mc);
 						return ActionResult.SUCCESS ;} 
 			continue;
                                     };
@@ -559,8 +560,9 @@ public class Printer {
                     		BlockState OffsetstateClient = mc.world.getBlockState(Offsetpos);
                                         if (OffsetstateClient.isAir() || (breakBlocks && !OffsetstateClient.getBlock().getName().equals(OffsetstateSchematic.getBlock().getName())) )
                                             continue;
-                        } 
-
+                        }  if (sBlock instanceof RedstoneBlock) {
+		if(isQCable(mc,world, pos)){continue;}
+		}
                         Direction facing = fi.dy.masa.malilib.util.BlockUtils
                                 .getFirstPropertyFacingValue(stateSchematic);
                         if (facing != null) {
@@ -752,6 +754,21 @@ public class Printer {
         }
         return ActionResult.FAIL;
     }
+    private static boolean isQCable(MinecraftClient mc,  World world, BlockPos pos) {
+	BlockPos posoffset = pos.down();
+	BlockPos poseast = posoffset.east();
+	BlockPos poswest = posoffset.west();
+	BlockPos posnorth = posoffset.north();
+	BlockPos possouth = posoffset.south();
+	Iterable<BlockPos> OffsetIterable = List.of(poseast, poswest, posnorth, possouth);
+	for (BlockPos Position: OffsetIterable) 
+		{BlockState stateClient = mc.world.getBlockState(Position);
+		  BlockState stateSchematic = world.getBlockState(Position);
+		  if(stateClient.isAir() && stateSchematic.getBlock() instanceof PistonBlock) {return true;} 
+		 }
+	return false;};
+
+
 
     /*
      * Checks if the block can be placed in the correct orientation if player is
