@@ -528,7 +528,7 @@ public class Printer {
 					ShouldFix =facingSchematicName!=facingClientName;
 					ShapeBoolean =  (facingSchematicName == "north" &&facingClientName == "south" ) || (facingSchematicName == "east" &&facingClientName == "west" ) ||(facingSchematicName == "up" &&facingClientName == "down" ) ||
 							(facingSchematicName == "south" &&facingClientName == "north" ) || (facingSchematicName == "west" &&facingClientName == "east" ) ||(facingSchematicName == "down" &&facingClientName == "up" ) ;
-				} 
+				} else if (sBlock instanceof RepeaterBlock || sBlock instanceof ComparatorBlock ||  sBlock instanceof FenceGateBlock || sBlock instanceof TrapdoorBlock) {ShapeBoolean = fi.dy.masa.malilib.util.BlockUtils.getFirstPropertyFacingValue(stateSchematic).getName() != fi.dy.masa.malilib.util.BlockUtils.getFirstPropertyFacingValue(stateClient).getName();}
                                              Direction side = Direction.UP;
                                              if (ShapeBoolean) {
                                                  Hand hand = Hand.MAIN_HAND;
