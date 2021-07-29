@@ -8,6 +8,7 @@ import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.EASY_PLACE_MOD
 import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.EASY_PLACE_MODE_RANGE_Y;
 import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.EASY_PLACE_MODE_RANGE_Z;
 import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.FLIPPIN_CACTUS; //now only applied for rail blocks, sometimes observer flipping can help redstone order too.
+import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.CLEAR_AREA_MODE;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -34,9 +35,11 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.block.AbstractButtonBlock;
 import net.minecraft.block.AbstractRailBlock;
+import net.minecraft.block.AbstractBlock.Settings;
 import net.minecraft.block.BedBlock;
 import net.minecraft.block.BeehiveBlock;
 import net.minecraft.block.Block;
+import net.minecraft.block.Blocks;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.CarvedPumpkinBlock;
 import net.minecraft.block.ChestBlock;
@@ -56,6 +59,7 @@ import net.minecraft.block.LecternBlock;
 import net.minecraft.block.LeverBlock;
 import net.minecraft.block.LoomBlock;
 import net.minecraft.block.Material;
+import net.minecraft.block.MapColor;
 import net.minecraft.block.NoteBlock;
 import net.minecraft.block.ObserverBlock;
 import net.minecraft.block.PillarBlock;
@@ -74,6 +78,7 @@ import net.minecraft.block.RedstoneBlock;
 import net.minecraft.block.SeaPickleBlock;
 import net.minecraft.block.SignBlock;
 import net.minecraft.block.SlabBlock;
+import net.minecraft.block.SlimeBlock;
 import net.minecraft.block.StairsBlock;
 import net.minecraft.block.StonecutterBlock;
 import net.minecraft.block.TorchBlock;
@@ -92,6 +97,7 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.ItemConvertible;
 import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
@@ -260,7 +266,7 @@ public class Printer {
         int posX = tracePos.getX();
         int posY = tracePos.getY();
         int posZ = tracePos.getZ();
-
+        boolean ClearArea = CLEAR_AREA_MODE.getBooleanValue(); // if its true, will ignore everything and remove fluids.
         SubChunkPos cpos = new SubChunkPos(tracePos);
         List<PlacementPart> list = DataManager.getSchematicPlacementManager().getAllPlacementsTouchingSubChunk(cpos);
 
@@ -381,7 +387,7 @@ public class Printer {
                         continue;
                     BlockState stateSchematic = world.getBlockState(pos);
                     BlockState stateClient = mc.world.getBlockState(pos);
-                    if (breakBlocks && stateSchematic != null && !stateClient.isAir() && !stateClient.getBlock().getTranslationKey().contains((String) "water") && !stateClient.getBlock().getTranslationKey().contains((String) "lava") && !stateClient.getBlock().getTranslationKey().contains((String) "column") && !stateClient.getBlock().getTranslationKey().contains((String) "bedrock")&& !stateClient.getBlock().getTranslationKey().contains((String) "piston_head")) {
+                    if (!ClearArea && breakBlocks && stateSchematic != null && !stateClient.isAir() && !stateClient.getBlock().getTranslationKey().contains((String) "water") && !stateClient.getBlock().getTranslationKey().contains((String) "lava") && !stateClient.getBlock().getTranslationKey().contains((String) "column") && !stateClient.getBlock().getTranslationKey().contains((String) "bedrock")&& !stateClient.getBlock().getTranslationKey().contains((String) "piston_head")) {
                         if (!stateClient.getBlock().getName().equals(stateSchematic.getBlock().getName()) && dx * dx + Math.pow(dy + 1.5,2) + dz * dz <= MaxReach * MaxReach) {
                             
                         	if (mc.player.getAbilities().creativeMode) {
@@ -399,11 +405,11 @@ public class Printer {
                         	}
                         }
                     }
-                    if (stateSchematic.isAir())
+                    if (stateSchematic.isAir() && !ClearArea)
                     continue;
                     
                     // Abort if there is already a block in the target position
-                    if (MaxFlip|| printerCheckCancel(stateSchematic, stateClient, mc.player)) {
+                    if (!ClearArea && MaxFlip|| printerCheckCancel(stateSchematic, stateClient, mc.player)) {
 
 
                         /*
@@ -503,7 +509,7 @@ public class Printer {
                                   
                                 }  
                             }
-                        } else if (MaxFlip) {
+                        } else if (!ClearArea && MaxFlip) {
                             Block cBlock = stateClient.getBlock();
                             Block sBlock = stateSchematic.getBlock();
                             if (cBlock.getName().equals(sBlock.getName())) {
@@ -544,14 +550,30 @@ public class Printer {
                              } 
                         continue;
                     }
-                    if (MaxFlip) {continue;};
+                    if (!ClearArea && MaxFlip) {continue;};
                     if (isPositionCached(pos, false)) {
                         continue;
                     }
-
-                    ItemStack stack = ((MaterialCache) MaterialCache.getInstance()).getRequiredBuildItemForState((BlockState)stateSchematic);
-                    if (stack.isEmpty() == false && (mc.player.getAbilities().creativeMode || mc.player.getInventory().getSlotWithStack(stack) != -1)) {
+	ItemStack stack;
+	     if (ClearArea) {
+                   stack= new ItemStack(new Blocks().SLIME_BLOCK.asItem(), 1);
+	     } else {
+	     
+	stack = ((MaterialCache) MaterialCache.getInstance()).getRequiredBuildItemForState((BlockState)stateSchematic);}
+	
+                    if ((ClearArea || stack.isEmpty() == false) && (mc.player.getAbilities().creativeMode || mc.player.getInventory().getSlotWithStack(stack) != -1)) {
                             Block sBlock = stateSchematic.getBlock();
+                            Block cBlock = stateClient.getBlock();
+	             
+		 if (ClearArea){ Hand hand = Hand.MAIN_HAND;
+                        if (ClearArea && mc.player.getInventory().getSlotWithStack(stack) != -1 && (cBlock.getTranslationKey().contains((String) "water") || cBlock.getTranslationKey().contains((String) "lava") || cBlock.getTranslationKey().contains((String) "column")) )
+		{ InventoryUtils.setPickedItemToHand(stack, mc);
+		Vec3d hitPos = new Vec3d(0.5, 0.5, 0.5);
+                               BlockHitResult hitResult = new BlockHitResult(hitPos, Direction.UP, pos, false);
+		  mc.interactionManager.interactBlock(mc.player, mc.world, hand, hitResult);
+		  continue;
+		} }
+                       if (ClearArea) {continue;}
                         if (stateSchematic == stateClient) {
                             continue;
                         } else if (sBlock instanceof SandBlock || sBlock instanceof DragonEggBlock || sBlock instanceof ConcretePowderBlock || sBlock instanceof GravelBlock || sBlock instanceof AnvilBlock) {
