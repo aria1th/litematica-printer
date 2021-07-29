@@ -78,7 +78,6 @@ import net.minecraft.block.RedstoneBlock;
 import net.minecraft.block.SeaPickleBlock;
 import net.minecraft.block.SignBlock;
 import net.minecraft.block.SlabBlock;
-import net.minecraft.block.SlimeBlock;
 import net.minecraft.block.StairsBlock;
 import net.minecraft.block.StonecutterBlock;
 import net.minecraft.block.TorchBlock;
@@ -555,22 +554,22 @@ public class Printer {
                         continue;
                     }
 	ItemStack stack;
+	Block cBlock = stateClient.getBlock();
 	     if (ClearArea) {
-                   stack= new ItemStack(new Blocks().SLIME_BLOCK.asItem(), 1);
-	     } else {
-	     
-	stack = ((MaterialCache) MaterialCache.getInstance()).getRequiredBuildItemForState((BlockState)stateSchematic);}
+		if( cBlock.getTranslationKey().contains((String) "water") || cBlock.getTranslationKey().contains((String) "column")) {stack= new ItemStack(new Blocks().SPONGE.asItem(), 1); 
+		 } else if  (cBlock.getTranslationKey().contains((String) "lava")) {
+                  		 stack= new ItemStack(new Blocks().SLIME_BLOCK.asItem(), 1);} else { stack = ((MaterialCache) MaterialCache.getInstance()).getRequiredBuildItemForState((BlockState)stateSchematic);}
+	    	 } else { stack = ((MaterialCache) MaterialCache.getInstance()).getRequiredBuildItemForState((BlockState)stateSchematic);}
 	
                     if ((ClearArea || stack.isEmpty() == false) && (mc.player.getAbilities().creativeMode || mc.player.getInventory().getSlotWithStack(stack) != -1)) {
                             Block sBlock = stateSchematic.getBlock();
-                            Block cBlock = stateClient.getBlock();
-	             
 		 if (ClearArea){ Hand hand = Hand.MAIN_HAND;
-                        if (ClearArea && mc.player.getInventory().getSlotWithStack(stack) != -1 && (cBlock.getTranslationKey().contains((String) "water") || cBlock.getTranslationKey().contains((String) "lava") || cBlock.getTranslationKey().contains((String) "column")) )
+                        if (ClearArea && mc.player.getInventory().getSlotWithStack(stack) != -1)
 		{ InventoryUtils.setPickedItemToHand(stack, mc);
 		Vec3d hitPos = new Vec3d(0.5, 0.5, 0.5);
                                BlockHitResult hitResult = new BlockHitResult(hitPos, Direction.UP, pos, false);
 		  mc.interactionManager.interactBlock(mc.player, mc.world, hand, hitResult);
+		if(cBlock.getTranslationKey().contains((String) "water") || cBlock.getTranslationKey().contains((String) "column")) {return ActionResult.SUCCESS;}
 		  continue;
 		} }
                        if (ClearArea) {continue;}
@@ -796,7 +795,7 @@ public class Printer {
 	for (BlockPos Position: OffsetIterable) 
 		{BlockState stateClient = mc.world.getBlockState(Position);
 		  BlockState stateSchematic = world.getBlockState(Position);
-		  if(stateClient.isAir() && stateSchematic.getBlock() instanceof PistonBlock &&  stateSchematic.get(PistonBlock.EXTENDED).toString().contains("false")) {return true;} 
+		  if(stateClient.isAir() && stateSchematic.getBlock() instanceof PistonBlock &&  stateSchematic.get(PistonBlock.EXTENDED).toString().contains("false")&& !stateSchematic.get(PistonBlock.FACING).toString().contains("up")) {return true;} 
 		 }
 	return false;};
     private static boolean ObserverUpdateOrder(MinecraftClient mc,  World world, BlockPos pos) {
