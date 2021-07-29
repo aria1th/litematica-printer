@@ -381,7 +381,7 @@ public class Printer {
                         continue;
                     BlockState stateSchematic = world.getBlockState(pos);
                     BlockState stateClient = mc.world.getBlockState(pos);
-                    if (breakBlocks && stateSchematic != null && !stateClient.isAir() && !stateClient.getBlock().getTranslationKey().contains((String) "water") && !stateClient.getBlock().getTranslationKey().contains((String) "lava") && !stateClient.getBlock().getTranslationKey().contains((String) "column")) {
+                    if (breakBlocks && stateSchematic != null && !stateClient.isAir() && !stateClient.getBlock().getTranslationKey().contains((String) "water") && !stateClient.getBlock().getTranslationKey().contains((String) "lava") && !stateClient.getBlock().getTranslationKey().contains((String) "column") && !stateClient.getBlock().getTranslationKey().contains((String) "bedrock")&& !stateClient.getBlock().getTranslationKey().contains((String) "piston_head")) {
                         if (!stateClient.getBlock().getName().equals(stateSchematic.getBlock().getName()) && dx * dx + Math.pow(dy + 1.5,2) + dz * dz <= MaxReach * MaxReach) {
                             
                         	if (mc.player.getAbilities().creativeMode) {
@@ -738,6 +738,13 @@ public class Printer {
                                 mc.interactionManager.interactBlock(mc.player, mc.world, hand, hitResult);
                                 interact++;
                             }
+                            if (stateClient.getBlock() instanceof SnowBlock
+                                    && stateClient.get(SnowBlock.LAYERS) < stateSchematic.get(SnowBlock.LAYERS)) {
+                                side = applyPlacementFacing(stateSchematic, sideOrig, stateClient);
+                                hitResult = new BlockHitResult(hitPos, side, npos, false);
+                                mc.interactionManager.interactBlock(mc.player, mc.world, hand, hitResult);
+                                interact++;
+                            }
                         }
                         if (interact >= maxInteract) {
                         	lastPlaced = new Date().getTime();
@@ -848,6 +855,13 @@ public class Printer {
             Block blockClient = stateClient.getBlock();
 
             if (blockClient instanceof SeaPickleBlock && stateClient.get(SeaPickleBlock.PICKLES) != stateSchematic.get(SeaPickleBlock.PICKLES)) {
+                return blockSchematic != blockClient;
+            }
+        }
+        if (blockSchematic instanceof SnowBlock && stateSchematic.get(SnowBlock.LAYERS) >1) {
+            Block blockClient = stateClient.getBlock();
+
+            if (blockClient instanceof SnowBlock && stateClient.get(SnowBlock.LAYERS) != stateSchematic.get(SnowBlock.LAYERS)) {
                 return blockSchematic != blockClient;
             }
         }
