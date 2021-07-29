@@ -760,8 +760,8 @@ public class Printer {
                                 mc.interactionManager.interactBlock(mc.player, mc.world, hand, hitResult);
                                 interact++;
                             }
-                            if (stateClient.getBlock() instanceof SnowBlock
-                                    && stateClient.get(SnowBlock.LAYERS) < stateSchematic.get(SnowBlock.LAYERS)) {
+                            if (stateSchematic.getBlock() instanceof SnowBlock && stateSchematic.get(SnowBlock.LAYERS)>1
+                                    && mc.world.getBlockState(npos).getBlock() instanceof SnowBlock && mc.world.getBlockState(npos).get(SnowBlock.LAYERS) < stateSchematic.get(SnowBlock.LAYERS)) {
                                 side = applyPlacementFacing(stateSchematic, sideOrig, stateClient);
                                 hitResult = new BlockHitResult(hitPos, side, npos, false);
                                 mc.interactionManager.interactBlock(mc.player, mc.world, hand, hitResult);
