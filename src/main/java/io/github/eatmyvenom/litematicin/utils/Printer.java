@@ -409,7 +409,7 @@ public class Printer {
                     continue;
                     
                     // Abort if there is already a block in the target position
-                    if (!ClearArea && MaxFlip|| printerCheckCancel(stateSchematic, stateClient, mc.player)) {
+                    if (!ClearArea && (MaxFlip|| printerCheckCancel(stateSchematic, stateClient, mc.player))) {
 
 
                         /*
@@ -759,15 +759,17 @@ public class Printer {
                                 hitResult = new BlockHitResult(hitPos, side, npos, false);
                                 mc.interactionManager.interactBlock(mc.player, mc.world, hand, hitResult);
                                 interact++;
-                            }
-                            if (stateSchematic.getBlock() instanceof SnowBlock && stateSchematic.get(SnowBlock.LAYERS)>1
-                                    && mc.world.getBlockState(npos).getBlock() instanceof SnowBlock && mc.world.getBlockState(npos).get(SnowBlock.LAYERS) < stateSchematic.get(SnowBlock.LAYERS)) {
+                            }}
+                        if (stateSchematic.getBlock() instanceof SnowBlock
+                                && stateSchematic.get(SnowBlock.LAYERS)>1) {
+                            stateClient = mc.world.getBlockState(npos);
+                            if (stateClient.getBlock() instanceof SnowBlock
+                                    && stateClient.get(SnowBlock.LAYERS) < stateSchematic.get(SnowBlock.LAYERS)) {
                                 side = applyPlacementFacing(stateSchematic, sideOrig, stateClient);
                                 hitResult = new BlockHitResult(hitPos, side, npos, false);
                                 mc.interactionManager.interactBlock(mc.player, mc.world, hand, hitResult);
                                 interact++;
-                            }
-                        }
+                            }}
                         if (interact >= maxInteract) {
                         	lastPlaced = new Date().getTime();
                             return ActionResult.SUCCESS;
@@ -884,7 +886,7 @@ public class Printer {
             Block blockClient = stateClient.getBlock();
 
             if (blockClient instanceof SnowBlock && stateClient.get(SnowBlock.LAYERS) != stateSchematic.get(SnowBlock.LAYERS)) {
-                return blockSchematic != blockClient;
+                return stateClient.get(SnowBlock.LAYERS) != stateSchematic.get(SnowBlock.LAYERS);
             }
         }
         if (blockSchematic instanceof SlabBlock && stateSchematic.get(SlabBlock.TYPE) == SlabType.DOUBLE) {
@@ -895,7 +897,7 @@ public class Printer {
             }
         }
         Block blockClient = stateClient.getBlock();
-        if (blockClient instanceof SnowBlock && stateClient.get(SnowBlock.LAYERS) <3) {
+        if (blockClient instanceof SnowBlock && stateClient.get(SnowBlock.LAYERS) <3 && stateClient.get(SnowBlock.LAYERS) != stateSchematic.get(SnowBlock.LAYERS)) {
                 return false;
         }
         if (stateClient.isAir() || stateClient.getBlock().getTranslationKey().contains((String) "water") || stateClient.getBlock().getTranslationKey().contains((String) "lava")|| stateClient.getBlock().getTranslationKey().contains((String) "column")) // This is a lot simpler than below. But slightly lacks functionality.
