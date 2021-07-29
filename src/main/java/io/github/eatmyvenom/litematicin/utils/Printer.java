@@ -53,6 +53,7 @@ import net.minecraft.block.EndRodBlock;
 import net.minecraft.block.EnderChestBlock;
 import net.minecraft.block.FenceGateBlock;
 import net.minecraft.block.FurnaceBlock;
+import net.minecraft.block.FluidBlock;
 import net.minecraft.block.HopperBlock;
 import net.minecraft.block.LadderBlock;
 import net.minecraft.block.LecternBlock;
@@ -269,7 +270,7 @@ public class Printer {
         SubChunkPos cpos = new SubChunkPos(tracePos);
         List<PlacementPart> list = DataManager.getSchematicPlacementManager().getAllPlacementsTouchingSubChunk(cpos);
 
-        if (list.isEmpty()) {
+        if (list.isEmpty() && !ClearArea) {
             return ActionResult.PASS;
         }
         int maxX = 0;
@@ -278,8 +279,11 @@ public class Printer {
         int minX = 0;
         int minY = 0;
         int minZ = 0;
-
+        int rangeX = EASY_PLACE_MODE_RANGE_X.getIntegerValue();
+        int rangeY = EASY_PLACE_MODE_RANGE_Y.getIntegerValue();
+        int rangeZ = EASY_PLACE_MODE_RANGE_Z.getIntegerValue();
         boolean foundBox = false;
+        if(ClearArea) {foundBox = true; maxX = posX + rangeX; maxY = posY + rangeY; maxZ = posZ + rangeZ; minX = posX - rangeX; minY = posY - rangeY; minZ = posZ - rangeZ;} else{
         for (PlacementPart part : list) {
             IntBoundingBox pbox = part.getBox();
             if (pbox.containsPos(tracePos)) {
@@ -312,15 +316,12 @@ public class Printer {
 
                 break;
             }
-        }
+        }}
 
         if (!foundBox) {
             return ActionResult.PASS;
         }
         LayerRange range = DataManager.getRenderLayerRange(); //add range following
-        int rangeX = EASY_PLACE_MODE_RANGE_X.getIntegerValue();
-        int rangeY = EASY_PLACE_MODE_RANGE_Y.getIntegerValue();
-        int rangeZ = EASY_PLACE_MODE_RANGE_Z.getIntegerValue();
         int MaxReach = Math.max(Math.max(rangeX,rangeY),rangeZ);
         boolean breakBlocks = EASY_PLACE_MODE_BREAK_BLOCKS.getBooleanValue();
         boolean Flippincactus = FLIPPIN_CACTUS.getBooleanValue();
@@ -382,7 +383,7 @@ public class Printer {
                         continue;
 
                     BlockPos pos = new BlockPos(x, y, z);
-                    if (range.isPositionWithinRange(pos) == false)
+                    if (range.isPositionWithinRange(pos) == false && !ClearArea)
                         continue;
                     BlockState stateSchematic = world.getBlockState(pos);
                     BlockState stateClient = mc.world.getBlockState(pos);
@@ -556,8 +557,8 @@ public class Printer {
 	ItemStack stack;
 	Block cBlock = stateClient.getBlock();
 	     if (ClearArea) {
-		if( cBlock.getTranslationKey().contains((String) "water") || cBlock.getTranslationKey().contains((String) "column")) {stack= new ItemStack(new Blocks().SPONGE.asItem(), 1); 
-		 } else if  (cBlock.getTranslationKey().contains((String) "lava")) {
+		if( cBlock.getTranslationKey().contains((String) "water")&& stateClient.contains(FluidBlock.LEVEL)&&stateClient.get(FluidBlock.LEVEL)==0  || cBlock.getTranslationKey().contains((String) "column")) {stack= new ItemStack(new Blocks().SPONGE.asItem(), 1); 
+		 } else if  (cBlock.getTranslationKey().contains((String) "lava")&& stateClient.contains(FluidBlock.LEVEL)&&stateClient.get(FluidBlock.LEVEL)==0) {
                   		 stack= new ItemStack(new Blocks().SLIME_BLOCK.asItem(), 1);} else { stack = ((MaterialCache) MaterialCache.getInstance()).getRequiredBuildItemForState((BlockState)stateSchematic);}
 	    	 } else { stack = ((MaterialCache) MaterialCache.getInstance()).getRequiredBuildItemForState((BlockState)stateSchematic);}
 	
