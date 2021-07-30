@@ -2,10 +2,12 @@ package io.github.eatmyvenom.litematicin;
 
 import com.google.common.collect.ImmutableList;
 import fi.dy.masa.litematica.config.Configs;
+import fi.dy.masa.litematica.config.Hotkeys;
 import fi.dy.masa.malilib.config.IConfigBase;
 import fi.dy.masa.malilib.config.options.ConfigBoolean;
 import fi.dy.masa.malilib.config.options.ConfigDouble;
 import fi.dy.masa.malilib.config.options.ConfigInteger;
+import fi.dy.masa.malilib.hotkeys.KeyCallbackToggleBooleanConfigWithMessage;
 import net.fabricmc.api.ModInitializer;
 
 public class LitematicaMixinMod implements ModInitializer {
@@ -19,6 +21,8 @@ public class LitematicaMixinMod implements ModInitializer {
     public static final ConfigBoolean EASY_PLACE_MODE_HOTBAR_ONLY	= new ConfigBoolean("easyPlaceModeHotbarOnly", false, "Only place blocks from your hotbar.");
     public static final ConfigBoolean FLIPPIN_CACTUS	= new ConfigBoolean("easyPlaceModeFlippincactus", false, "If FlippinCactus is enabled and cactus is on mainhand, will not place block and do rotations only.");
     public static final ConfigBoolean CLEAR_AREA_MODE	= new ConfigBoolean("easyPlaceModeClearFluids", false, "It will try to place slime blocks at fluids anywhere to clear");
+    public static final ConfigBoolean CLEAR_AREA_MODE_COBBLESTONE	= new ConfigBoolean("ClearFluidsUseCobblestone", false, "It will try to place Cobblestone at anywhere to clear");
+
 	public static final ImmutableList<IConfigBase> betterList = ImmutableList.of(
 			Configs.Generic.AREAS_PER_WORLD,
 			//BETTER_RENDER_ORDER,
@@ -52,12 +56,13 @@ public class LitematicaMixinMod implements ModInitializer {
 			EASY_PLACE_MODE_DELAY,
 			EASY_PLACE_MODE_HOTBAR_ONLY,
                                            FLIPPIN_CACTUS,
-			CLEAR_AREA_MODE
+			CLEAR_AREA_MODE,
+			CLEAR_AREA_MODE_COBBLESTONE
 
 	);
-
 	@Override
 	public void onInitialize() {
 		System.out.println("YeeFuckinHaw");
 	}
 }
+
