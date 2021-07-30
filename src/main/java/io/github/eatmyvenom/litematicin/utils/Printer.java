@@ -9,7 +9,7 @@ import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.EASY_PLACE_MOD
 import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.EASY_PLACE_MODE_RANGE_Z;
 import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.FLIPPIN_CACTUS; //now only applied for rail blocks, sometimes observer flipping can help redstone order too.
 import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.CLEAR_AREA_MODE;
-
+import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.CLEAR_AREA_MODE_COBBLESTONE;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedHashMap;
@@ -267,6 +267,7 @@ public class Printer {
         int posY = tracePos.getY();
         int posZ = tracePos.getZ();
         boolean ClearArea = CLEAR_AREA_MODE.getBooleanValue(); // if its true, will ignore everything and remove fluids.
+        boolean UseCobble = CLEAR_AREA_MODE_COBBLESTONE.getBooleanValue();
         SubChunkPos cpos = new SubChunkPos(tracePos);
         List<PlacementPart> list = DataManager.getSchematicPlacementManager().getAllPlacementsTouchingSubChunk(cpos);
 
@@ -557,9 +558,9 @@ public class Printer {
 	ItemStack stack;
 	Block cBlock = stateClient.getBlock();
 	     if (ClearArea) {
-		if( cBlock.getTranslationKey().contains((String) "water")&& stateClient.contains(FluidBlock.LEVEL)&&stateClient.get(FluidBlock.LEVEL)==0  || cBlock.getTranslationKey().contains((String) "column")) {stack= new ItemStack(new Blocks().SPONGE.asItem(), 1); 
-		 } else if  (cBlock.getTranslationKey().contains((String) "lava")&& stateClient.contains(FluidBlock.LEVEL)&&stateClient.get(FluidBlock.LEVEL)==0) {
-                  		 stack= new ItemStack(new Blocks().SLIME_BLOCK.asItem(), 1);} else { stack = ((MaterialCache) MaterialCache.getInstance()).getRequiredBuildItemForState((BlockState)stateSchematic);}
+		if( cBlock.getTranslationKey().contains((String) "water")&& stateClient.contains(FluidBlock.LEVEL)&&stateClient.get(FluidBlock.LEVEL)==0  || cBlock.getTranslationKey().contains((String) "column")) {if (true) {stack= new ItemStack(new Blocks().SPONGE.asItem(), 1);} else {stack= new ItemStack(new Blocks().COBBLESTONE.asItem(), 1);}; 
+		 } else if  (cBlock.getTranslationKey().contains((String) "lava")&& stateClient.contains(FluidBlock.LEVEL)&&stateClient.get(FluidBlock.LEVEL)==0) {if (!UseCobble) {
+                  		 stack= new ItemStack(new Blocks().SLIME_BLOCK.asItem(), 1);} else {stack= new ItemStack(new Blocks().COBBLESTONE.asItem(), 1);}} else { stack = ((MaterialCache) MaterialCache.getInstance()).getRequiredBuildItemForState((BlockState)stateSchematic);}
 	    	 } else { stack = ((MaterialCache) MaterialCache.getInstance()).getRequiredBuildItemForState((BlockState)stateSchematic);}
 	
                     if ((ClearArea || stack.isEmpty() == false) && (mc.player.getAbilities().creativeMode || mc.player.getInventory().getSlotWithStack(stack) != -1)) {
