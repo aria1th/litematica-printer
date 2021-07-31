@@ -255,9 +255,11 @@ public class Printer {
     public static ActionResult doPrinterAction(MinecraftClient mc) {
     	if (breaker.isBreakingBlock()) return ActionResult.SUCCESS;
     	if (new Date().getTime() < lastPlaced + 1000.0 * EASY_PLACE_MODE_DELAY.getDoubleValue()) return ActionResult.PASS;
-
-    	
-        RayTraceWrapper traceWrapper = RayTraceUtils.getGenericTrace(mc.world, mc.player, 6, true);
+        int rangeX = EASY_PLACE_MODE_RANGE_X.getIntegerValue();
+        int rangeY = EASY_PLACE_MODE_RANGE_Y.getIntegerValue();
+        int rangeZ = EASY_PLACE_MODE_RANGE_Z.getIntegerValue();
+        int MaxReach = Math.max(Math.max(rangeX,rangeY),rangeZ);
+        RayTraceWrapper traceWrapper = RayTraceUtils.getGenericTrace(mc.world, mc.player, MaxReach, true);
         if (traceWrapper == null) {
             return ActionResult.FAIL;
         }
@@ -280,9 +282,7 @@ public class Printer {
         int minX = 0;
         int minY = 0;
         int minZ = 0;
-        int rangeX = EASY_PLACE_MODE_RANGE_X.getIntegerValue();
-        int rangeY = EASY_PLACE_MODE_RANGE_Y.getIntegerValue();
-        int rangeZ = EASY_PLACE_MODE_RANGE_Z.getIntegerValue();
+
         boolean foundBox = false;
         if(ClearArea) {foundBox = true; maxX = posX + rangeX; maxY = posY + rangeY; maxZ = posZ + rangeZ; minX = posX - rangeX; minY = posY - rangeY; minZ = posZ - rangeZ;} else{
         for (PlacementPart part : list) {
@@ -323,7 +323,6 @@ public class Printer {
             return ActionResult.PASS;
         }
         LayerRange range = DataManager.getRenderLayerRange(); //add range following
-        int MaxReach = Math.max(Math.max(rangeX,rangeY),rangeZ);
         boolean breakBlocks = EASY_PLACE_MODE_BREAK_BLOCKS.getBooleanValue();
         boolean Flippincactus = FLIPPIN_CACTUS.getBooleanValue();
         ItemStack Mainhandstack = mc.player.getMainHandStack();
