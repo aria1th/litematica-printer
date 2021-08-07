@@ -594,7 +594,6 @@ public class Printer {
 			} else if (sBlock instanceof ObserverBlock) {
 				if(ObserverUpdateOrder(mc,world, pos)){continue;}
 				}
-			System.out.println(stack.getTranslationKey());System.out.println(sBlock.getTranslationKey());
 			if (sBlock instanceof NetherPortalBlock && !sBlock.getName().equals(cBlock.getName()) ) {
 				Hand hand = Hand.MAIN_HAND;
 				BlockPos Offsetpos = new BlockPos(x, y-1, z);
@@ -602,7 +601,6 @@ public class Printer {
 				BlockState OffsetstateClient = mc.world.getBlockState(Offsetpos);
 				if (mc.player.getInventory().getSlotWithStack(stack) == -1 || OffsetstateClient.isAir() || ( !OffsetstateClient.getBlock().getName().equals(OffsetstateSchematic.getBlock().getName())) ) {
 											continue;};
-			System.out.println("S");
 				InventoryUtils.setPickedItemToHand(stack, mc);
 				Vec3d hitPos = new Vec3d(0.5, 0.5, 0.5);
 				BlockHitResult hitResult = new BlockHitResult(hitPos, Direction.DOWN, new BlockPos(x,y+1,z), false);
