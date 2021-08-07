@@ -579,7 +579,7 @@ public class Printer {
 					Vec3d hitPos = new Vec3d(0.5, 0.5, 0.5);
 					BlockHitResult hitResult = new BlockHitResult(hitPos, Direction.UP, pos, false);
 					mc.interactionManager.interactBlock(mc.player, mc.world, hand, hitResult);
-					if(cBlock.getTranslationKey().contains((String) "water") || cBlock.getTranslationKey().contains((String) "column")) {return ActionResult.SUCCESS;}
+					if(cBlock.getTranslationKey().contains((String) "water") || cBlock.getTranslationKey().contains((String) "column")) {lastPlaced = new Date().getTime();return ActionResult.SUCCESS;}
 					continue;
 					} }
 			if (ClearArea) {continue;}
@@ -604,7 +604,7 @@ public class Printer {
 				InventoryUtils.setPickedItemToHand(stack, mc);
 				Vec3d hitPos = new Vec3d(0.5, 0.5, 0.5);
 				BlockHitResult hitResult = new BlockHitResult(hitPos, Direction.DOWN, new BlockPos(x,y+1,z), false);
-				mc.interactionManager.interactBlock(mc.player, mc.world, hand, hitResult); return ActionResult.SUCCESS; 							};
+				mc.interactionManager.interactBlock(mc.player, mc.world, hand, hitResult); lastPlaced = new Date().getTime();return ActionResult.SUCCESS; 							};
 						Direction facing = fi.dy.masa.malilib.util.BlockUtils
 								.getFirstPropertyFacingValue(stateSchematic);
 						if (facing != null) {
