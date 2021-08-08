@@ -914,7 +914,7 @@ public class Printer {
 			}
 		}
 		Block blockClient = stateClient.getBlock();
-		if (blockClient instanceof SnowBlock && stateClient.get(SnowBlock.LAYERS) <3 && stateClient.get(SnowBlock.LAYERS) != stateSchematic.get(SnowBlock.LAYERS)) {
+		if (blockClient instanceof SnowBlock && stateClient.get(SnowBlock.LAYERS) <3 && (stateSchematic instanceof SnowBlock && stateClient.get(SnowBlock.LAYERS) != stateSchematic.get(SnowBlock.LAYERS))) {
 				return false;
 		}
 		if (stateClient.isAir() || stateClient.getBlock().getTranslationKey().contains((String) "water") || stateClient.getBlock().getTranslationKey().contains((String) "lava")|| stateClient.getBlock().getTranslationKey().contains((String) "column")) // This is a lot simpler than below. But slightly lacks functionality.
