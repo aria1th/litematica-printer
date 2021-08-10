@@ -21,7 +21,7 @@ public class LitematicaMixinMod implements ModInitializer {
     public static final ConfigBoolean FLIPPIN_CACTUS	= new ConfigBoolean("easyPlaceModeFlippincactus", false, "If FlippinCactus is enabled and cactus is on mainhand, will not place block and do rotations only.");
     public static final ConfigBoolean CLEAR_AREA_MODE	= new ConfigBoolean("easyPlaceModeClearFluids", false, "It will try to place slime blocks at fluids anywhere to clear");
     public static final ConfigBoolean CLEAR_AREA_MODE_COBBLESTONE	= new ConfigBoolean("ClearFluidsUseCobblestone", false, "It will try to place Cobblestone at anywhere to clear");
-
+    public static final ConfigBoolean CLEAR_AREA_MODE_SNOWPREVENT = new ConfigBoolean("ClearSnowLayer", false, "It will try to place string when snow layer is found");
 	public static final ImmutableList<IConfigBase> betterList = ImmutableList.of(
 			Configs.Generic.AREAS_PER_WORLD,
 			//BETTER_RENDER_ORDER,
@@ -56,7 +56,8 @@ public class LitematicaMixinMod implements ModInitializer {
 			EASY_PLACE_MODE_HOTBAR_ONLY,
                                            FLIPPIN_CACTUS,
 			CLEAR_AREA_MODE,
-			CLEAR_AREA_MODE_COBBLESTONE
+			CLEAR_AREA_MODE_COBBLESTONE,
+			CLEAR_AREA_MODE_SNOWPREVENT
 
 	);
 	@Override
