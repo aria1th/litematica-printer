@@ -10,6 +10,7 @@ import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.EASY_PLACE_MOD
 import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.FLIPPIN_CACTUS; //now only applied for rail blocks, sometimes observer flipping can help redstone order too.
 import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.CLEAR_AREA_MODE;
 import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.CLEAR_AREA_MODE_COBBLESTONE;
+import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.CLEAR_AREA_MODE_SNOWPREVENT;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedHashMap;
@@ -390,7 +391,7 @@ public class Printer {
 						continue;
 					BlockState stateSchematic = world.getBlockState(pos);
 					BlockState stateClient = mc.world.getBlockState(pos);
-					if (!ClearArea && breakBlocks && stateSchematic != null && !stateClient.isAir() && !stateClient.getBlock().getTranslationKey().contains((String) "water") && !stateClient.getBlock().getTranslationKey().contains((String) "lava") && !stateClient.getBlock().getTranslationKey().contains((String) "column") && !stateClient.getBlock().getTranslationKey().contains((String) "bedrock")&& !stateClient.getBlock().getTranslationKey().contains((String) "piston_head")) {
+					if (!ClearArea && breakBlocks && stateSchematic != null && !(stateClient.getBlock() instanceof SnowBlock) && !stateClient.isAir() && !stateClient.getBlock().getTranslationKey().contains((String) "water") && !stateClient.getBlock().getTranslationKey().contains((String) "lava") && !stateClient.getBlock().getTranslationKey().contains((String) "column") && !stateClient.getBlock().getTranslationKey().contains((String) "bedrock")&& !stateClient.getBlock().getTranslationKey().contains((String) "piston_head")) {
 						if (!stateClient.getBlock().getName().equals(stateSchematic.getBlock().getName()) && dx * dx + Math.pow(dy + 1.5,2) + dz * dz <= MaxReach * MaxReach) {
 
 							if (mc.player.getAbilities().creativeMode) {
@@ -557,7 +558,7 @@ public class Printer {
 					if (isPositionCached(pos, false)) {
 						continue;
 					}
-	ItemStack stack;
+	ItemStack stack = ((MaterialCache) MaterialCache.getInstance()).getRequiredBuildItemForState((BlockState)stateSchematic);
 	Block cBlock = stateClient.getBlock();
 	Block sBlock = stateSchematic.getBlock();
 	     if (ClearArea) {
@@ -568,8 +569,9 @@ public class Printer {
 			 if (!UseCobble) {
 				stack= new ItemStack(new Blocks().SLIME_BLOCK.asItem(), 1);} else {
 				stack= new ItemStack(new Blocks().COBBLESTONE.asItem(), 1);}
-		}else {if (sBlock instanceof NetherPortalBlock) {stack = new ItemStack(new Items().FIRE_CHARGE.asItem(),1 );} else {stack = ((MaterialCache) MaterialCache.getInstance()).getRequiredBuildItemForState((BlockState)stateSchematic);};}
-	    } else {if (sBlock instanceof NetherPortalBlock) {stack = new ItemStack(new Items().FIRE_CHARGE.asItem(),1 );} else {stack = ((MaterialCache) MaterialCache.getInstance()).getRequiredBuildItemForState((BlockState)stateSchematic);};}
+		} else if (cBlock instanceof SnowBlock) {stack= new ItemStack(new Items().STRING.asItem(), 1);}
+	    } else if (sBlock instanceof NetherPortalBlock) {stack = new ItemStack(new Items().FIRE_CHARGE.asItem(),1 );
+		} else {stack = ((MaterialCache) MaterialCache.getInstance()).getRequiredBuildItemForState((BlockState)stateSchematic);}
 
 		if ((ClearArea || stack.isEmpty() == false) && (mc.player.getAbilities().creativeMode || mc.player.getInventory().getSlotWithStack(stack) != -1)) {
 
@@ -579,7 +581,7 @@ public class Printer {
 					Vec3d hitPos = new Vec3d(0.5, 0.5, 0.5);
 					BlockHitResult hitResult = new BlockHitResult(hitPos, Direction.UP, pos, false);
 					mc.interactionManager.interactBlock(mc.player, mc.world, hand, hitResult);
-					if(cBlock.getTranslationKey().contains((String) "water") || cBlock.getTranslationKey().contains((String) "column")) {lastPlaced = new Date().getTime();return ActionResult.SUCCESS;}
+					if(cBlock.getTranslationKey().contains((String) "water")|| (cBlock instanceof SnowBlock) || cBlock.getTranslationKey().contains((String) "column")) {lastPlaced = new Date().getTime();return ActionResult.SUCCESS;}
 					continue;
 					} }
 			if (ClearArea) {continue;}
