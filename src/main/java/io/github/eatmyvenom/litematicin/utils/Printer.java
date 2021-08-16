@@ -11,6 +11,7 @@ import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.FLIPPIN_CACTUS
 import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.CLEAR_AREA_MODE;
 import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.CLEAR_AREA_MODE_COBBLESTONE;
 import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.CLEAR_AREA_MODE_SNOWPREVENT;
+import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.ACCURATE_BLOCK_PLACEMENT;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedHashMap;
@@ -28,6 +29,7 @@ import fi.dy.masa.litematica.util.EntityUtils;
 import fi.dy.masa.litematica.util.InventoryUtils;
 import fi.dy.masa.litematica.util.RayTraceUtils;
 import fi.dy.masa.litematica.util.RayTraceUtils.RayTraceWrapper;
+import fi.dy.masa.litematica.util.WorldUtils;
 import fi.dy.masa.litematica.world.SchematicWorldHandler;
 import fi.dy.masa.malilib.util.IntBoundingBox;
 import fi.dy.masa.malilib.util.LayerRange;
@@ -271,6 +273,7 @@ public class Printer {
 		int posZ = tracePos.getZ();
 		boolean ClearArea = CLEAR_AREA_MODE.getBooleanValue(); // if its true, will ignore everything and remove fluids.
 		boolean UseCobble = CLEAR_AREA_MODE_COBBLESTONE.getBooleanValue();
+		boolean CanUseProtocol = ACCURATE_BLOCK_PLACEMENT.getBooleanValue();
 		SubChunkPos cpos = new SubChunkPos(tracePos);
 		List<PlacementPart> list = DataManager.getSchematicPlacementManager().getAllPlacementsTouchingSubChunk(cpos);
 
@@ -611,7 +614,7 @@ public class Printer {
 								.getFirstPropertyFacingValue(stateSchematic);
 						if (facing != null) {
 							FacingData facedata = getFacingData(stateSchematic);
-							if (!canPlaceFace(facedata, stateSchematic, mc.player, primaryFacing, horizontalFacing))
+							if (!CanUseProtocol && !canPlaceFace(facedata, stateSchematic, mc.player, primaryFacing, horizontalFacing))
 								continue;
 
 							if ((stateSchematic.getBlock() instanceof DoorBlock
@@ -745,6 +748,7 @@ public class Printer {
 						Vec3d hitPos = new Vec3d(offX, offY, offZ);
 						// Carpet Accurate Placement protocol support, plus BlockSlab support
 						hitPos = applyHitVec(npos, stateSchematic, hitPos, side);
+						if(CanUseProtocol) {hitPos = WorldUtils.applyCarpetProtocolHitVec(npos,stateSchematic,hitPos);} else {hitPos = applyHitVec(npos, stateSchematic, hitPos, side);}
 
 						// Mark that this position has been handled (use the non-offset position that is
 						// checked above)
