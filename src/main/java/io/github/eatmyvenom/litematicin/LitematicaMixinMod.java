@@ -23,7 +23,7 @@ public class LitematicaMixinMod implements ModInitializer {
     public static final ConfigBoolean CLEAR_AREA_MODE_COBBLESTONE	= new ConfigBoolean("ClearFluidsUseCobblestone", false, "It will try to place Cobblestone at anywhere to clear");
     public static final ConfigBoolean CLEAR_AREA_MODE_SNOWPREVENT = new ConfigBoolean("ClearSnowLayer", false, "It will try to place string when snow layer is found");
     public static final ConfigBoolean ACCURATE_BLOCK_PLACEMENT = new ConfigBoolean("AccurateBlockPlacement",false,"if carpet extra/quickcarpet enabled it, turn on");
-	
+    public static final ConfigBoolean EASY_PLACE_MODE_USE_COMPOSTER = new  ConfigBoolean("easyPlaceModeUsePumpkinPie",false,"use punkin pie to adjust composter level");
 	public static final ImmutableList<IConfigBase> betterList = ImmutableList.of(
 			Configs.Generic.AREAS_PER_WORLD,
 			//BETTER_RENDER_ORDER,
@@ -60,7 +60,8 @@ public class LitematicaMixinMod implements ModInitializer {
 			CLEAR_AREA_MODE,
 			CLEAR_AREA_MODE_COBBLESTONE,
 			CLEAR_AREA_MODE_SNOWPREVENT,
-			ACCURATE_BLOCK_PLACEMENT
+			ACCURATE_BLOCK_PLACEMENT,
+			EASY_PLACE_MODE_USE_COMPOSTER
 
 	);
 	@Override
