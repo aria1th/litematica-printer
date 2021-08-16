@@ -11,6 +11,7 @@ import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.FLIPPIN_CACTUS
 import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.CLEAR_AREA_MODE;
 import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.CLEAR_AREA_MODE_COBBLESTONE;
 import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.CLEAR_AREA_MODE_SNOWPREVENT;
+import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.ACCURATE_BLOCK_PLACEMENT;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedHashMap;
@@ -271,6 +272,7 @@ public class Printer {
 		int posZ = tracePos.getZ();
 		boolean ClearArea = CLEAR_AREA_MODE.getBooleanValue(); // if its true, will ignore everything and remove fluids.
 		boolean UseCobble = CLEAR_AREA_MODE_COBBLESTONE.getBooleanValue();
+		boolean CanUseProtocol = ACCURATE_BLOCK_PLACEMENT.getBooleanValue();
 		SubChunkPos cpos = new SubChunkPos(tracePos);
 		List<PlacementPart> list = DataManager.getSchematicPlacementManager().getAllPlacementsTouchingSubChunk(cpos);
 
@@ -611,7 +613,7 @@ public class Printer {
 								.getFirstPropertyFacingValue(stateSchematic);
 						if (facing != null) {
 							FacingData facedata = getFacingData(stateSchematic);
-							if (!canPlaceFace(facedata, stateSchematic, mc.player, primaryFacing, horizontalFacing))
+							if (!CanUseProtocol && !canPlaceFace(facedata, stateSchematic, mc.player, primaryFacing, horizontalFacing))
 								continue;
 
 							if ((stateSchematic.getBlock() instanceof DoorBlock
