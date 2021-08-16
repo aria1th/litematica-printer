@@ -30,7 +30,6 @@ import fi.dy.masa.litematica.util.EntityUtils;
 import fi.dy.masa.litematica.util.InventoryUtils;
 import fi.dy.masa.litematica.util.RayTraceUtils;
 import fi.dy.masa.litematica.util.RayTraceUtils.RayTraceWrapper;
-import fi.dy.masa.litematica.util.WorldUtils;
 import fi.dy.masa.litematica.world.SchematicWorldHandler;
 import fi.dy.masa.malilib.util.IntBoundingBox;
 import fi.dy.masa.malilib.util.LayerRange;
@@ -48,6 +47,7 @@ import net.minecraft.block.BlockState;
 import net.minecraft.block.CarvedPumpkinBlock;
 import net.minecraft.block.ChestBlock;
 import net.minecraft.block.ComparatorBlock;
+import net.minecraft.block.enums.ComparatorMode;
 import net.minecraft.block.ComposterBlock;
 import net.minecraft.block.DetectorRailBlock;
 import net.minecraft.block.DispenserBlock;
@@ -764,7 +764,7 @@ public class Printer {
 						Vec3d hitPos = new Vec3d(offX, offY, offZ);
 						// Carpet Accurate Placement protocol support, plus BlockSlab support
 						hitPos = applyHitVec(npos, stateSchematic, hitPos, side);
-						if(CanUseProtocol) {hitPos = WorldUtils.applyCarpetProtocolHitVec(npos,stateSchematic,hitPos);} else {hitPos = applyHitVec(npos, stateSchematic, hitPos, side);}
+						if(CanUseProtocol) {hitPos = applyCarpetProtocolHitVec(npos,stateSchematic,hitPos);} else {hitPos = applyHitVec(npos, stateSchematic, hitPos, side);}
 
 						// Mark that this position has been handled (use the non-offset position that is
 						// checked above)
@@ -1127,6 +1127,57 @@ public class Printer {
 			item.hasClicked = true;
 		positionCache.add(item);
 	}
+	public static Vec3d applyCarpetProtocolHitVec(BlockPos pos, BlockState state, Vec3d hitVecIn)
+	    {
+  	      double x = hitVecIn.x;
+ 	       double y = hitVecIn.y;
+   	     double z = hitVecIn.z;
+   	     Block block = state.getBlock();
+   	     Direction facing = fi.dy.masa.malilib.util.BlockUtils.getFirstPropertyFacingValue(state);
+   	     final int propertyIncrement = 32;
+   	     double relX = hitVecIn.x - pos.getX();
+
+    	    if (facing != null)
+   	     {
+    	        x = pos.getX() + relX + 2 + (facing.getId() * 2);
+   	     }
+	if (block instanceof RepeaterBlock)
+      	  {
+  	          x += ((state.get(RepeaterBlock.DELAY))) * propertyIncrement;
+   	     }
+  	      else if (block instanceof TrapdoorBlock && state.get(TrapdoorBlock.HALF) == BlockHalf.TOP)
+ 	       {
+  	          x += propertyIncrement;
+ 	       }
+  	      else if (block instanceof ComparatorBlock && state.get(ComparatorBlock.MODE) == ComparatorMode.SUBTRACT)
+    	    {
+  	          x += propertyIncrement;
+  	      }
+  	      else if (block instanceof TrapdoorBlock && state.get(TrapdoorBlock.HALF) == BlockHalf.TOP)
+  	      {
+  	          x += propertyIncrement;
+  	      }
+   	     else if (block instanceof StairsBlock && state.get(StairsBlock.HALF) == BlockHalf.TOP)
+  	      {
+  	          x += propertyIncrement;
+  	      }
+  	      else if (block instanceof SlabBlock && state.get(SlabBlock.TYPE) != SlabType.DOUBLE)
+  	      {
+            //x += 10; // Doesn't actually exist (yet?)
+	
+            // Do it via vanilla
+  	          if (state.get(SlabBlock.TYPE) == SlabType.TOP)
+  	          {
+     	           y = pos.getY() + 0.9;
+  	          }
+    	        else
+    	        {
+                y = pos.getY();
+       	     }
+     	   }
+
+    	    return new Vec3d(x, y, z);
+  	  }
 
 	public static class PositionCache {
 		private final BlockPos pos;
