@@ -44,8 +44,6 @@ Andrews is the one who made the litematica printer implimentation, I just conver
 This template is available under the CC0 license. Feel free to learn from it and incorporate it in your own projects.
 
 ## TODO List (most possible to least possible)
-Carpet protocol. (seems its just disabling face placement by default, and can enable it if server supports it)
-
 Water placement - should be done with ice placement and request breaking.
 
 Waterlogged block placement - will be placed when water source is there because it will automatically waterlog it
