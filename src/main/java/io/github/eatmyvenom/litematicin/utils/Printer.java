@@ -12,6 +12,7 @@ import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.CLEAR_AREA_MOD
 import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.CLEAR_AREA_MODE_COBBLESTONE;
 import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.CLEAR_AREA_MODE_SNOWPREVENT;
 import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.ACCURATE_BLOCK_PLACEMENT;
+import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.EASY_PLACE_MODE_USE_COMPOSTER;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedHashMap;
@@ -47,6 +48,7 @@ import net.minecraft.block.BlockState;
 import net.minecraft.block.CarvedPumpkinBlock;
 import net.minecraft.block.ChestBlock;
 import net.minecraft.block.ComparatorBlock;
+import net.minecraft.block.ComposterBlock;
 import net.minecraft.block.DetectorRailBlock;
 import net.minecraft.block.DispenserBlock;
 import net.minecraft.block.DoorBlock;
@@ -274,6 +276,8 @@ public class Printer {
 		boolean ClearArea = CLEAR_AREA_MODE.getBooleanValue(); // if its true, will ignore everything and remove fluids.
 		boolean UseCobble = CLEAR_AREA_MODE_COBBLESTONE.getBooleanValue();
 		boolean CanUseProtocol = ACCURATE_BLOCK_PLACEMENT.getBooleanValue();
+		boolean FillInventory = EASY_PLACE_MODE_USE_COMPOSTER.getBooleanValue();
+		ItemStack ComposterItem = new Items().PUMPKIN_PIE.getDefaultStack();
 		SubChunkPos cpos = new SubChunkPos(tracePos);
 		List<PlacementPart> list = DataManager.getSchematicPlacementManager().getAllPlacementsTouchingSubChunk(cpos);
 
@@ -495,6 +499,18 @@ public class Printer {
 												clickTimes = targetNote + (25 - note);
 											}
 										}
+									} else if (sBlock instanceof ComposterBlock && FillInventory){
+										int level = stateClient.get(ComposterBlock.LEVEL);
+										int Schematiclevel = stateSchematic.get(ComposterBlock.LEVEL);
+										if (level != Schematiclevel && !(level == 7 && Schematiclevel == 8)) {
+											Hand hand = Hand.MAIN_HAND;
+											 if (mc.player.getInventory().getSlotWithStack(ComposterItem)!= -1) {InventoryUtils.setPickedItemToHand(ComposterItem, mc);}
+											Vec3d hitPos = new Vec3d(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5);
+											BlockHitResult hitResult = new BlockHitResult(hitPos, side, pos, false);
+											mc.interactionManager.interactBlock(mc.player, mc.world, hand, hitResult);
+											lastPlaced = new Date().getTime();
+											return ActionResult.SUCCESS;
+											} else {cacheEasyPlacePosition(pos,true);}	
 									}
 
 
@@ -791,7 +807,8 @@ public class Printer {
 								side = applyPlacementFacing(stateSchematic, sideOrig, stateClient);
 								hitResult = new BlockHitResult(hitPos, side, npos, false);
 								mc.interactionManager.interactBlock(mc.player, mc.world, hand, hitResult);
-								interact++;
+								lastPlaced = new Date().getTime();
+								return ActionResult.SUCCESS;
 							}}
 						if (interact >= maxInteract) {
 							lastPlaced = new Date().getTime();
@@ -918,7 +935,10 @@ public class Printer {
 			if (blockClient instanceof SlabBlock && stateClient.get(SlabBlock.TYPE) != SlabType.DOUBLE) {
 				return blockSchematic != blockClient;
 			}
-		}
+		}	
+		if (blockSchematic instanceof ComposterBlock && stateSchematic.get(ComposterBlock.LEVEL) > 0 && stateClient.getBlock() instanceof ComposterBlock) {
+			return  stateClient.get(ComposterBlock.LEVEL) !=  stateSchematic.get(ComposterBlock.LEVEL);
+		}									
 		Block blockClient = stateClient.getBlock();
 		if (blockClient instanceof SnowBlock && stateClient.get(SnowBlock.LAYERS) <3 && !(stateSchematic.getBlock() instanceof SnowBlock && stateClient.get(SnowBlock.LAYERS) != stateSchematic.get(SnowBlock.LAYERS))) {
 				return false;
