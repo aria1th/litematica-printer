@@ -29,6 +29,7 @@ import fi.dy.masa.litematica.util.EntityUtils;
 import fi.dy.masa.litematica.util.InventoryUtils;
 import fi.dy.masa.litematica.util.RayTraceUtils;
 import fi.dy.masa.litematica.util.RayTraceUtils.RayTraceWrapper;
+import fi.dy.masa.litematica.util.WorldUtils;
 import fi.dy.masa.litematica.world.SchematicWorldHandler;
 import fi.dy.masa.malilib.util.IntBoundingBox;
 import fi.dy.masa.malilib.util.LayerRange;
@@ -747,6 +748,7 @@ public class Printer {
 						Vec3d hitPos = new Vec3d(offX, offY, offZ);
 						// Carpet Accurate Placement protocol support, plus BlockSlab support
 						hitPos = applyHitVec(npos, stateSchematic, hitPos, side);
+						if(CanUseProtocol) {hitPos = WorldUtils.applyCarpetProtocolHitVec(npos,stateSchematic,hitPos);} else {hitPos = applyHitVec(npos, stateSchematic, hitPos, side);}
 
 						// Mark that this position has been handled (use the non-offset position that is
 						// checked above)
