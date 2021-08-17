@@ -2,7 +2,7 @@
 
 ## Setup
 
-To set this up just add the latest litematica version to your mods folder as well as this, it will replace easy place with printer. This does not use accurate placement protocol and therefore means that in order to place blocks in some rotations, you need to rotate your player. If I stop lazy, I will add one that does use accurate placement.
+To set this up just add the latest litematica version to your mods folder as well as this, it will replace easy place with printer. If carpet extra /quickcarpet enabled accurateblockplacement, you can turn on option, and... here goes the overpowered printer.
 
 ## Settings
 
@@ -50,8 +50,6 @@ This template is available under the CC0 license. Feel free to learn from it and
 Water placement - should be done with ice placement and request breaking.
 
 Waterlogged block placement - will be placed when water source is there because it will automatically waterlog it
-
-Composter support - uses cactus (wut) ...or composable items to fill the level correctly. should use cactus.
 
 Fix block "face" rounding(rotation) issue, due to player rotation while using right click. 
 
