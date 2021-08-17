@@ -14,6 +14,7 @@ import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.CLEAR_AREA_MOD
 import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.ACCURATE_BLOCK_PLACEMENT;
 import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.EASY_PLACE_MODE_USE_COMPOSTER;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -65,7 +66,6 @@ import net.minecraft.block.LecternBlock;
 import net.minecraft.block.LeverBlock;
 import net.minecraft.block.LoomBlock;
 import net.minecraft.block.Material;
-import net.minecraft.block.MapColor;
 import net.minecraft.block.NoteBlock;
 import net.minecraft.block.ObserverBlock;
 import net.minecraft.block.PillarBlock;
@@ -277,7 +277,7 @@ public class Printer {
 		boolean UseCobble = CLEAR_AREA_MODE_COBBLESTONE.getBooleanValue();
 		boolean CanUseProtocol = ACCURATE_BLOCK_PLACEMENT.getBooleanValue();
 		boolean FillInventory = EASY_PLACE_MODE_USE_COMPOSTER.getBooleanValue();
-		ItemStack ComposterItem = new Items().PUMPKIN_PIE.getDefaultStack();
+		ItemStack ComposterItem =new ItemStack( Items.PUMPKIN_PIE) ;
 		SubChunkPos cpos = new SubChunkPos(tracePos);
 		List<PlacementPart> list = DataManager.getSchematicPlacementManager().getAllPlacementsTouchingSubChunk(cpos);
 
@@ -582,14 +582,14 @@ public class Printer {
 	Block sBlock = stateSchematic.getBlock();
 	     if (ClearArea) {
 			if( cBlock.getTranslationKey().contains((String) "water")&& stateClient.contains(FluidBlock.LEVEL)&&stateClient.get(FluidBlock.LEVEL)==0  || cBlock.getTranslationKey().contains((String) "column")) {
-				if (true) {stack= new ItemStack(new Blocks().SPONGE.asItem(), 1);} else {
-					stack= new ItemStack(new Blocks().COBBLESTONE.asItem(), 1);};
+				if (true) {stack= new ItemStack(Blocks.SPONGE.asItem(), 1);} else {
+					stack= new ItemStack(Blocks.COBBLESTONE.asItem(), 1);};
 		 } else if  (cBlock.getTranslationKey().contains((String) "lava")&& stateClient.contains(FluidBlock.LEVEL)&&stateClient.get(FluidBlock.LEVEL)==0) {
 			 if (!UseCobble) {
-				stack= new ItemStack(new Blocks().SLIME_BLOCK.asItem(), 1);} else {
-				stack= new ItemStack(new Blocks().COBBLESTONE.asItem(), 1);}
-		} else if (cBlock instanceof SnowBlock) {stack= new ItemStack(new Items().STRING.asItem(), 1);}
-	    } else if (sBlock instanceof NetherPortalBlock) {stack = new ItemStack(new Items().FIRE_CHARGE.asItem(),1 );
+				stack= new ItemStack(Blocks.SLIME_BLOCK.asItem(), 1);} else {
+				stack= new ItemStack(Blocks.COBBLESTONE.asItem(), 1);}
+		} else if (cBlock instanceof SnowBlock) {stack= new ItemStack(Items.STRING.asItem(), 1);}
+	    } else if (sBlock instanceof NetherPortalBlock) {stack = new ItemStack( Items.FIRE_CHARGE.asItem(),1 );
 		} else {stack = ((MaterialCache) MaterialCache.getInstance()).getRequiredBuildItemForState((BlockState)stateSchematic);}
 
 		if ((ClearArea || stack.isEmpty() == false) && (mc.player.abilities.creativeMode || mc.player.inventory.getSlotWithStack(stack) != -1)) {
@@ -834,7 +834,7 @@ public class Printer {
 	BlockPos poswest = posoffset.west();
 	BlockPos posnorth = posoffset.north();
 	BlockPos possouth = posoffset.south();
-	Iterable<BlockPos> OffsetIterable = List.of(poseast, poswest, posnorth, possouth);
+	List<BlockPos> OffsetIterable = Arrays.asList(poseast, poswest, posnorth, possouth);
 	for (BlockPos Position: OffsetIterable)
 		{BlockState stateClient = mc.world.getBlockState(Position);
 		  BlockState stateSchematic = world.getBlockState(Position);
