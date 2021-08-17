@@ -59,6 +59,7 @@ import net.minecraft.block.EnderChestBlock;
 import net.minecraft.block.FenceGateBlock;
 import net.minecraft.block.FurnaceBlock;
 import net.minecraft.block.FluidBlock;
+import net.minecraft.block.GlazedTerracottaBlock;
 import net.minecraft.block.HopperBlock;
 import net.minecraft.block.LadderBlock;
 import net.minecraft.block.LecternBlock;
@@ -764,7 +765,7 @@ public class Printer {
 						Vec3d hitPos = new Vec3d(offX, offY, offZ);
 						// Carpet Accurate Placement protocol support, plus BlockSlab support
 						hitPos = applyHitVec(npos, stateSchematic, hitPos, side);
-						if(CanUseProtocol) {hitPos = applyCarpetProtocolHitVec(npos,stateSchematic,hitPos);} else {hitPos = applyHitVec(npos, stateSchematic, hitPos, side);}
+						if(CanUseProtocol &&  IsBlockSupportedCarpet(stateSchematic.getBlock())) {hitPos = applyCarpetProtocolHitVec(npos,stateSchematic,hitPos);} else {hitPos = applyHitVec(npos, stateSchematic, hitPos, side);}
 
 						// Mark that this position has been handled (use the non-offset position that is
 						// checked above)
@@ -1022,6 +1023,13 @@ public class Printer {
 	 * Gets the direction necessary to build the block oriented correctly. TODO:
 	 * Need a better way to do this.
 	 */
+	private static Boolean IsBlockSupportedCarpet(Block SchematicBlock){
+	if (SchematicBlock instanceof GlazedTerracottaBlock || SchematicBlock instanceof ObserverBlock || SchematicBlock instanceof RepeaterBlock || SchematicBlock instanceof TrapdoorBlock ||
+		SchematicBlock instanceof ComparatorBlock || SchematicBlock instanceof DispenserBlock || SchematicBlock instanceof PistonBlock || SchematicBlock instanceof StairsBlock)
+		{return true;}
+	return false;
+
+	}
 	private static Direction applyPlacementFacing(BlockState stateSchematic, Direction side, BlockState stateClient) {
 		Block blockSchematic = stateSchematic.getBlock();
 		Block blockClient = stateClient.getBlock();
