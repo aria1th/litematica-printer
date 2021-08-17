@@ -209,9 +209,9 @@ public class Printer {
 		ItemStack stack = MaterialCache.getInstance().getRequiredBuildItemForState(preference, world, pos);
 
 		if (stack.isEmpty() == false) {
-			PlayerInventory inv = mc.player.getInventory();
+			PlayerInventory inv = mc.player.inventory;
 
-			if (mc.player.getAbilities().creativeMode) {
+			if (mc.player.abilities.creativeMode) {
 				// BlockEntity te = world.getBlockEntity(pos);
 
 				// The creative mode pick block with NBT only works correctly
@@ -401,7 +401,7 @@ public class Printer {
 					if (!ClearArea && breakBlocks && stateSchematic != null && !(stateClient.getBlock() instanceof SnowBlock) && !stateClient.isAir() && !stateClient.getBlock().getTranslationKey().contains((String) "water") && !stateClient.getBlock().getTranslationKey().contains((String) "lava") && !stateClient.getBlock().getTranslationKey().contains((String) "column") && !stateClient.getBlock().getTranslationKey().contains((String) "bedrock")&& !stateClient.getBlock().getTranslationKey().contains((String) "piston_head")) {
 						if (!stateClient.getBlock().getName().equals(stateSchematic.getBlock().getName()) && dx * dx + Math.pow(dy + 1.5,2) + dz * dz <= MaxReach * MaxReach) {
 
-							if (mc.player.getAbilities().creativeMode) {
+							if (mc.player.abilities.creativeMode) {
 								mc.interactionManager.attackBlock(pos, Direction.DOWN);
 								interact++;
 
@@ -504,7 +504,7 @@ public class Printer {
 										int Schematiclevel = stateSchematic.get(ComposterBlock.LEVEL);
 										if (level != Schematiclevel && !(level == 7 && Schematiclevel == 8)) {
 											Hand hand = Hand.MAIN_HAND;
-											 if (mc.player.getInventory().getSlotWithStack(ComposterItem)!= -1) {InventoryUtils.setPickedItemToHand(ComposterItem, mc);}
+											 if (mc.player.inventory.getSlotWithStack(ComposterItem)!= -1) {InventoryUtils.setPickedItemToHand(ComposterItem, mc);}
 											Vec3d hitPos = new Vec3d(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5);
 											BlockHitResult hitResult = new BlockHitResult(hitPos, side, pos, false);
 											mc.interactionManager.interactBlock(mc.player, mc.world, hand, hitResult);
@@ -592,10 +592,10 @@ public class Printer {
 	    } else if (sBlock instanceof NetherPortalBlock) {stack = new ItemStack(new Items().FIRE_CHARGE.asItem(),1 );
 		} else {stack = ((MaterialCache) MaterialCache.getInstance()).getRequiredBuildItemForState((BlockState)stateSchematic);}
 
-		if ((ClearArea || stack.isEmpty() == false) && (mc.player.getAbilities().creativeMode || mc.player.getInventory().getSlotWithStack(stack) != -1)) {
+		if ((ClearArea || stack.isEmpty() == false) && (mc.player.abilities.creativeMode || mc.player.inventory.getSlotWithStack(stack) != -1)) {
 
 			if (ClearArea){ Hand hand = Hand.MAIN_HAND;
-				if (ClearArea && mc.player.getInventory().getSlotWithStack(stack) != -1)
+				if (ClearArea && mc.player.inventory.getSlotWithStack(stack) != -1)
 					{ InventoryUtils.setPickedItemToHand(stack, mc);
 					Vec3d hitPos = new Vec3d(0.5, 0.5, 0.5);
 					BlockHitResult hitResult = new BlockHitResult(hitPos, Direction.UP, pos, false);
@@ -620,7 +620,7 @@ public class Printer {
 				BlockPos Offsetpos = new BlockPos(x, y-1, z);
 				BlockState OffsetstateSchematic = world.getBlockState(Offsetpos);
 				BlockState OffsetstateClient = mc.world.getBlockState(Offsetpos);
-				if (mc.player.getInventory().getSlotWithStack(stack) == -1 || OffsetstateClient.isAir() || ( !OffsetstateClient.getBlock().getName().equals(OffsetstateSchematic.getBlock().getName())) ) {
+				if (mc.player.inventory.getSlotWithStack(stack) == -1 || OffsetstateClient.isAir() || ( !OffsetstateClient.getBlock().getName().equals(OffsetstateSchematic.getBlock().getName())) ) {
 											continue;};
 				InventoryUtils.setPickedItemToHand(stack, mc);
 				Vec3d hitPos = new Vec3d(0.5, 0.5, 0.5);
@@ -646,7 +646,7 @@ public class Printer {
 						// Exception for signs (edge case)
 						if (stateSchematic.getBlock() instanceof SignBlock
 								&& !(stateSchematic.getBlock() instanceof WallSignBlock)) {
-							if ((MathHelper.floor((double) ((180.0F + mc.player.getYaw()) * 16.0F / 360.0F) + 0.5D)
+							if ((MathHelper.floor((double) ((180.0F + mc.player.yaw) * 16.0F / 360.0F) + 0.5D)
 									& 15) != stateSchematic.get(SignBlock.ROTATION))
 								continue;
 
