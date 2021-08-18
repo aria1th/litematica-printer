@@ -4,6 +4,10 @@
 
 To set this up just add the latest litematica version to your mods folder as well as this, it will replace easy place with printer. If carpet extra /quickcarpet enabled accurateblockplacement, you can turn on option, and... here goes the overpowered printer.
 
+## Install guide
+
+Install fabric (well, use MultiMC), litematica, malilib, and put this into mods folder. then you can just use easyplace. 
+
 ## Settings
 
 ### Printer settings:
