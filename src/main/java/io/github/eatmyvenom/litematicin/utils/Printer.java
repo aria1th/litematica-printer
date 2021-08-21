@@ -13,6 +13,7 @@ import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.CLEAR_AREA_MOD
 import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.CLEAR_AREA_MODE_SNOWPREVENT;
 import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.ACCURATE_BLOCK_PLACEMENT;
 import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.EASY_PLACE_MODE_USE_COMPOSTER;
+import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.ADVANCED_ACCURATE_BLOCK_PLACEMENT;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedHashMap;
@@ -37,6 +38,7 @@ import fi.dy.masa.malilib.util.SubChunkPos;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.block.AbstractButtonBlock;
+import net.minecraft.block.AbstractChestBlock;
 import net.minecraft.block.AbstractRailBlock;
 import net.minecraft.block.AbstractBlock.Settings;
 import net.minecraft.block.BedBlock;
@@ -1024,11 +1026,11 @@ public class Printer {
 	 * Need a better way to do this.
 	 */
 	private static Boolean IsBlockSupportedCarpet(Block SchematicBlock){
-	if (SchematicBlock instanceof GlazedTerracottaBlock || SchematicBlock instanceof ObserverBlock || SchematicBlock instanceof RepeaterBlock || SchematicBlock instanceof TrapdoorBlock ||
+	if (SchematicBlock instanceof WallMountedBlock) {return false;}
+	if (ADVANCED_ACCURATE_BLOCK_PLACEMENT.getBooleanValue() || SchematicBlock instanceof GlazedTerracottaBlock || SchematicBlock instanceof ObserverBlock || SchematicBlock instanceof RepeaterBlock || SchematicBlock instanceof TrapdoorBlock ||
 		SchematicBlock instanceof ComparatorBlock || SchematicBlock instanceof DispenserBlock || SchematicBlock instanceof PistonBlock || SchematicBlock instanceof StairsBlock)
 		{return true;}
 	return false;
-
 	}
 	private static Direction applyPlacementFacing(BlockState stateSchematic, Direction side, BlockState stateClient) {
 		Block blockSchematic = stateSchematic.getBlock();
