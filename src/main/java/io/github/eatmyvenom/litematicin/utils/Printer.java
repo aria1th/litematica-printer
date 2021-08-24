@@ -170,6 +170,7 @@ public class Printer {
 		addFD(ComparatorBlock.class, new FacingData(1, true));
 		addFD(EnderChestBlock.class, new FacingData(1, true));
 		addFD(FurnaceBlock.class, new FacingData(1, true));
+		addFD(GlazedTerracottaBlock.class, new FacingData(1, true));
 		addFD(LecternBlock.class, new FacingData(1, true));
 		addFD(LoomBlock.class, new FacingData(1, true));
 		addFD(BeehiveBlock.class, new FacingData(1, true));
