@@ -96,6 +96,7 @@ import net.minecraft.block.TripwireHookBlock;
 import net.minecraft.block.WallMountedBlock;
 import net.minecraft.block.WallRedstoneTorchBlock;
 import net.minecraft.block.WallSignBlock;
+import net.minecraft.block.WallSkulllock;
 import net.minecraft.block.WallTorchBlock;
 import net.minecraft.block.enums.BedPart;
 import net.minecraft.block.enums.BlockHalf;
@@ -671,7 +672,7 @@ public class Printer {
 								if(OffsetstateClient.getBlock().getTranslationKey().contains((String) "water") || OffsetstateClient.getBlock().getTranslationKey().contains((String) "lava") || OffsetstateClient.getBlock().getTranslationKey().contains((String) "column")){
 								continue;}
 						}
-						if (blockSchematic instanceof WallMountedBlock || blockSchematic instanceof TorchBlock
+						if (blockSchematic instanceof WallMountedBlock || blockSchematic instanceof TorchBlock || blockSchematic instanceof WallSkullBlock
 								|| blockSchematic instanceof LadderBlock || blockSchematic instanceof TrapdoorBlock
 								|| blockSchematic instanceof TripwireHookBlock || blockSchematic instanceof SignBlock || blockSchematic instanceof EndRodBlock) {
 
@@ -930,7 +931,7 @@ public class Printer {
 			Block blockClient = stateClient.getBlock();
 
 			if (blockClient instanceof SnowBlock && stateClient.get(SnowBlock.LAYERS) != stateSchematic.get(SnowBlock.LAYERS)) {
-				return stateClient.get(SnowBlock.LAYERS) != stateSchematic.get(SnowBlock.LAYERS);
+				return stateClient.get(SnowBlock.LAYERS) == stateSchematic.get(SnowBlock.LAYERS);
 			}
 		}
 		if (blockSchematic instanceof SlabBlock && stateSchematic.get(SlabBlock.TYPE) == SlabType.DOUBLE) {
@@ -1027,7 +1028,7 @@ public class Printer {
 	 * Need a better way to do this.
 	 */
 	private static Boolean IsBlockSupportedCarpet(Block SchematicBlock){
-	if (SchematicBlock instanceof WallMountedBlock) {return false;}
+	if (SchematicBlock instanceof WallMountedBlock || SchematicBlock instanceof WallSkullBlock) {return false;}
 	if (ADVANCED_ACCURATE_BLOCK_PLACEMENT.getBooleanValue() || SchematicBlock instanceof GlazedTerracottaBlock || SchematicBlock instanceof ObserverBlock || SchematicBlock instanceof RepeaterBlock || SchematicBlock instanceof TrapdoorBlock ||
 		SchematicBlock instanceof ComparatorBlock || SchematicBlock instanceof DispenserBlock || SchematicBlock instanceof PistonBlock || SchematicBlock instanceof StairsBlock)
 		{return true;}
@@ -1062,6 +1063,8 @@ public class Printer {
 			}
 
 		} else if (blockSchematic instanceof WallSignBlock) {
+			return stateSchematic.get(WallSignBlock.FACING);
+		} else if (blockSchematic instanceof WallSkullBlock) {
 			return stateSchematic.get(WallSignBlock.FACING);
 		} else if (blockSchematic instanceof SignBlock) {
 			return Direction.UP;
