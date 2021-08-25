@@ -41,6 +41,7 @@ import net.minecraft.block.AbstractButtonBlock;
 import net.minecraft.block.AbstractChestBlock;
 import net.minecraft.block.AbstractRailBlock;
 import net.minecraft.block.AbstractBlock.Settings;
+import net.minecraft.block.BarrelBlock;
 import net.minecraft.block.BedBlock;
 import net.minecraft.block.BeehiveBlock;
 import net.minecraft.block.Block;
@@ -63,6 +64,7 @@ import net.minecraft.block.FurnaceBlock;
 import net.minecraft.block.FluidBlock;
 import net.minecraft.block.GlazedTerracottaBlock;
 import net.minecraft.block.HopperBlock;
+import net.minecraft.block.HorizontalFacingBlock;
 import net.minecraft.block.LadderBlock;
 import net.minecraft.block.LecternBlock;
 import net.minecraft.block.LeverBlock;
@@ -167,6 +169,7 @@ public class Printer {
 		addFD(FenceGateBlock.class, new FacingData(1, false));
 
 		// Horizontal directions, reverse of what player is facing
+		addFD(BarrelBlock.class, new FacingData(1, true));
 		addFD(ChestBlock.class, new FacingData(1, true));
 		addFD(RepeaterBlock.class, new FacingData(1, true));
 		addFD(ComparatorBlock.class, new FacingData(1, true));
@@ -186,6 +189,9 @@ public class Printer {
 		addFD(AbstractButtonBlock.class, new FacingData(2, false));
 	 //addFD(BellBlock.class, new FacingData(2, false));
 		//addFD(GrindstoneBlock.class, new FacingData(2, false));
+
+		// Anvils
+		addFD(AnvilBlock.class, new FacingData(3, true));
 
 	}
 
@@ -777,7 +783,7 @@ public class Printer {
 	
 						BlockHitResult hitResult = new BlockHitResult(hitPos, side, npos, false);
 
-						// System.out.printf("pos: %s side: %s, hit: %s\n", pos, side, hitPos);
+						System.out.printf("pos: %s side: %s, hit: %s\n", pos, side, hitPos);
 						// pos, side, hitPos
 						if (stateSchematic.getBlock() instanceof SnowBlock) {
 							stateClient = mc.world.getBlockState(npos);
@@ -793,7 +799,7 @@ public class Printer {
 						mc.interactionManager.interactBlock(mc.player, mc.world, hand, hitResult);
 						interact++;
 						if (stateSchematic.getBlock() instanceof SlabBlock
-								&& stateSchematic.get(SlabBlock.TYPE) == SlabType.DOUBLE) {
+						wa		&& stateSchematic.get(SlabBlock.TYPE) == SlabType.DOUBLE) {
 							stateClient = mc.world.getBlockState(npos);
 
 							if (stateClient.getBlock() instanceof SlabBlock
@@ -926,6 +932,8 @@ public class Printer {
 			case 2: // Wall mountable, such as a lever, only use player direction if not on wall.
 				return stateSchematic.get(WallMountedBlock.FACE) == WallMountLocation.WALL
 						|| facing == horizontalFacing;
+			case 3: //rotated, why, anvil, WNES order
+				return horizontalFacing.rotateYClockwise() == facing;
 			default: // Ignore rest -> TODO: Other blocks like anvils, etc...
 				return true;
 			}
@@ -1115,7 +1123,9 @@ public class Printer {
 			return stateSchematic.get(TripwireHookBlock.FACING);
 		} else if (blockSchematic instanceof EndRodBlock) {
 			return stateSchematic.get(EndRodBlock.FACING);
-		}
+		} else if (blockSchematic instanceof AnvilBlock) {
+			if (ADVANCED_ACCURATE_BLOCK_PLACEMENT.getBooleanValue() || ACCURATE_BLOCK_PLACEMENT.getBooleanValue() &&  IsBlockSupportedCarpet(blockSchematic) ) {return stateSchematic.get(AnvilBlock.FACING);}
+			return stateSchematic.get(AnvilBlock.FACING).rotateYCounterclockwise();}
 
 		// TODO: Add more for other blocks
 		return side;
@@ -1160,6 +1170,9 @@ public class Printer {
 	}
 	public static Vec3d applyCarpetProtocolHitVec(BlockPos pos, BlockState state, Vec3d hitVecIn)
 	    {
+		double dx = pos.getX();
+		double dy = pos.getY();
+		double dz = pos.getZ();
   	      double x = hitVecIn.x;
  	       double y = hitVecIn.y;
    	     double z = hitVecIn.z;
@@ -1207,7 +1220,7 @@ public class Printer {
        	     }
      	   }
 
-    	    return new Vec3d(x, y, z);
+    	    return new Vec3d(dx+x,dy+ y,dz+ z);
   	  }
 
 	public static class PositionCache {
