@@ -93,6 +93,7 @@ import net.minecraft.block.StonecutterBlock;
 import net.minecraft.block.TorchBlock;
 import net.minecraft.block.TrapdoorBlock;
 import net.minecraft.block.TripwireHookBlock;
+import net.minecraft.block.WallBlock;
 import net.minecraft.block.WallMountedBlock;
 import net.minecraft.block.WallRedstoneTorchBlock;
 import net.minecraft.block.WallSignBlock;
@@ -856,31 +857,48 @@ public class Printer {
 			Posoffset = pos.up();
 			OffsetStateSchematic = world.getBlockState(Posoffset);
 			OffsetStateClient = mc.world.getBlockState(Posoffset);
-			if (OffsetStateSchematic.getBlock() instanceof ComparatorBlock ||OffsetStateSchematic.getBlock() instanceof RepeaterBlock ||
+			if (OffsetStateSchematic.getBlock() instanceof WallBlock || OffsetStateSchematic.getBlock() instanceof ComparatorBlock ||OffsetStateSchematic.getBlock() instanceof RepeaterBlock ||
 			 OffsetStateSchematic.getBlock().getTranslationKey().contains((String) "rail") || OffsetStateSchematic.getBlock().getTranslationKey().contains((String) "water") || OffsetStateSchematic.getBlock().getTranslationKey().contains((String) "lava") ||
-			OffsetStateSchematic.getBlock().getTranslationKey().contains((String) "column") ||OffsetStateSchematic.getBlock().getTranslationKey().contains((String) "wire") ) {
+			OffsetStateSchematic.getBlock().getTranslationKey().contains((String) "column") ||OffsetStateSchematic.getBlock().getTranslationKey().contains((String) "wire") || ((OffsetStateSchematic.getBlock() instanceof WallMountedBlock) && OffsetStateSchematic.get(WallMountedBlock.FACE) == WallMountLocation.FLOOR  ) ) {
 			return false;}}
 	if (facingSchematicName.contains((String) "down")) {
 			Posoffset = pos.down();
+			OffsetStateSchematic = world.getBlockState(Posoffset);
+			OffsetStateClient = mc.world.getBlockState(Posoffset);
+			if (OffsetStateSchematic.getBlock() instanceof WallBlock || OffsetStateSchematic.getBlock() instanceof WallMountedBlock && OffsetStateSchematic.get(WallMountedBlock.FACE) == WallMountLocation.CEILING) {return false;}
 		}
 	if (facingSchematicName.contains((String) "north")) {
 			Posoffset = pos.north();
+			OffsetStateSchematic = world.getBlockState(Posoffset);
+			OffsetStateClient = mc.world.getBlockState(Posoffset);
+	if (OffsetStateSchematic.getBlock() instanceof WallBlock || OffsetStateSchematic.getBlock() instanceof WallMountedBlock &&
+		 OffsetStateSchematic.get(WallMountedBlock.FACE) == WallMountLocation.WALL && OffsetStateSchematic.get(WallMountedBlock.FACING) == Direction.NORTH ) {return false;}
 		}
 	if (facingSchematicName.contains((String) "south")) {
 			Posoffset = pos.south();
+			OffsetStateSchematic = world.getBlockState(Posoffset);
+			OffsetStateClient = mc.world.getBlockState(Posoffset);
+	if (OffsetStateSchematic.getBlock() instanceof WallBlock || OffsetStateSchematic.getBlock() instanceof WallMountedBlock && OffsetStateSchematic.get(WallMountedBlock.FACE) == WallMountLocation.WALL &&
+	 	OffsetStateSchematic.get(WallMountedBlock.FACING) == Direction.SOUTH  ) {return false;}
 		}
 	 if (facingSchematicName.contains((String) "west")) {
 			Posoffset = pos.west();
+			OffsetStateSchematic = world.getBlockState(Posoffset);
+			OffsetStateClient = mc.world.getBlockState(Posoffset);
+	if (OffsetStateSchematic.getBlock() instanceof WallBlock || OffsetStateSchematic.getBlock() instanceof WallMountedBlock && OffsetStateSchematic.get(WallMountedBlock.FACE) == WallMountLocation.WALL &&
+	 	OffsetStateSchematic.get(WallMountedBlock.FACING) == Direction.WEST  ) {return false;}
 		}
 	 if (facingSchematicName.contains((String) "east")) {
 			Posoffset = pos.east();
+			OffsetStateSchematic = world.getBlockState(Posoffset);
+			OffsetStateClient = mc.world.getBlockState(Posoffset);
+	if (OffsetStateSchematic.getBlock() instanceof WallBlock || OffsetStateSchematic.getBlock() instanceof WallMountedBlock && OffsetStateSchematic.get(WallMountedBlock.FACE) == WallMountLocation.WALL &&
+	 	OffsetStateSchematic.get(WallMountedBlock.FACING) == Direction.EAST  ); {return false;}
 		}
-
 	OffsetStateSchematic = world.getBlockState(Posoffset);
 	OffsetStateClient = mc.world.getBlockState(Posoffset);
-	if (!OffsetStateSchematic.isAir() && (OffsetStateClient.isAir() || OffsetStateClient.getBlock().getTranslationKey().contains((String) "water") || OffsetStateClient.getBlock().getTranslationKey().contains((String) "lava")|| OffsetStateClient.getBlock().getTranslationKey().contains((String) "column")) )
-	{return true;}
-	return false;} //no problem to place
+	return !OffsetStateSchematic.getBlock().equals(OffsetStateClient.getBlock());
+	} 
 
 
 	/*
