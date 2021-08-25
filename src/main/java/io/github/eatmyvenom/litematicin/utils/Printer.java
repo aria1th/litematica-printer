@@ -798,7 +798,7 @@ public class Printer {
 						mc.interactionManager.interactBlock(mc.player, mc.world, hand, hitResult);
 						interact++;
 						if (stateSchematic.getBlock() instanceof SlabBlock
-						wa		&& stateSchematic.get(SlabBlock.TYPE) == SlabType.DOUBLE) {
+								&& stateSchematic.get(SlabBlock.TYPE) == SlabType.DOUBLE) {
 							stateClient = mc.world.getBlockState(npos);
 
 							if (stateClient.getBlock() instanceof SlabBlock
