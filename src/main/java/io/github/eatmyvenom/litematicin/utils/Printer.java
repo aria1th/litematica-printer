@@ -70,7 +70,6 @@ import net.minecraft.block.LecternBlock;
 import net.minecraft.block.LeverBlock;
 import net.minecraft.block.LoomBlock;
 import net.minecraft.block.Material;
-import net.minecraft.block.MapColor;
 import net.minecraft.block.NoteBlock;
 import net.minecraft.block.ObserverBlock;
 import net.minecraft.block.PillarBlock;
@@ -783,7 +782,7 @@ public class Printer {
 	
 						BlockHitResult hitResult = new BlockHitResult(hitPos, side, npos, false);
 
-						System.out.printf("pos: %s side: %s, hit: %s\n", pos, side, hitPos);
+						//System.out.printf("pos: %s side: %s, hit: %s\n", pos, side, hitPos);
 						// pos, side, hitPos
 						if (stateSchematic.getBlock() instanceof SnowBlock) {
 							stateClient = mc.world.getBlockState(npos);
@@ -799,7 +798,7 @@ public class Printer {
 						mc.interactionManager.interactBlock(mc.player, mc.world, hand, hitResult);
 						interact++;
 						if (stateSchematic.getBlock() instanceof SlabBlock
-								&& stateSchematic.get(SlabBlock.TYPE) == SlabType.DOUBLE) {
+						wa		&& stateSchematic.get(SlabBlock.TYPE) == SlabType.DOUBLE) {
 							stateClient = mc.world.getBlockState(npos);
 
 							if (stateClient.getBlock() instanceof SlabBlock
