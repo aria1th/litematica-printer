@@ -769,7 +769,6 @@ public class Printer {
 
 						Vec3d hitPos = new Vec3d(offX, offY, offZ);
 						// Carpet Accurate Placement protocol support, plus BlockSlab support
-						hitPos = applyHitVec(npos, stateSchematic, hitPos, side);
 						if(CanUseProtocol &&  IsBlockSupportedCarpet(stateSchematic.getBlock())) {hitPos = applyCarpetProtocolHitVec(npos,stateSchematic,hitPos);} else {hitPos = applyHitVec(npos, stateSchematic, hitPos, side);}
 
 						// Mark that this position has been handled (use the non-offset position that is
@@ -1008,15 +1007,15 @@ public class Printer {
 		if (side == Direction.UP) {
 			dy = 1;
 		} else if (side == Direction.DOWN) {
-			dy = 0;
+			dy = -1;
 		} else if (side == Direction.EAST) {
 			dx = 1;
 		} else if (side == Direction.WEST) {
-			dx = 0;
+			dx = -1;
 		} else if (side == Direction.SOUTH) {
 			dz = 1;
 		} else if (side == Direction.NORTH) {
-			dz = 0;
+			dz = -1;
 		}
 
 		if (block instanceof StairsBlock) {
