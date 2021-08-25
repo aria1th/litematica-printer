@@ -96,7 +96,7 @@ import net.minecraft.block.TripwireHookBlock;
 import net.minecraft.block.WallMountedBlock;
 import net.minecraft.block.WallRedstoneTorchBlock;
 import net.minecraft.block.WallSignBlock;
-import net.minecraft.block.WallSkulllock;
+import net.minecraft.block.WallSkullBlock;
 import net.minecraft.block.WallTorchBlock;
 import net.minecraft.block.enums.BedPart;
 import net.minecraft.block.enums.BlockHalf;
@@ -774,12 +774,22 @@ public class Printer {
 						// Mark that this position has been handled (use the non-offset position that is
 						// checked above)
 						cacheEasyPlacePosition(pos, false);
-
+	
 						BlockHitResult hitResult = new BlockHitResult(hitPos, side, npos, false);
 
 						// System.out.printf("pos: %s side: %s, hit: %s\n", pos, side, hitPos);
 						// pos, side, hitPos
-
+						if (stateSchematic.getBlock() instanceof SnowBlock) {
+							stateClient = mc.world.getBlockState(npos);
+							if (stateClient.isAir() || stateClient.getBlock() instanceof SnowBlock 
+									&& stateClient.get(SnowBlock.LAYERS) < stateSchematic.get(SnowBlock.LAYERS)) {
+								side = Direction.UP;
+								hitResult = new BlockHitResult(hitPos, side, npos, false);
+								mc.interactionManager.interactBlock(mc.player, mc.world, hand, hitResult);
+								interact++;
+						} 
+						continue;
+						}
 						mc.interactionManager.interactBlock(mc.player, mc.world, hand, hitResult);
 						interact++;
 						if (stateSchematic.getBlock() instanceof SlabBlock
@@ -804,17 +814,7 @@ public class Printer {
 								mc.interactionManager.interactBlock(mc.player, mc.world, hand, hitResult);
 								interact++;
 							}}
-						if (stateSchematic.getBlock() instanceof SnowBlock
-								&& stateSchematic.get(SnowBlock.LAYERS)>1) {
-							stateClient = mc.world.getBlockState(npos);
-							if (stateClient.getBlock() instanceof SnowBlock
-									&& stateClient.get(SnowBlock.LAYERS) < stateSchematic.get(SnowBlock.LAYERS)) {
-								side = applyPlacementFacing(stateSchematic, sideOrig, stateClient);
-								hitResult = new BlockHitResult(hitPos, side, npos, false);
-								mc.interactionManager.interactBlock(mc.player, mc.world, hand, hitResult);
-								lastPlaced = new Date().getTime();
-								return ActionResult.SUCCESS;
-							}}
+	
 						if (interact >= maxInteract) {
 							lastPlaced = new Date().getTime();
 							return ActionResult.SUCCESS;
@@ -927,11 +927,11 @@ public class Printer {
 				return blockSchematic != blockClient;
 			}
 		}
-		if (blockSchematic instanceof SnowBlock && stateSchematic.get(SnowBlock.LAYERS) >1) {
+		if (blockSchematic instanceof SnowBlock) {
 			Block blockClient = stateClient.getBlock();
-
-			if (blockClient instanceof SnowBlock && stateClient.get(SnowBlock.LAYERS) != stateSchematic.get(SnowBlock.LAYERS)) {
-				return stateClient.get(SnowBlock.LAYERS) == stateSchematic.get(SnowBlock.LAYERS);
+			
+			if (blockClient instanceof SnowBlock && stateClient.get(SnowBlock.LAYERS) < stateSchematic.get(SnowBlock.LAYERS)) {
+				return false;
 			}
 		}
 		if (blockSchematic instanceof SlabBlock && stateSchematic.get(SlabBlock.TYPE) == SlabType.DOUBLE) {
@@ -945,7 +945,7 @@ public class Printer {
 			return  stateClient.get(ComposterBlock.LEVEL) !=  stateSchematic.get(ComposterBlock.LEVEL);
 		}									
 		Block blockClient = stateClient.getBlock();
-		if (blockClient instanceof SnowBlock && stateClient.get(SnowBlock.LAYERS) <3 && !(stateSchematic.getBlock() instanceof SnowBlock && stateClient.get(SnowBlock.LAYERS) != stateSchematic.get(SnowBlock.LAYERS))) {
+		if (blockClient instanceof SnowBlock && stateClient.get(SnowBlock.LAYERS) <3 && !(stateSchematic.getBlock() instanceof SnowBlock)) {
 				return false;
 		}
 		if (stateClient.isAir() || stateClient.getBlock().getTranslationKey().contains((String) "water") || stateClient.getBlock().getTranslationKey().contains((String) "lava")|| stateClient.getBlock().getTranslationKey().contains((String) "column")) // This is a lot simpler than below. But slightly lacks functionality.
