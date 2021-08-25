@@ -6,10 +6,10 @@
   "name": "Litematica Printer",
   "description": "Replaces EasyPlace with a printer to make building even easier.",
   "authors": [
-    "eatmyvenom"
+    "eatmyvenom, jensvh, aria1th"
   ],
   "contact": {
-    "homepage": "https://github.com/eatmyvenom/litematica-printer",
+    "homepage": "https://github.com/aria1th/litematica-printer",
     "sources": "https://github.com/eatmyvenom/litematica-printer"
   },
 
@@ -34,7 +34,7 @@
   },
   "custom": {
     "modmenu": {
-      "parent": "carpet"
+      "parent": "litematica"
     }
   }
 }
