@@ -27,6 +27,8 @@ Install fabric (well, use MultiMC), litematica, malilib, and put this into mods 
 `ClearSnowLayer`:&emsp;			"It will place string where snow layer exists, ignores placement boxes"<br/>
 `AccurateBlockPlacement`:&emsp;			"If carpet mod AccurateBlockPlacement is enabled (from extra or quickcarpet), you can turn on and printer will be rotation-free"<br/>
 `easyPlaceModeUsePumpkinPie`:&emsp;			"If composter Level filling is needed, printer will use pumpkin pie to adjust its level"<br/>
+`CarpetExtraFixedVersion`:&emsp;			"Carpet extra currently not supports some blocks, if its updated or server is using Quickcarpet, test this."<br/>
+
 ### Handy litematica settings:
 
 `easyPlaceMode`:&emsp;				"When enabled, then simply trying to use an item/place a block on schematic blocks will place that block in that position."<br/>
