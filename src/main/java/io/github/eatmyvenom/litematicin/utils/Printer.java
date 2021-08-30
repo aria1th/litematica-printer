@@ -898,7 +898,7 @@ public class Printer {
 			OffsetStateSchematic = world.getBlockState(Posoffset);
 			OffsetStateClient = mc.world.getBlockState(Posoffset);
 	if (OffsetStateSchematic.getBlock() instanceof WallBlock || OffsetStateSchematic.getBlock() instanceof WallMountedBlock && OffsetStateSchematic.get(WallMountedBlock.FACE) == WallMountLocation.WALL &&
-	 	OffsetStateSchematic.get(WallMountedBlock.FACING) == Direction.EAST  ); {return false;}
+	 	OffsetStateSchematic.get(WallMountedBlock.FACING) == Direction.EAST  ) {return false;}
 		}
 	OffsetStateSchematic = world.getBlockState(Posoffset);
 	OffsetStateClient = mc.world.getBlockState(Posoffset);
