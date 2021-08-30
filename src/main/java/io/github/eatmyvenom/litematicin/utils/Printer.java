@@ -523,7 +523,7 @@ public class Printer {
 											mc.interactionManager.interactBlock(mc.player, mc.world, hand, hitResult);
 											lastPlaced = new Date().getTime();
 											return ActionResult.SUCCESS;
-											} else {cacheEasyPlacePosition(pos,true);}	
+											} else {cacheEasyPlacePosition(pos,true);}
 									}
 
 
@@ -622,7 +622,7 @@ public class Printer {
 				BlockPos Offsetpos = new BlockPos(x, y-1, z);
 				BlockState OffsetstateSchematic = world.getBlockState(Offsetpos);
 				BlockState OffsetstateClient = mc.world.getBlockState(Offsetpos);
-				if (OffsetstateClient.isAir() || (breakBlocks && !OffsetstateClient.getBlock().getName().equals(OffsetstateSchematic.getBlock().getName())) ) {continue;}}  
+				if (OffsetstateClient.isAir() || (breakBlocks && !OffsetstateClient.getBlock().getName().equals(OffsetstateSchematic.getBlock().getName())) ) {continue;}}
 			if (sBlock instanceof RedstoneBlock) {
 				if(isQCable(mc,world, pos)){continue;}}
 			else if (sBlock instanceof PistonBlock) {
@@ -783,20 +783,20 @@ public class Printer {
 						// Mark that this position has been handled (use the non-offset position that is
 						// checked above)
 						cacheEasyPlacePosition(pos, false);
-	
+
 						BlockHitResult hitResult = new BlockHitResult(hitPos, side, npos, false);
 
 						//System.out.printf("pos: %s side: %s, hit: %s\n", pos, side, hitPos);
 						// pos, side, hitPos
 						if (stateSchematic.getBlock() instanceof SnowBlock) {
 							stateClient = mc.world.getBlockState(npos);
-							if (stateClient.isAir() || stateClient.getBlock() instanceof SnowBlock 
+							if (stateClient.isAir() || stateClient.getBlock() instanceof SnowBlock
 									&& stateClient.get(SnowBlock.LAYERS) < stateSchematic.get(SnowBlock.LAYERS)) {
 								side = Direction.UP;
 								hitResult = new BlockHitResult(hitPos, side, npos, false);
 								mc.interactionManager.interactBlock(mc.player, mc.world, hand, hitResult);
 								interact++;
-						} 
+						}
 						continue;
 						}
 						mc.interactionManager.interactBlock(mc.player, mc.world, hand, hitResult);
@@ -823,7 +823,7 @@ public class Printer {
 								mc.interactionManager.interactBlock(mc.player, mc.world, hand, hitResult);
 								interact++;
 							}}
-	
+
 						if (interact >= maxInteract) {
 							lastPlaced = new Date().getTime();
 							return ActionResult.SUCCESS;
@@ -856,6 +856,8 @@ public class Printer {
 		  if(stateSchematic.getBlock() instanceof PistonBlock &&  (stateClient.isAir() && !stateSchematic.get(PistonBlock.EXTENDED) ||
 				  (stateClient.getBlock() instanceof PistonBlock && stateSchematic.get(PistonBlock.FACING).equals(Direction.UP) && !world.getBlockState(Position.up()).getBlock().equals(mc.world.getBlockState(Position.up()).getBlock())) )) {return true;}
 		 }
+	BlockState stateSchematic = world.getBlockState(posoffset.down());
+	if (stateSchematic.getBlock() instanceof PistonBlock && !stateSchematic.get(PistonBlock.EXTENDED) && !world.getBlockState(posoffset).getBlock().equals(mc.world.getBlockState(posoffset).getBlock()) ) {return true;}
 	return false;};
 
 
@@ -930,7 +932,7 @@ public class Printer {
 	OffsetStateSchematic = world.getBlockState(Posoffset);
 	OffsetStateClient = mc.world.getBlockState(Posoffset);
 	return !OffsetStateSchematic.toString().equals(OffsetStateClient.toString());
-	} 
+	}
 
 
 	/*
@@ -981,7 +983,7 @@ public class Printer {
 		}
 		if (blockSchematic instanceof SnowBlock) {
 			Block blockClient = stateClient.getBlock();
-			
+
 			if (blockClient instanceof SnowBlock && stateClient.get(SnowBlock.LAYERS) < stateSchematic.get(SnowBlock.LAYERS)) {
 				return false;
 			}
@@ -992,10 +994,10 @@ public class Printer {
 			if (blockClient instanceof SlabBlock && stateClient.get(SlabBlock.TYPE) != SlabType.DOUBLE) {
 				return blockSchematic != blockClient;
 			}
-		}	
+		}
 		if (blockSchematic instanceof ComposterBlock && stateSchematic.get(ComposterBlock.LEVEL) > 0 && stateClient.getBlock() instanceof ComposterBlock) {
 			return  stateClient.get(ComposterBlock.LEVEL) !=  stateSchematic.get(ComposterBlock.LEVEL);
-		}									
+		}
 		Block blockClient = stateClient.getBlock();
 		if (blockClient instanceof SnowBlock && stateClient.get(SnowBlock.LAYERS) <3 && !(stateSchematic.getBlock() instanceof SnowBlock)) {
 				return false;
@@ -1235,7 +1237,7 @@ public class Printer {
 		  else if (block instanceof SlabBlock && state.get(SlabBlock.TYPE) != SlabType.DOUBLE)
 		  {
 			//x += 10; // Doesn't actually exist (yet?)
-	
+
 			// Do it via vanilla
 			  if (state.get(SlabBlock.TYPE) == SlabType.TOP)
 			  {
