@@ -285,7 +285,8 @@ public class Printer {
 		int posY = tracePos.getY();
 		int posZ = tracePos.getZ();
 		boolean ClearArea = CLEAR_AREA_MODE.getBooleanValue(); // if its true, will ignore everything and remove fluids.
-		boolean UseCobble = CLEAR_AREA_MODE_COBBLESTONE.getBooleanValue();
+		boolean UseCobble = CLEAR_AREA_MODE_COBBLESTONE.getBooleanValue() && ClearArea;
+		boolean ClearSnow = CLEAR_AREA_MODE_SNOWPREVENT.getBooleanValue() && ClearArea;
 		boolean CanUseProtocol = ACCURATE_BLOCK_PLACEMENT.getBooleanValue();
 		boolean FillInventory = EASY_PLACE_MODE_USE_COMPOSTER.getBooleanValue();
 		ItemStack ComposterItem = new Items().PUMPKIN_PIE.getDefaultStack();
@@ -599,7 +600,7 @@ public class Printer {
 			 if (!UseCobble) {
 				stack= new ItemStack(new Blocks().SLIME_BLOCK.asItem(), 1);} else {
 				stack= new ItemStack(new Blocks().COBBLESTONE.asItem(), 1);}
-		} else if (cBlock instanceof SnowBlock) {stack= new ItemStack(new Items().STRING.asItem(), 1);}
+		} else if (ClearSnow && cBlock instanceof SnowBlock) {stack= new ItemStack(new Items().STRING.asItem(), 1);} else {continue;}
 	    } else if (sBlock instanceof NetherPortalBlock) {stack = new ItemStack(new Items().FIRE_CHARGE.asItem(),1 );
 		} else {stack = ((MaterialCache) MaterialCache.getInstance()).getRequiredBuildItemForState((BlockState)stateSchematic);}
 
