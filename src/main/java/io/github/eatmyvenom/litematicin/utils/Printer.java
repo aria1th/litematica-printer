@@ -853,7 +853,8 @@ public class Printer {
 	for (BlockPos Position: OffsetIterable)
 		{BlockState stateClient = mc.world.getBlockState(Position);
 		  BlockState stateSchematic = world.getBlockState(Position);
-		  if(stateClient.isAir() && stateSchematic.getBlock() instanceof PistonBlock &&  !stateSchematic.get(PistonBlock.EXTENDED)) {return true;}
+		  if(stateSchematic.getBlock() instanceof PistonBlock &&  (stateClient.isAir() && !stateSchematic.get(PistonBlock.EXTENDED) ||
+				  (stateClient.getBlock() instanceof PistonBlock && stateSchematic.get(PistonBlock.FACING).equals(Direction.UP) && !world.getBlockState(Position.up()).getBlock().equals(mc.world.getBlockState(Position.up()).getBlock())) )) {return true;}
 		 }
 	return false;};
 
