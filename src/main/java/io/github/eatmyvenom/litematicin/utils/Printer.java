@@ -626,7 +626,7 @@ public class Printer {
 			if (sBlock instanceof RedstoneBlock) {
 				if(isQCable(mc,world, pos)){continue;}}
 			else if (sBlock instanceof PistonBlock) {
-				if(ShouldExtendQC(mc,world, pos)){continue;}
+				if(!ShouldExtendQC(mc,world, pos)){continue;}
 			} else if (sBlock instanceof ObserverBlock) {
 				if(ObserverUpdateOrder(mc,world, pos)){continue;}
 				}
@@ -858,22 +858,24 @@ public class Printer {
 
 
 	private static boolean ShouldExtendQC(MinecraftClient mc,  World world, BlockPos pos) {
-	Boolean isExtended = world.getBlockState(pos).get(PistonBlock.EXTENDED);
-	if (!isExtended) {return false;}
-	BlockPos posoffset = pos.up();
-	BlockPos poseast = posoffset.east();
-	BlockPos poswest = posoffset.west();
-	BlockPos posnorth = posoffset.north();
-	BlockPos possouth = posoffset.south();
-	Iterable<BlockPos> OffsetIterable = List.of(poseast, poswest, posnorth, possouth);
-	for (BlockPos Position: OffsetIterable)
-		{BlockState stateClient = mc.world.getBlockState(Position);
-		  BlockState stateSchematic = world.getBlockState(Position);
-		  if(stateSchematic.getBlock().equals(stateClient.getBlock()) && stateClient.getBlock().
-				  emitsRedstonePower(stateClient) ) {return false;}
-		 }
-	return true;};
 
+	return shouldExtend(mc.world, pos, world.getBlockState(pos).get(PistonBlock.FACING))== world.getBlockState(pos).get(PistonBlock.EXTENDED);};
+
+	private static boolean shouldExtend(World world, BlockPos pos, Direction pistonFace) {
+		for (Direction lv : Direction.values()) {
+			if (lv == pistonFace || !world.isEmittingRedstonePower(pos.offset(lv), lv)) continue;
+			return true;
+		}
+		if (world.isEmittingRedstonePower(pos, Direction.DOWN)) {
+			return true;
+		}
+		BlockPos lv2 = pos.up();
+		for (Direction lv3 : Direction.values()) {
+			if (lv3 == Direction.DOWN || !world.isEmittingRedstonePower(lv2.offset(lv3), lv3)) continue;
+			return true;
+		}
+		return false;
+	}
 
 	private static boolean ObserverUpdateOrder(MinecraftClient mc,  World world, BlockPos pos) {
 	BlockState stateSchematic = world.getBlockState(pos);
