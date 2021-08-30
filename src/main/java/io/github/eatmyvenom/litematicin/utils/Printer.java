@@ -842,6 +842,7 @@ public class Printer {
 		}
 		return ActionResult.FAIL;
 	}
+
 	private static boolean isQCable(MinecraftClient mc,  World world, BlockPos pos) {
 	BlockPos posoffset = pos.down();
 	BlockPos poseast = posoffset.east();
@@ -927,7 +928,7 @@ public class Printer {
 		}
 	OffsetStateSchematic = world.getBlockState(Posoffset);
 	OffsetStateClient = mc.world.getBlockState(Posoffset);
-	return !OffsetStateSchematic.getBlock().equals(OffsetStateClient.getBlock());
+	return !OffsetStateSchematic.toString().equals(OffsetStateClient.toString());
 	} 
 
 
