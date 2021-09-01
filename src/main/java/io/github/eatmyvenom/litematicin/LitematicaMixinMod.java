@@ -24,6 +24,7 @@ public class LitematicaMixinMod implements ModInitializer {
     public static final ConfigBoolean CLEAR_AREA_MODE_SNOWPREVENT = new ConfigBoolean("ClearSnowLayer", false, "It will try to place string when snow layer is found");
     public static final ConfigBoolean ACCURATE_BLOCK_PLACEMENT = new ConfigBoolean("AccurateBlockPlacement",false,"if carpet extra/quickcarpet enabled it, turn on");
     public static final ConfigBoolean EASY_PLACE_MODE_USE_COMPOSTER = new  ConfigBoolean("easyPlaceModeUsePumpkinPie",false,"use punkin pie to adjust composter level");
+	public static final ConfigBoolean EASY_PLACE_MODE_OBSERVER_EXPLICIT_ORDER = new  ConfigBoolean("easyPlaceModeObserverAvoidAll",false,"Observer will avoid all state update, can cause deadlock");
     public static final ConfigBoolean ADVANCED_ACCURATE_BLOCK_PLACEMENT = new  ConfigBoolean("CarpetExtraFixedVersion",false,"If carpet extra is updated, turn on to allow all facingblock rotation");
 	public static final ImmutableList<IConfigBase> betterList = ImmutableList.of(
 			Configs.Generic.AREAS_PER_WORLD,
@@ -63,7 +64,9 @@ public class LitematicaMixinMod implements ModInitializer {
 			CLEAR_AREA_MODE_SNOWPREVENT,
 			ACCURATE_BLOCK_PLACEMENT,
 			EASY_PLACE_MODE_USE_COMPOSTER,
-			ADVANCED_ACCURATE_BLOCK_PLACEMENT
+			ADVANCED_ACCURATE_BLOCK_PLACEMENT,
+			EASY_PLACE_MODE_OBSERVER_EXPLICIT_ORDER
+
 
 	);
 	@Override
