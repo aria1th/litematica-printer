@@ -193,7 +193,8 @@ public class Printer {
 
 		// Anvils
 		addFD(AnvilBlock.class, new FacingData(3, true));
-
+		// Rails
+		addFD(AbstractRailBlock.class, new FacingData(4,false));
 	}
 
 	// TODO: This must be moved to another class and not be static.
@@ -644,6 +645,9 @@ public class Printer {
 				mc.interactionManager.interactBlock(mc.player, mc.world, hand, hitResult); lastPlaced = new Date().getTime();return ActionResult.SUCCESS; 							};
 						Direction facing = fi.dy.masa.malilib.util.BlockUtils
 								.getFirstPropertyFacingValue(stateSchematic);
+						if (stateSchematic.getBlock() instanceof AbstractRailBlock) {
+							facing = convertRailShapetoFace(stateSchematic);
+						}
 						if (facing != null) {
 							FacingData facedata = getFacingData(stateSchematic);
 							if (!(CanUseProtocol && IsBlockSupportedCarpet(stateSchematic.getBlock())) && !canPlaceFace(facedata, stateSchematic, mc.player, primaryFacing, horizontalFacing))
@@ -946,6 +950,7 @@ public class Printer {
 	private static boolean canPlaceFace(FacingData facedata, BlockState stateSchematic, PlayerEntity player,
 			Direction primaryFacing, Direction horizontalFacing) {
 		Direction facing = fi.dy.masa.malilib.util.BlockUtils.getFirstPropertyFacingValue(stateSchematic);
+		if (stateSchematic.getBlock() instanceof AbstractRailBlock) {facing = convertRailShapetoFace(stateSchematic);}
 		if (facing != null && facedata != null) {
 
 			switch (facedata.type) {
@@ -967,6 +972,8 @@ public class Printer {
 						|| facing == horizontalFacing;
 			case 3: //rotated, why, anvil, WNES order
 				return horizontalFacing.rotateYClockwise() == facing;
+			case 4: //rails
+				return facing == horizontalFacing || facing == horizontalFacing.getOpposite();
 			default: // Ignore rest -> TODO: Other blocks like anvils, etc...
 				return true;
 			}
@@ -1086,7 +1093,7 @@ public class Printer {
 	 * Need a better way to do this.
 	 */
 	private static Boolean IsBlockSupportedCarpet(Block SchematicBlock){
-	if (SchematicBlock instanceof WallMountedBlock || SchematicBlock instanceof WallSkullBlock) {return false;}
+	if (SchematicBlock instanceof WallMountedBlock || SchematicBlock instanceof WallSkullBlock || SchematicBlock instanceof AbstractRailBlock) {return false;}
 	if (ADVANCED_ACCURATE_BLOCK_PLACEMENT.getBooleanValue() || SchematicBlock instanceof GlazedTerracottaBlock || SchematicBlock instanceof ObserverBlock || SchematicBlock instanceof RepeaterBlock || SchematicBlock instanceof TrapdoorBlock ||
 		SchematicBlock instanceof ComparatorBlock || SchematicBlock instanceof DispenserBlock || SchematicBlock instanceof PistonBlock || SchematicBlock instanceof StairsBlock)
 		{return true;}
@@ -1159,9 +1166,25 @@ public class Printer {
 		} else if (blockSchematic instanceof AnvilBlock) {
 			if (ADVANCED_ACCURATE_BLOCK_PLACEMENT.getBooleanValue() || ACCURATE_BLOCK_PLACEMENT.getBooleanValue() &&  IsBlockSupportedCarpet(blockSchematic) ) {return stateSchematic.get(AnvilBlock.FACING);}
 			return stateSchematic.get(AnvilBlock.FACING).rotateYCounterclockwise();}
+		else if (blockSchematic instanceof AbstractRailBlock){
+			return convertRailShapetoFace(stateSchematic);
+		}
 
 		// TODO: Add more for other blocks
 		return side;
+	}
+	private static Direction convertRailShapetoFace(BlockState state){
+		String RailShape;
+		if (state.getBlock() instanceof RailBlock) {
+			RailShape = state.get(RailBlock.SHAPE).toString();
+		}
+		else {
+			RailShape = state.get(PoweredRailBlock.SHAPE).toString();
+		}
+		if (RailShape.contains("east") || RailShape.contains("west")){
+			return Direction.EAST;
+		}
+		else {return Direction.NORTH;}
 	}
 
 	public static boolean isPositionCached(BlockPos pos, boolean useClicked) {
