@@ -38,6 +38,9 @@ import fi.dy.masa.malilib.util.LayerRange;
 import fi.dy.masa.malilib.util.SubChunkPos;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+
+import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
+
 import net.minecraft.block.AbstractButtonBlock;
 import net.minecraft.block.AbstractChestBlock;
 import net.minecraft.block.AbstractRailBlock;
@@ -788,7 +791,17 @@ public class Printer {
 						// Mark that this position has been handled (use the non-offset position that is
 						// checked above)
 						cacheEasyPlacePosition(pos, false);
-
+			float originYaw = mc.player.getYaw(1.0f);;
+						if (stateSchematic.getBlock() instanceof AbstractRailBlock) {
+							float yaw;
+							if (facing == Direction.NORTH) {
+								yaw = 0f;
+							} else {
+								yaw = 90f;
+							}
+							
+							mc.getNetworkHandler().sendPacket(new PlayerMoveC2SPacket.LookAndOnGround(yaw, mc.player.getPitch(1.0f), mc.player.isOnGround()));
+						}
 						BlockHitResult hitResult = new BlockHitResult(hitPos, side, npos, false);
 
 						//System.out.printf("pos: %s side: %s, hit: %s\n", pos, side, hitPos);
@@ -806,6 +819,9 @@ public class Printer {
 						}
 						mc.interactionManager.interactBlock(mc.player, mc.world, hand, hitResult);
 						interact++;
+			if (stateSchematic.getBlock() instanceof AbstractRailBlock) {
+				mc.getNetworkHandler().sendPacket(new PlayerMoveC2SPacket.LookAndOnGround(originYaw, mc.player.getPitch(1.0f), mc.player.isOnGround()));
+			}
 						if (stateSchematic.getBlock() instanceof SlabBlock
 								&& stateSchematic.get(SlabBlock.TYPE) == SlabType.DOUBLE) {
 							stateClient = mc.world.getBlockState(npos);
@@ -973,7 +989,8 @@ public class Printer {
 			case 3: //rotated, why, anvil, WNES order
 				return horizontalFacing.rotateYClockwise() == facing;
 			case 4: //rails
-				return facing == horizontalFacing || facing == horizontalFacing.getOpposite();
+				return true;
+				//return facing == horizontalFacing || facing == horizontalFacing.getOpposite();
 			default: // Ignore rest -> TODO: Other blocks like anvils, etc...
 				return true;
 			}
