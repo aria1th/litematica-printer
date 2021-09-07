@@ -281,7 +281,7 @@ public class Printer {
 		if (new Date().getTime() < lastPlaced + 1000.0 * EASY_PLACE_MODE_DELAY.getDoubleValue()) return ActionResult.PASS;
 
 
-		RayTraceWrapper traceWrapper = RayTraceUtils.getGenericTrace(mc.world, mc.player, 6, true);
+		RayTraceWrapper traceWrapper = RayTraceUtils.getGenericTrace(mc.world, mc.player, 6);
 		if (traceWrapper == null) {
 			return ActionResult.FAIL;
 		}
