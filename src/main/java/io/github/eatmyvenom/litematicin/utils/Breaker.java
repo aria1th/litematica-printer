@@ -45,7 +45,7 @@ public class Breaker implements IClientTickHandler {
 		return this.breakingBlock;
 	}
 	
-	private int getBestItemSlotIdToMineBlock(MinecraftClient mc, BlockPos blockToMine) {
+	public static int getBestItemSlotIdToMineBlock(MinecraftClient mc, BlockPos blockToMine) {
 		int bestSlot = 0;
 		float bestSpeed = 0;
 		BlockState state = mc.world.getBlockState(blockToMine);
@@ -60,7 +60,7 @@ public class Breaker implements IClientTickHandler {
 		return bestSlot;
 	}
 	
-	private float getBlockBreakingSpeed(BlockState block, MinecraftClient mc, int slotId) {
+	private static float getBlockBreakingSpeed(BlockState block, MinecraftClient mc, int slotId) {
 		float f = ((ItemStack)mc.player.getInventory().main.get(slotId)).getMiningSpeedMultiplier(block);
 	    if (f > 1.0F) {
 	       int i = EnchantmentHelper.getEfficiency(mc.player);
