@@ -301,10 +301,7 @@ public class BedrockBreaker {
         for (BlockPos position : targetPosMap.keySet()) {
             @Nullable PositionCache item = targetPosMap.get(position);
             if (item == null) {continue;}
-            System.out.println(item.distance(pos,distance));
             if (isPositionInRange(mc, position) && item.distanceLessThan(pos, distance) && !item.isClear()) {
-                System.out.println(pos);
-                System.out.println(position);
                 return true;
             }
         }
@@ -388,7 +385,6 @@ public class BedrockBreaker {
         ) {
             TorchPath torch = getPistonTorchPosDir(mc, pos);
             if (torch != null) {
-                torch.toStr();
                 lastPlaced = new Date().getTime();
                 BlockPos TorchPos = torch.TorchPos;
                 Direction TorchFacing = torch.Torchfacing;
