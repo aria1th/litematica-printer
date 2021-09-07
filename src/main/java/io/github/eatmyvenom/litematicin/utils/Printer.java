@@ -433,20 +433,21 @@ public class Printer {
                                     lastPlaced = new Date().getTime();
                                     return ActionResult.SUCCESS;
                                 }
-                            } else if (!bedrockBreaker.Lock && stateClient.getBlock().getTranslationKey().contains((String) "bedrock") && BEDROCK_BREAKING.getBooleanValue()) {
+                            } else if (stateClient.getBlock().getTranslationKey().contains((String) "bedrock") && BEDROCK_BREAKING.getBooleanValue()) {
                                 bedrockBreaker.scheduledTickHandler(mc, pos);
                                 continue;
 
-                            } else if (!bedrockBreaker.Lock && BEDROCK_BREAKING.getBooleanValue()) {
+                            } else if (BEDROCK_BREAKING.getBooleanValue()) {
                                 bedrockBreaker.scheduledTickHandler(mc, null);
                                 continue;
-                            } else { // For survival
+                            } else if (stateClient.getBlock().getTranslationKey().contains((String) "bedrock") && !BEDROCK_BREAKING.getBooleanValue()){ // For survival
                                 mc.interactionManager.attackBlock(pos, Direction.DOWN); //yes, this seemingly needless line adds functionality but paper would not allow it.
                                 breaker.startBreakingBlock(pos, mc); // it need to avoid unbreakable blocks and just added and lava, but its not block so somehow made it work
                                 return ActionResult.SUCCESS;
                             }
                         }
                     }
+                    if (BEDROCK_BREAKING.getBooleanValue()) {continue;} // don't process other actions
                     if (!(stateSchematic.getBlock() instanceof NetherPortalBlock) && stateSchematic.isAir() && !ClearArea)
                         continue;
 
