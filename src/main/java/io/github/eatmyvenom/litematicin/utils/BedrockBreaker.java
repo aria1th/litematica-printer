@@ -172,11 +172,13 @@ public class BedrockBreaker {
         return null;
     }
 
-    public static void removeScheduledPos() {
+    public static void removeScheduledPos(MinecraftClient mc) {
         long time = new Date().getTime();
         for (BlockPos position : targetPosMap.keySet()) {
             PositionCache item = targetPosMap.get(position);
-            if (time - item.getSysTime() > 10000 ) {item.markClear();}
+            if (item != null && time - item.getSysTime() > 10000 && item.isClear() ) {
+                targetPosMap.put(position,null);
+            }
         }
     }
 
@@ -281,7 +283,7 @@ public class BedrockBreaker {
     }
 
     public static boolean canProcess(MinecraftClient mc, BlockPos pos) {
-        double SafetyDistance = 3.0f;
+        double SafetyDistance = 16.0f;
         if (positionAnyNear(mc, pos, SafetyDistance)) {
             return false;
         }
@@ -297,7 +299,12 @@ public class BedrockBreaker {
 
     public static boolean positionAnyNear(MinecraftClient mc,BlockPos pos, double distance) {
         for (BlockPos position : targetPosMap.keySet()) {
-            if (isPositionInRange(mc, position) && targetPosMap.get(position).distanceLessThan(pos, distance) && !targetPosMap.get(position).isClear()) {
+            @Nullable PositionCache item = targetPosMap.get(position);
+            if (item == null) {continue;}
+            System.out.println(item.distance(pos,distance));
+            if (isPositionInRange(mc, position) && item.distanceLessThan(pos, distance) && !item.isClear()) {
+                System.out.println(pos);
+                System.out.println(position);
                 return true;
             }
         }
@@ -350,11 +357,12 @@ public class BedrockBreaker {
     }
 
     public static void resetFailure(MinecraftClient mc, PositionCache FailedCache) {
-        BlockPos pos = FailedCache.pos;
-        BlockPos torchPos = FailedCache.torchPos;
+        BlockPos pos = FailedCache.getPos();
+        BlockPos torchPos = FailedCache.getTorch();
         switchTool(mc, pos);
         attackBlock(mc, torchPos, Direction.UP);
-        attackBlock(mc, pos, Direction.DOWN);
+        attackBlock(mc, pos, Direction.UP);
+
         if (mc.world.getBlockState(torchPos.down()).getBlock() instanceof SlimeBlock) {
             attackBlock(mc, torchPos.down(), Direction.UP);
         }
@@ -375,13 +383,13 @@ public class BedrockBreaker {
     }
 
     public static void scheduledTickHandler(MinecraftClient mc, @Nullable BlockPos pos) {
-        Lock = true;
-        removeScheduledPos();
+        removeScheduledPos(mc);
         if (pos != null && isPositionInRange(mc, pos)  && canProcess(mc, pos) && new Date().getTime() - lastPlaced > 1000.0 * EASY_PLACE_MODE_DELAY.getDoubleValue()
         ) {
-            lastPlaced = new Date().getTime();
             TorchPath torch = getPistonTorchPosDir(mc, pos);
             if (torch != null) {
+                torch.toStr();
+                lastPlaced = new Date().getTime();
                 BlockPos TorchPos = torch.TorchPos;
                 Direction TorchFacing = torch.Torchfacing;
                 BlockPos PistonPos = torch.PistonPos;
@@ -389,16 +397,16 @@ public class BedrockBreaker {
                 Direction PistonExtendFacing = torch.PistonBreakableFacing;
                 placeTorch(mc, TorchPos, TorchFacing);
                 placePiston(mc, PistonPos, PistonFacing);
-                targetPosMap.put(pos, new PositionCache(PistonPos, PistonExtendFacing, TorchPos, pos, new Date().getTime()));
+                targetPosMap.put(pos, new PositionCache(PistonPos, PistonExtendFacing, TorchPos, pos, lastPlaced));
             }
         }
         for (BlockPos position : targetPosMap.keySet()) {
             PositionCache item = targetPosMap.get(position);
-            if (!isPositionInRange(mc, position) || !item.isAvailable()) { //
+            if (item == null) {continue;}
+            if (!isPositionInRange(mc, position)  && !item.isAvailable()) { //
                 continue;
             }
             if (!isItemPrePared(mc)) {
-                Lock = false;
                 break;
             }
             if (item.isClear()) {
@@ -411,27 +419,28 @@ public class BedrockBreaker {
                 continue;
             }
             if (!isPistonPowered(mc, item.getPos()) && !item.isHandled() && item.isAvailable()) {
+                attackBlock(mc, item.getPos(), Direction.DOWN);
                 resetFailure(mc, item);
                 item.markFail();
                 item.markClear();
             }
             if (item.isHandled() && item.isAvailable() && mc.world.getBlockState(item.gettargetPos()).getBlock().equals(Blocks.BEDROCK)) {
                 item.markFail();
+                attackBlock(mc, item.getPos(), Direction.DOWN);
                 resetFailure(mc, item);
                 item.markClear();
             } else if (item.isHandled() && item.isAvailable() && !mc.world.getBlockState(item.gettargetPos()).getBlock().equals(Blocks.BEDROCK)) {
+                attackBlock(mc, item.getPos(), Direction.DOWN);
                 resetFailure(mc, item);
                 item.markClear();
             }
-            if (!item.isClear() && item.isAvailable() && !(mc.world.getBlockState(item.getPos()).getBlock() instanceof PistonBlock || mc.world.getBlockState(item.getPos()).getBlock().equals(Blocks.MOVING_PISTON)) || !(mc.world.getBlockState(item.gettargetPos()).getBlock().equals(Blocks.BEDROCK))) {
+            if (!item.isClear() && item.isAvailable()) {
                 attackBlock(mc, item.getPos(), Direction.DOWN);
                 item.markFail();
                 resetFailure(mc, item);
                 item.markClear();
             }
-            ;
         }
-        Lock = false;
     }
 
     public static class PositionCache {
@@ -500,7 +509,7 @@ public class BedrockBreaker {
         }
 
         public boolean isAvailable() {
-            return new Date().getTime() - SysTime > 1000.0 * EASY_PLACE_MODE_DELAY.getDoubleValue();
+            return new Date().getTime() - SysTime > 2000.0 * EASY_PLACE_MODE_DELAY.getDoubleValue();
         }
         public long getSysTime() {
             return this.SysTime;
@@ -514,6 +523,16 @@ public class BedrockBreaker {
             int pY = ReferPos.getY();
             int pZ = ReferPos.getZ();
             return (pX - aX) * (pX - aX) + (pY - aY) * (pY - aY) + (pZ - aZ) * (pZ - aZ) < distance * distance;
+        }
+        public double distance(BlockPos ReferPos, double distance) {
+            BlockPos pos = this.targetPos;
+            int aX = pos.getX();
+            int aY = pos.getY();
+            int aZ = pos.getZ();
+            int pX = ReferPos.getX();
+            int pY = ReferPos.getY();
+            int pZ = ReferPos.getZ();
+            return (pX - aX) * (pX - aX) + (pY - aY) * (pY - aY) + (pZ - aZ) * (pZ - aZ);
         }
     }
 
