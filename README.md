@@ -23,13 +23,13 @@ Install fabric (well, use MultiMC), litematica, malilib, and put this into mods 
 `easyPlaceModeHotbarOnly`:&emsp;	"Only place blocks from your hotbar. This bypasses some anti-cheats."
 `easyPlaceModeFlippincactus`:&emsp;			"Allows Rotating incorrect blocks when carpet option is enabled and holding cactus on your mainhand"<br/>
 `easyPlaceModeClearArea`:&emsp;			"Remove nearby fluids, within easyplace range, to prevent errors. uses slime block to remove lava, sponges for water. WILL STOP OTHER ACTIONS"<br/>
-`easyPlaceModeClearAreaCobblestone`:&emsp;			"Use cobblestones instead of slime block to remove lava REQUIRES : easyPlaceModeClearArea TRUE"<br/>
+`easyPlaceModeClearAreaCobblestone`:&emsp;			"Use cobblestones instead of slime block to remove lava <br/> REQUIRES : easyPlaceModeClearArea TRUE"<br/>
 `ClearSnowLayer`:&emsp;			"It will place string where snow layer exists, ignores placement boxes, Only use if you need to. DEFAULT : FALSE"<br/>
 `AccurateBlockPlacement`:&emsp;			"If carpet mod AccurateBlockPlacement is enabled (from extra or quickcarpet), you can turn on and printer will be rotation-free"<br/>
 `easyPlaceModeUsePumpkinPie`:&emsp;			"If composter Level filling is needed, printer will use pumpkin pie to adjust its level"<br/>
 `CarpetExtraFixedVersion`:&emsp;			"Carpet extra currently not supports some blocks, if its updated or server is using Quickcarpet, test this."<br/>
 `easyPlaceModeObserverAvoidAll`:&emsp;			" Observer will avoid being placed when its watching state(not block) is not correct"<br/>
-`BedrockBreaking`:&emsp;			"Removes bedrock when it needs to, will stop other actions, it needs BreakBlocks TRUE and haste 2, eff 5 pickaxe, works more well with accurateblockplacement. REQUIRES : easyPlaceModeBreakBlocks TRUE"<br/>
+`BedrockBreaking`:&emsp;			"Removes bedrock when it needs to, will stop other actions, it needs BreakBlocks TRUE and haste 2, eff 5 pickaxe, works more well with accurateblockplacement.<br/> REQUIRES : easyPlaceModeBreakBlocks TRUE"<br/>
 `BedrockBreakingUseSlimeBlocks`:&emsp;			"Places slime block to easily remove it"<br/>
 ### Handy litematica settings:
 
