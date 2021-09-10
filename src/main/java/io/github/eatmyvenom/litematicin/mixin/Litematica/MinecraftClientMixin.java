@@ -6,6 +6,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import io.github.eatmyvenom.litematicin.utils.Printer;
+import io.github.eatmyvenom.litematicin.utils.BedrockBreaker;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.world.ClientWorld;
 
@@ -19,4 +20,9 @@ public class MinecraftClientMixin {
 		Printer.worldBottomY = world.getBottomY();
 		Printer.worldTopY = world.getTopY();
 	}
+	@Inject(at = @At("HEAD"), method = "tick")
+	public void onPrinterTickCount(CallbackInfo info) {
+		BedrockBreaker.tick();
+	}
+
 }
