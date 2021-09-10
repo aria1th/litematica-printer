@@ -7,7 +7,8 @@ To set this up just add the latest litematica version to your mods folder as wel
 ## Install guide
 
 Install fabric (well, use MultiMC), litematica, malilib, and put this into mods folder. then you can just use easyplace. 
-
+Bedrock breaking is highly dependent on your ping, so you should set up delay higher than ping. for example if your ping is 200ms, then set delay to upper than 0.2.
+in singleplayer, ping is 0 so whatever.
 ## Caution
 
 (WON'T FIX) paper, spigot or other types can have their own anti cheat to prevent 'not-looking' placement, which means you can't do anything with this. There's some option to nerf printing action at https://github.com/jensvh/litematica-printer/releases/tag/v1.0.4, but still we can't assure if it would work or not. Use this if you are sure about it.
