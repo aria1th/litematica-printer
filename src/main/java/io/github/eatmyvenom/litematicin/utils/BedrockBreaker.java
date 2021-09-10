@@ -49,7 +49,10 @@ public class BedrockBreaker {
     public static boolean Lock = false;
     static List<Direction> HORIZONTAL = List.of(Direction.EAST, Direction.WEST, Direction.NORTH, Direction.SOUTH);
     private static Map<BlockPos, PositionCache> targetPosMap = new LinkedHashMap<BlockPos, PositionCache>();
-
+    static int rangeX = EASY_PLACE_MODE_RANGE_X.getIntegerValue();
+    static int rangeY = EASY_PLACE_MODE_RANGE_Y.getIntegerValue();
+    static int rangeZ = EASY_PLACE_MODE_RANGE_Z.getIntegerValue();
+    static int MaxReach = Math.max(Math.max(rangeX, rangeY), rangeZ);
     @Nullable
     public static TorchPath getPistonTorchPosDir(MinecraftClient mc, BlockPos bedrockPos) {
         for (Direction lv : Direction.values()) {
@@ -189,6 +192,7 @@ public class BedrockBreaker {
     }
 
     public static void placePiston(MinecraftClient mc, BlockPos pos, Direction facing) {
+        positionStorage.registerPos(pos, true);
         ItemStack PistonStack = Items.PISTON.getDefaultStack();
         InventoryUtils.setPickedItemToHand(PistonStack, mc);
         mc.getNetworkHandler().sendPacket(new UpdateSelectedSlotC2SPacket(mc.player.getInventory().selectedSlot));
@@ -207,6 +211,7 @@ public class BedrockBreaker {
     }
 
     public static void placeViaCarpet(MinecraftClient mc, BlockPos pos, Direction facing) {
+        positionStorage.registerPos(pos, true);
         Vec3d hitVec = new Vec3d(pos.getX() + 2 + (facing.getId() * 2), pos.getY(), pos.getZ());
         Hand hand = Hand.MAIN_HAND;
         BlockHitResult hitResult = new BlockHitResult(hitVec, facing, pos, false);
@@ -214,6 +219,7 @@ public class BedrockBreaker {
     }
 
     public static void placeViaPacketReversed(MinecraftClient mc, BlockPos pos, Direction facing, boolean ShouldOffset) {
+        positionStorage.registerPos(pos, true);
         int px = pos.getX();
         int py = pos.getY();
         int pz = pos.getZ();
@@ -342,14 +348,15 @@ public class BedrockBreaker {
     public static void ProcessBreaking(MinecraftClient mc, BlockPos pos, Direction facing, BlockPos torchPos) {
         switchTool(mc, pos);
         attackBlock(mc, torchPos, Direction.UP);
-        attackBlock(mc, pos, Direction.DOWN);
+        attackBlock(mc, pos, Direction.UP);
         placePiston(mc, pos, facing);
         if (mc.world.getBlockState(torchPos.down()).getBlock() instanceof SlimeBlock) {
-            attackBlock(mc, torchPos.down(), Direction.DOWN);
+            attackBlock(mc, torchPos.down(), Direction.UP);
         }
     }
 
     public static void attackBlock(MinecraftClient mc, BlockPos pos, Direction direction) {
+        positionStorage.registerPos(pos, false);
         mc.getNetworkHandler().sendPacket(new PlayerActionC2SPacket(PlayerActionC2SPacket.Action.START_DESTROY_BLOCK, pos, direction));
     }
 
@@ -366,10 +373,6 @@ public class BedrockBreaker {
     }
 
     public static boolean isPositionInRange(MinecraftClient mc, BlockPos pos) {
-        int rangeX = EASY_PLACE_MODE_RANGE_X.getIntegerValue();
-        int rangeY = EASY_PLACE_MODE_RANGE_Y.getIntegerValue();
-        int rangeZ = EASY_PLACE_MODE_RANGE_Z.getIntegerValue();
-        int MaxReach = Math.max(Math.max(rangeX, rangeY), rangeZ);
         double pX = mc.player.getX();
         double pY = mc.player.getY();
         double pZ = mc.player.getZ();
@@ -378,9 +381,15 @@ public class BedrockBreaker {
         int aZ = pos.getZ();
         return (pX - aX) * (pX - aX) + (pY - aY) * (pY - aY) + (pZ - aZ) * (pZ - aZ) < MaxReach * MaxReach;
     }
-
+    public static void processRemainder(MinecraftClient mc){
+        ArrayList<BlockPos> attackList = positionStorage.getFalseMarkedHasBlockPosinAttackRange(mc.world, mc.player.getPos(), MaxReach);
+        for (BlockPos position : attackList) {
+            attackBlock(mc, position, Direction.UP);
+        }
+    }
     public static void scheduledTickHandler(MinecraftClient mc, @Nullable BlockPos pos) {
         removeScheduledPos(mc);
+        processRemainder(mc);
         if (pos != null && isPositionInRange(mc, pos)  && canProcess(mc, pos) && new Date().getTime() - lastPlaced > 1000.0 * EASY_PLACE_MODE_DELAY.getDoubleValue()
         ) {
             TorchPath torch = getPistonTorchPosDir(mc, pos);
