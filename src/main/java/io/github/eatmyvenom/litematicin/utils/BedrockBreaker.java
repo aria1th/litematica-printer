@@ -47,8 +47,9 @@ public class BedrockBreaker {
     private final static List<PositionCache> positionCache = new ArrayList<>();
     public static long lastPlaced = new Date().getTime();
     public static boolean Lock = false;
+    public static Long CurrentTick = 0L;
     static List<Direction> HORIZONTAL = List.of(Direction.EAST, Direction.WEST, Direction.NORTH, Direction.SOUTH);
-    private static Map<BlockPos, PositionCache> targetPosMap = new LinkedHashMap<BlockPos, PositionCache>();
+    private static Map<Long, PositionCache> targetPosMap = new LinkedHashMap<Long, PositionCache>();
     static int rangeX = EASY_PLACE_MODE_RANGE_X.getIntegerValue();
     static int rangeY = EASY_PLACE_MODE_RANGE_Y.getIntegerValue();
     static int rangeZ = EASY_PLACE_MODE_RANGE_Z.getIntegerValue();
@@ -176,10 +177,9 @@ public class BedrockBreaker {
     }
 
     public static void removeScheduledPos(MinecraftClient mc) {
-        long time = new Date().getTime();
-        for (BlockPos position : targetPosMap.keySet()) {
+        for (Long position : targetPosMap.keySet()) {
             PositionCache item = targetPosMap.get(position);
-            if (item != null && time - item.getSysTime() > 10000 && item.isClear() ) {
+            if (item != null && CurrentTick - item.getSysTime() > 10000L && item.isClear() ) {
                 targetPosMap.put(position,null);
             }
         }
@@ -289,12 +289,12 @@ public class BedrockBreaker {
     }
 
     public static boolean canProcess(MinecraftClient mc, BlockPos pos) {
-        double SafetyDistance = 16.0f;
+        double SafetyDistance = 6.0f;
         if (positionAnyNear(mc, pos, SafetyDistance)) {
             return false;
         }
-        if (!(targetPosMap.get(pos) == null)) {
-            if (targetPosMap.get(pos).isFail()) {
+        if (!(targetPosMap.get(pos.asLong()) == null)) {
+            if (targetPosMap.get(pos.asLong()).isFail()) {
                 return true;
             } else {
                 return false;
@@ -304,10 +304,10 @@ public class BedrockBreaker {
     }
 
     public static boolean positionAnyNear(MinecraftClient mc,BlockPos pos, double distance) {
-        for (BlockPos position : targetPosMap.keySet()) {
+        for (Long position : targetPosMap.keySet()) {
             @Nullable PositionCache item = targetPosMap.get(position);
             if (item == null) {continue;}
-            if (isPositionInRange(mc, position) && item.distanceLessThan(pos, distance) && !item.isClear()) {
+            if (isPositionInRange(mc, BlockPos.fromLong(position)) && item.distanceLessThan(pos, distance) && !item.isClear()) {
                 return true;
             }
         }
@@ -402,11 +402,12 @@ public class BedrockBreaker {
                 Direction PistonExtendFacing = torch.PistonBreakableFacing;
                 placeTorch(mc, TorchPos, TorchFacing);
                 placePiston(mc, PistonPos, PistonFacing);
-                targetPosMap.put(pos, new PositionCache(PistonPos, PistonExtendFacing, TorchPos, pos, lastPlaced));
+                targetPosMap.put(pos.asLong(), new PositionCache(PistonPos, PistonExtendFacing, TorchPos, pos, lastPlaced));
             }
         }
-        for (BlockPos position : targetPosMap.keySet()) {
-            PositionCache item = targetPosMap.get(position);
+        for (Long posLong : targetPosMap.keySet()) {
+            PositionCache item = targetPosMap.get(posLong);
+            BlockPos position = BlockPos.fromLong(posLong);
             if (item == null) {continue;}
             if (!isPositionInRange(mc, position)  && !item.isAvailable()) { //
                 continue;
@@ -448,6 +449,9 @@ public class BedrockBreaker {
         }
     }
 
+    public static void tick() {
+        CurrentTick += 1L;
+    }
     public static class PositionCache {
         private final BlockPos pos;
         private final Direction facing;
@@ -463,7 +467,8 @@ public class BedrockBreaker {
             this.facing = facing;
             this.torchPos = torchPos;
             this.targetPos = targetPos;
-            this.SysTime = SysTime;
+            this.SysTime = CurrentTick;
+            //this.SysTime = SysTime;
             this.Handled = false;
             this.Fail = false;
             this.Clear = false;
@@ -498,7 +503,8 @@ public class BedrockBreaker {
         }
 
         public void updateSystime(long now) {
-            this.SysTime = now;
+            this.SysTime = CurrentTick;
+            //this.SysTime = now;
         }
 
         public boolean isHandled() {
@@ -514,7 +520,8 @@ public class BedrockBreaker {
         }
 
         public boolean isAvailable() {
-            return new Date().getTime() - SysTime > 2000.0 * EASY_PLACE_MODE_DELAY.getDoubleValue();
+            return CurrentTick - this.SysTime > 2L;
+            //return new Date().getTime() - SysTime > 2000.0 * EASY_PLACE_MODE_DELAY.getDoubleValue();
         }
         public long getSysTime() {
             return this.SysTime;
@@ -527,7 +534,7 @@ public class BedrockBreaker {
             int pX = ReferPos.getX();
             int pY = ReferPos.getY();
             int pZ = ReferPos.getZ();
-            return (pX - aX) * (pX - aX) + (pY - aY) * (pY - aY) + (pZ - aZ) * (pZ - aZ) < distance * distance;
+            return ((pX - aX) * (pX - aX) + (pY - aY) * (pY - aY) + (pZ - aZ) * (pZ - aZ)) < distance * distance;
         }
         public double distance(BlockPos ReferPos, double distance) {
             BlockPos pos = this.targetPos;
