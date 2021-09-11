@@ -434,14 +434,14 @@ public class Printer {
                                     lastPlaced = new Date().getTime();
                                     return ActionResult.SUCCESS;
                                 }
-                            } else if (stateClient.getBlock().getTranslationKey().contains((String) "bedrock") && BEDROCK_BREAKING.getBooleanValue()) {
+                            } else if (bedrockBreaker.isBlockNotInstantBreakable(stateClient.getBlock()) && BEDROCK_BREAKING.getBooleanValue()) {
                                 bedrockBreaker.scheduledTickHandler(mc, pos);
                                 continue;
 
                             } else if (BEDROCK_BREAKING.getBooleanValue()) {
                                 bedrockBreaker.scheduledTickHandler(mc, null);
                                 continue;
-                            } else if (stateClient.getBlock().getTranslationKey().contains((String) "bedrock") && !BEDROCK_BREAKING.getBooleanValue()){ // For survival
+                            } else if (!bedrockBreaker.isBlockNotInstantBreakable(stateClient.getBlock()) && !BEDROCK_BREAKING.getBooleanValue()){ // For survival
                                 mc.interactionManager.attackBlock(pos, Direction.DOWN); //yes, this seemingly needless line adds functionality but paper would not allow it.
                                 breaker.startBreakingBlock(pos, mc); // it need to avoid unbreakable blocks and just added and lava, but its not block so somehow made it work
                                 return ActionResult.SUCCESS;

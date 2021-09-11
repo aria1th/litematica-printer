@@ -371,7 +371,9 @@ public class BedrockBreaker {
             attackBlock(mc, torchPos.down(), Direction.UP);
         }
     }
-
+    public static boolean isBlockNotInstantBreakable (Block block) {
+        return block.equals(Blocks.BEDROCK) || block.equals(Blocks.OBSIDIAN);
+    }
     public static boolean isPositionInRange(MinecraftClient mc, BlockPos pos) {
         double pX = mc.player.getX();
         double pY = mc.player.getY();
@@ -430,12 +432,12 @@ public class BedrockBreaker {
                 item.markFail();
                 item.markClear();
             }
-            if (item.isHandled() && item.isAvailable() && mc.world.getBlockState(item.gettargetPos()).getBlock().equals(Blocks.BEDROCK)) {
+            if (item.isHandled() && item.isAvailable() && isBlockNotInstantBreakable(mc.world.getBlockState(item.gettargetPos()).getBlock())) {
                 item.markFail();
                 attackBlock(mc, item.getPos(), Direction.DOWN);
                 resetFailure(mc, item);
                 item.markClear();
-            } else if (item.isHandled() && item.isAvailable() && !mc.world.getBlockState(item.gettargetPos()).getBlock().equals(Blocks.BEDROCK)) {
+            } else if (item.isHandled() && item.isAvailable() && !isBlockNotInstantBreakable(mc.world.getBlockState(item.gettargetPos()).getBlock())) {
                 attackBlock(mc, item.getPos(), Direction.DOWN);
                 resetFailure(mc, item);
                 item.markClear();
