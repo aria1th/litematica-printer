@@ -9,7 +9,6 @@ import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.EASY_PLACE_MOD
 import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.EASY_PLACE_MODE_RANGE_Z;
 import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.FLIPPIN_CACTUS; //now only applied for rail blocks, sometimes observer flipping can help redstone order too.
 import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.CLEAR_AREA_MODE;
-import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.BEDROCK_BREAKING;
 import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.CLEAR_AREA_MODE_COBBLESTONE;
 import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.CLEAR_AREA_MODE_SNOWPREVENT;
 import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.ACCURATE_BLOCK_PLACEMENT;
@@ -135,7 +134,6 @@ public class Printer {
     // For printing delay
     public static long lastPlaced = new Date().getTime();
     public static Breaker breaker = new Breaker();
-    public static BedrockBreaker bedrockBreaker = new BedrockBreaker();
     public static int worldBottomY = 0;
     public static int worldTopY = 256;
     private static boolean setupFacing = false;
@@ -272,7 +270,6 @@ public class Printer {
 
 
         RayTraceWrapper traceWrapper = RayTraceUtils.getGenericTrace(mc.world, mc.player, 6);
-        //RayTraceWrapper traceWrapper = RayTraceUtils.getGenericTrace(mc.world, mc.player, 6, true);
         if (traceWrapper == null) {
             return ActionResult.FAIL;
         }
@@ -402,8 +399,8 @@ public class Printer {
         toY = Math.min(toY, (int) mc.player.getY() + rangeY);
         toZ = Math.min(toZ, (int) mc.player.getZ() + rangeZ);
 
-        for (int x = fromX; x <= toX; x++) {
-            for (int y = fromY; y <= toY; y++) {
+        for (int y = fromY; y <= toY; y++) {
+            for (int x = fromX; x <= toX; x++) {
                 for (int z = fromZ; z <= toZ; z++) {
 
 
@@ -419,11 +416,7 @@ public class Printer {
                         continue;
                     BlockState stateSchematic = world.getBlockState(pos);
                     BlockState stateClient = mc.world.getBlockState(pos);
-                    if (!ClearArea && breakBlocks && stateSchematic != null && !(stateClient.getBlock() instanceof SnowBlock) &&
-                            !stateClient.isAir() && !stateClient.getBlock().getTranslationKey().contains((String) "water") &&
-                            !stateClient.getBlock().getTranslationKey().contains((String) "lava") && !stateClient.getBlock().getTranslationKey().contains((String) "column") &&
-                            !stateClient.getBlock().getTranslationKey().contains((String) "piston_head") &&
-                            !stateClient.getBlock().equals(Blocks.MOVING_PISTON)) {
+                    if (!ClearArea && breakBlocks && stateSchematic != null && !(stateClient.getBlock() instanceof SnowBlock) && !stateClient.isAir() && !stateClient.getBlock().getTranslationKey().contains((String) "water") && !stateClient.getBlock().getTranslationKey().contains((String) "lava") && !stateClient.getBlock().getTranslationKey().contains((String) "column") && !stateClient.getBlock().getTranslationKey().contains((String) "bedrock") && !stateClient.getBlock().getTranslationKey().contains((String) "piston_head")) {
                         if (!stateClient.getBlock().getName().equals(stateSchematic.getBlock().getName()) && dx * dx + Math.pow(dy + 1.5, 2) + dz * dz <= MaxReach * MaxReach) {
 
                             if (mc.player.getAbilities().creativeMode) {
@@ -434,21 +427,13 @@ public class Printer {
                                     lastPlaced = new Date().getTime();
                                     return ActionResult.SUCCESS;
                                 }
-                            } else if (bedrockBreaker.isBlockNotInstantBreakable(stateClient.getBlock()) && BEDROCK_BREAKING.getBooleanValue()) {
-                                bedrockBreaker.scheduledTickHandler(mc, pos);
-                                continue;
-
-                            } else if (BEDROCK_BREAKING.getBooleanValue()) {
-                                bedrockBreaker.scheduledTickHandler(mc, null);
-                                continue;
-                            } else if (!bedrockBreaker.isBlockNotInstantBreakable(stateClient.getBlock()) && !BEDROCK_BREAKING.getBooleanValue()){ // For survival
+                            } else { // For survival
                                 mc.interactionManager.attackBlock(pos, Direction.DOWN); //yes, this seemingly needless line adds functionality but paper would not allow it.
                                 breaker.startBreakingBlock(pos, mc); // it need to avoid unbreakable blocks and just added and lava, but its not block so somehow made it work
                                 return ActionResult.SUCCESS;
                             }
                         }
                     }
-                    if (BEDROCK_BREAKING.getBooleanValue()) {continue;} // don't process other actions
                     if (!(stateSchematic.getBlock() instanceof NetherPortalBlock) && stateSchematic.isAir() && !ClearArea)
                         continue;
 
@@ -869,6 +854,7 @@ public class Printer {
                             } else {
                                 yaw = 90f;
                             }
+
                             mc.getNetworkHandler().sendPacket(new PlayerMoveC2SPacket.LookAndOnGround(yaw, mc.player.getPitch(1.0f), mc.player.isOnGround()));
                         }
                         BlockHitResult hitResult = new BlockHitResult(hitPos, side, npos, false);
@@ -1200,35 +1186,13 @@ public class Printer {
         }
         return new Vec3d(x + dx, y + dy, z + dz);
     }
-    public static Vec3d applyTorchHitVec(BlockPos pos, Vec3d hitVecIn, Direction side) {
-        double x = pos.getX();
-        double y = pos.getY();
-        double z = pos.getZ();
 
-        double dx = hitVecIn.getX();
-        double dy = hitVecIn.getY();
-        double dz = hitVecIn.getZ();
-        if (side == Direction.UP) {
-            dy = 1;
-        } else if (side == Direction.DOWN) {
-            dy = -1;
-        } else if (side == Direction.EAST) {
-            dx = 1;
-        } else if (side == Direction.WEST) {
-            dx = -1;
-        } else if (side == Direction.SOUTH) {
-            dz = 1;
-        } else if (side == Direction.NORTH) {
-            dz = -1;
-        }
-        return new Vec3d(x + dx, y + dy, z + dz);
-    }
     /*
      * Gets the direction necessary to build the block oriented correctly. TODO:
      * Need a better way to do this.
      */
     private static Boolean IsBlockSupportedCarpet(Block SchematicBlock) {
-        if (SchematicBlock instanceof WallMountedBlock || SchematicBlock instanceof WallSkullBlock) {
+        if (SchematicBlock instanceof WallMountedBlock || SchematicBlock instanceof WallSkullBlock || SchematicBlock instanceof AbstractRailBlock) {
             return false;
         }
         if (ADVANCED_ACCURATE_BLOCK_PLACEMENT.getBooleanValue() || SchematicBlock instanceof GlazedTerracottaBlock || SchematicBlock instanceof ObserverBlock || SchematicBlock instanceof RepeaterBlock || SchematicBlock instanceof TrapdoorBlock ||
@@ -1383,7 +1347,7 @@ public class Printer {
         if (facing != null) {
             x = pos.getX() + relX + 2 + (facing.getId() * 2);
         }
-        if (railEnumCode != 32) {
+        if (railEnumCode != null) {
             x = pos.getX() + relX + 2 + (railEnumCode * 2);
         }
         if (block instanceof RepeaterBlock) {
@@ -1409,6 +1373,7 @@ public class Printer {
 
         return new Vec3d(dx + x, dy + y, dz + z);
     }
+
     public static Integer getRailShapeOrder(BlockState state)
     {
         Block stateBlock = state.getBlock();
@@ -1429,7 +1394,7 @@ public class Printer {
         }
         else
         {
-            return 32;
+            return null;
         }
     }
     private static class FacingData {
