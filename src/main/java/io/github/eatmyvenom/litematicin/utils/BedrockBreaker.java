@@ -75,7 +75,11 @@ public class BedrockBreaker {
                 if (mc.world.getBlockState(checkAir).isAir() || mc.world.getBlockState(checkAir).getMaterial().isReplaceable()) {
                     TorchData torchdata = getPossiblePowerableTorchPosFace(mc, bedrockPos, pistonPos, checkAir);
                     if (torchdata != null) {
-                        return new TorchPath(torchdata.TorchPos, torchdata.Torchfacing, pistonPos, Pistonfacing, lv.getOpposite());
+                        TorchPath torchPath = new TorchPath(torchdata.TorchPos, torchdata.Torchfacing, pistonPos, Pistonfacing, lv.getOpposite());
+                        if (torchdata.SlimePos != null) {
+                            torchPath.slimePos = torchdata.SlimePos;
+                        }
+                        return torchPath;
                     }
                 }
             }
@@ -143,8 +147,10 @@ public class BedrockBreaker {
                     continue;
                 }
                 if (world.getBlockState(slimePos).isAir() || world.getBlockState(slimePos).getMaterial().isReplaceable()) {
+                    TorchData torchData = new TorchData(torchCheck, Direction.DOWN);
                     placeSlime(mc, slimePos);
-                    return new TorchData(torchCheck, Direction.DOWN);
+                    torchData.registerSlimePos(slimePos);
+                    return torchData;
                 }
             } else {
                 for (Direction hd2 : HORIZONTAL) {
@@ -168,8 +174,10 @@ public class BedrockBreaker {
                 BlockPos slimePos = torchCheck.down();
                 if (slimePos.equals(pos2)) {return null;}
                 if (isBlockPosinYRange(slimePos) && world.getBlockState(slimePos).isAir() || world.getBlockState(slimePos).getMaterial().isReplaceable()) {
+                    TorchData torchData = new TorchData(torchCheck, Direction.DOWN);
                     placeSlime(mc, slimePos);
-                    return new TorchData(torchCheck, Direction.DOWN);
+                    torchData.registerSlimePos(slimePos);
+                    return torchData;
                 }
             }
         }
@@ -556,6 +564,7 @@ public class BedrockBreaker {
         private BlockPos PistonPos;
         private Direction Pistonfacing;
         private Direction PistonBreakableFacing;
+        private BlockPos slimePos;
 
         public TorchPath(BlockPos TorchPos, Direction Torchfacing, BlockPos PistonPos, Direction Pistonfacing, Direction PistonBreakableFacing) {
             this.TorchPos = TorchPos;
@@ -581,10 +590,14 @@ public class BedrockBreaker {
     public static class TorchData {
         private BlockPos TorchPos;
         private Direction Torchfacing;
+        private BlockPos SlimePos = null;
 
         public TorchData(BlockPos TorchPos, Direction Torchfacing) {
             this.TorchPos = TorchPos;
             this.Torchfacing = Torchfacing;
+        }
+        public void registerSlimePos(BlockPos slimePos) {
+            this.SlimePos = slimePos;
         }
     }
 }
