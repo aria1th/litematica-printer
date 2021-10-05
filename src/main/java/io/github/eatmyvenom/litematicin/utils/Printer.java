@@ -402,8 +402,8 @@ public class Printer {
         toY = Math.min(toY, (int) mc.player.getY() + rangeY);
         toZ = Math.min(toZ, (int) mc.player.getZ() + rangeZ);
 
-        for (int x = fromX; x <= toX; x++) {
-            for (int y = fromY; y <= toY; y++) {
+        for (int y = fromY; y <= toY; y++) {
+            for (int x = fromX; x <= toX; x++) {
                 for (int z = fromZ; z <= toZ; z++) {
 
 
