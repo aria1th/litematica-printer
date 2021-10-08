@@ -567,7 +567,7 @@ public class Printer {
                                         cacheEasyPlacePosition(pos, true);
                                     }
 
-                                }
+                                } //can place vanilla
                             }
                         } else if (!ClearArea && MaxFlip) {
                             Block cBlock = stateClient.getBlock();
@@ -613,9 +613,9 @@ public class Printer {
                                 continue;
                             }
                             ;
-                        }
+                        } //flip
                         continue;
-                    }
+                    } //cancel normal placing
                     if (!ClearArea && MaxFlip) {
                         continue;
                     }
@@ -756,7 +756,7 @@ public class Printer {
                             }
                         }
                         if (blockSchematic instanceof WallMountedBlock || blockSchematic instanceof TorchBlock || blockSchematic instanceof WallSkullBlock
-                                || blockSchematic instanceof LadderBlock || blockSchematic instanceof TrapdoorBlock
+                                || blockSchematic instanceof LadderBlock || (blockSchematic instanceof TrapdoorBlock && !CanUseProtocol)
                                 || blockSchematic instanceof TripwireHookBlock || blockSchematic instanceof SignBlock || blockSchematic instanceof EndRodBlock) {
 
                             /*
@@ -849,7 +849,7 @@ public class Printer {
                             continue;
                         }
 
-                        Vec3d hitPos = new Vec3d(offX, offY, offZ);
+                        Vec3d hitPos = new Vec3d(npos.getX(), npos.getY() , npos.getZ());
                         // Carpet Accurate Placement protocol support, plus BlockSlab support
                         if (CanUseProtocol && IsBlockSupportedCarpet(stateSchematic.getBlock())) {
                             hitPos = applyCarpetProtocolHitVec(npos, stateSchematic, hitPos);
@@ -861,7 +861,6 @@ public class Printer {
                         // checked above)
                         cacheEasyPlacePosition(pos, false);
                         float originYaw = mc.player.getYaw(1.0f);
-                        ;
                         if (stateSchematic.getBlock() instanceof AbstractRailBlock) {
                             float yaw;
                             if (facing == Direction.NORTH) {
@@ -1367,47 +1366,56 @@ public class Printer {
         positionCache.add(item);
     }
 
-    public static Vec3d applyCarpetProtocolHitVec(BlockPos pos, BlockState state, Vec3d hitVecIn) {
-        double dx = pos.getX();
-        double dy = pos.getY();
-        double dz = pos.getZ();
-        double x = hitVecIn.x;
+    public static Vec3d applyCarpetProtocolHitVec(BlockPos pos, BlockState state, Vec3d hitVecIn)
+    {
+        double code = hitVecIn.x;
         double y = hitVecIn.y;
         double z = hitVecIn.z;
         Block block = state.getBlock();
         Direction facing = fi.dy.masa.malilib.util.BlockUtils.getFirstPropertyFacingValue(state);
         Integer railEnumCode = getRailShapeOrder(state);
-        final int propertyIncrement = 32;
+        final int propertyIncrement = 16;
         double relX = hitVecIn.x - pos.getX();
-
-        if (facing != null) {
-            x = pos.getX() + relX + 2 + (facing.getId() * 2);
+        if (facing == null && railEnumCode == null)
+        {
+            return new Vec3d (code, y, z);
         }
-        if (railEnumCode != 32) {
-            x = pos.getX() + relX + 2 + (railEnumCode * 2);
+        if (facing != null)
+        {
+            code = facing.getId();
         }
-        if (block instanceof RepeaterBlock) {
-            x += ((state.get(RepeaterBlock.DELAY))) * propertyIncrement;
-        } else if (block instanceof TrapdoorBlock && state.get(TrapdoorBlock.HALF) == BlockHalf.TOP) {
-            x += propertyIncrement;
-        } else if (block instanceof ComparatorBlock && state.get(ComparatorBlock.MODE) == ComparatorMode.SUBTRACT) {
-            x += propertyIncrement;
-        } else if (block instanceof TrapdoorBlock && state.get(TrapdoorBlock.HALF) == BlockHalf.TOP) {
-            x += propertyIncrement;
-        } else if (block instanceof StairsBlock && state.get(StairsBlock.HALF) == BlockHalf.TOP) {
-            x += propertyIncrement;
-        } else if (block instanceof SlabBlock && state.get(SlabBlock.TYPE) != SlabType.DOUBLE) {
-            //x += 10; // Doesn't actually exist (yet?)
-
-            // Do it via vanilla
-            if (state.get(SlabBlock.TYPE) == SlabType.TOP) {
+        else if (railEnumCode != null)
+        {
+            code = railEnumCode;
+        }
+        if (block instanceof RepeaterBlock)
+        {
+            code += ((state.get(RepeaterBlock.DELAY))) * (propertyIncrement);
+        }
+        else if (block instanceof TrapdoorBlock && state.get(TrapdoorBlock.HALF) == BlockHalf.TOP)
+        {
+            code += propertyIncrement;
+        }
+        else if (block instanceof ComparatorBlock && state.get(ComparatorBlock.MODE) == ComparatorMode.SUBTRACT)
+        {
+            code += propertyIncrement;
+        }
+        else if (block instanceof StairsBlock && state.get(StairsBlock.HALF) == BlockHalf.TOP)
+        {
+            code += propertyIncrement;
+        }
+        else if (block instanceof SlabBlock && state.get(SlabBlock.TYPE) != SlabType.DOUBLE)
+        {
+            if (state.get(SlabBlock.TYPE) == SlabType.TOP)
+            {
                 y = pos.getY() + 0.9;
-            } else {
+            }
+            else
+            {
                 y = pos.getY();
             }
         }
-
-        return new Vec3d(dx + x, dy + y, dz + z);
+        return new Vec3d(code * 2 + 2 + pos.getX(), y, z);
     }
     public static Integer getRailShapeOrder(BlockState state)
     {
