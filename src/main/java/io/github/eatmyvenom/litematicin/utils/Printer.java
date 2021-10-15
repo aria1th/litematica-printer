@@ -41,72 +41,11 @@ import fi.dy.masa.malilib.util.SubChunkPos;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 
+import net.minecraft.block.*;
 import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
 
-import net.minecraft.block.AbstractButtonBlock;
-import net.minecraft.block.AbstractChestBlock;
-import net.minecraft.block.AbstractRailBlock;
 import net.minecraft.block.AbstractBlock.Settings;
-import net.minecraft.block.BarrelBlock;
-import net.minecraft.block.BedBlock;
-import net.minecraft.block.BeehiveBlock;
-import net.minecraft.block.Block;
-import net.minecraft.block.Blocks;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.CarvedPumpkinBlock;
-import net.minecraft.block.ChestBlock;
-import net.minecraft.block.ComparatorBlock;
 import net.minecraft.block.enums.ComparatorMode;
-import net.minecraft.block.ComposterBlock;
-import net.minecraft.block.DetectorRailBlock;
-import net.minecraft.block.DispenserBlock;
-import net.minecraft.block.DoorBlock;
-import net.minecraft.block.DropperBlock;
-import net.minecraft.block.EndPortalFrameBlock;
-import net.minecraft.block.EndRodBlock;
-import net.minecraft.block.EnderChestBlock;
-import net.minecraft.block.FenceGateBlock;
-import net.minecraft.block.FallingBlock;
-import net.minecraft.block.FurnaceBlock;
-import net.minecraft.block.FluidBlock;
-import net.minecraft.block.GlazedTerracottaBlock;
-import net.minecraft.block.HopperBlock;
-import net.minecraft.block.HorizontalFacingBlock;
-import net.minecraft.block.LadderBlock;
-import net.minecraft.block.LecternBlock;
-import net.minecraft.block.LeverBlock;
-import net.minecraft.block.LoomBlock;
-import net.minecraft.block.Material;
-import net.minecraft.block.NoteBlock;
-import net.minecraft.block.ObserverBlock;
-import net.minecraft.block.PillarBlock;
-import net.minecraft.block.PistonBlock;
-import net.minecraft.block.PoweredRailBlock;
-import net.minecraft.block.NetherPortalBlock;
-import net.minecraft.block.PumpkinBlock;
-import net.minecraft.block.RailBlock;
-import net.minecraft.block.RepeaterBlock;
-import net.minecraft.block.SandBlock;
-import net.minecraft.block.SnowBlock;
-import net.minecraft.block.ConcretePowderBlock;
-import net.minecraft.block.GravelBlock;
-import net.minecraft.block.AnvilBlock;
-import net.minecraft.block.DragonEggBlock;
-import net.minecraft.block.RedstoneBlock;
-import net.minecraft.block.SeaPickleBlock;
-import net.minecraft.block.SignBlock;
-import net.minecraft.block.SlabBlock;
-import net.minecraft.block.StairsBlock;
-import net.minecraft.block.StonecutterBlock;
-import net.minecraft.block.TorchBlock;
-import net.minecraft.block.TrapdoorBlock;
-import net.minecraft.block.TripwireHookBlock;
-import net.minecraft.block.WallBlock;
-import net.minecraft.block.WallMountedBlock;
-import net.minecraft.block.WallRedstoneTorchBlock;
-import net.minecraft.block.WallSignBlock;
-import net.minecraft.block.WallSkullBlock;
-import net.minecraft.block.WallTorchBlock;
 import net.minecraft.block.enums.BedPart;
 import net.minecraft.block.enums.BlockHalf;
 import net.minecraft.block.enums.DoubleBlockHalf;
@@ -286,7 +225,7 @@ public class Printer {
         boolean ClearSnow = CLEAR_AREA_MODE_SNOWPREVENT.getBooleanValue() && ClearArea;
         boolean CanUseProtocol = ACCURATE_BLOCK_PLACEMENT.getBooleanValue();
         boolean FillInventory = EASY_PLACE_MODE_USE_COMPOSTER.getBooleanValue();
-        ItemStack ComposterItem = new Items().PUMPKIN_PIE.getDefaultStack();
+        ItemStack ComposterItem = Items.PUMPKIN_PIE.getDefaultStack();
         SubChunkPos cpos = new SubChunkPos(tracePos);
         List<PlacementPart> list = DataManager.getSchematicPlacementManager().getAllPlacementsTouchingSubChunk(cpos);
 
@@ -757,7 +696,8 @@ public class Printer {
                         }
                         if (blockSchematic instanceof WallMountedBlock || blockSchematic instanceof TorchBlock || blockSchematic instanceof WallSkullBlock
                                 || blockSchematic instanceof LadderBlock || (blockSchematic instanceof TrapdoorBlock && !CanUseProtocol)
-                                || blockSchematic instanceof TripwireHookBlock || blockSchematic instanceof SignBlock || blockSchematic instanceof EndRodBlock) {
+                                || blockSchematic instanceof TripwireHookBlock || blockSchematic instanceof SignBlock ||
+                                blockSchematic instanceof EndRodBlock || blockSchematic instanceof DeadCoralWallFanBlock) {
 
                             /*
                              * Some blocks, especially wall mounted blocks must be placed on another for
@@ -1281,7 +1221,8 @@ public class Printer {
                 return stateSchematic.get(WallMountedBlock.FACING);
 
             }
-
+        } else if (blockSchematic instanceof DeadCoralWallFanBlock) {
+            return stateSchematic.get(DeadCoralWallFanBlock.FACING);
         } else if (blockSchematic instanceof HopperBlock) {
             return stateSchematic.get(HopperBlock.FACING).getOpposite();
         } else if (blockSchematic instanceof TorchBlock) {
