@@ -17,11 +17,7 @@ import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.EASY_PLACE_MOD
 import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.ADVANCED_ACCURATE_BLOCK_PLACEMENT;
 import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.EASY_PLACE_MODE_OBSERVER_EXPLICIT_ORDER;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import com.google.common.collect.ImmutableMap;
 
@@ -42,6 +38,9 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 
 import net.minecraft.block.*;
+import net.minecraft.fluid.Fluids;
+import net.minecraft.fluid.LavaFluid;
+import net.minecraft.fluid.WaterFluid;
 import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
 
 import net.minecraft.block.AbstractBlock.Settings;
@@ -161,7 +160,7 @@ public class Printer {
 
         ItemStack stack = MaterialCache.getInstance().getRequiredBuildItemForState(preference, world, pos);
 
-        if (stack.isEmpty() == false) {
+        if (!stack.isEmpty()) {
             PlayerInventory inv = mc.player.getInventory();
 
             if (mc.player.getAbilities().creativeMode) {
@@ -294,12 +293,8 @@ public class Printer {
         boolean breakBlocks = EASY_PLACE_MODE_BREAK_BLOCKS.getBooleanValue();
         boolean Flippincactus = FLIPPIN_CACTUS.getBooleanValue();
         ItemStack Mainhandstack = mc.player.getMainHandStack();
-        boolean Cactus = Mainhandstack.getItem().getTranslationKey().contains((String) "cactus") && Flippincactus;
-        boolean MaxFlip = true;
-        if (!Flippincactus || !Cactus) {
-            MaxFlip = false;
-        }
-        ;
+        boolean Cactus = Mainhandstack.getItem().getTranslationKey().contains("cactus") && Flippincactus;
+        boolean MaxFlip = Flippincactus && Cactus;
         Direction[] facingSides = Direction.getEntityFacingOrder(mc.player);
         Direction primaryFacing = facingSides[0];
         Direction horizontalFacing = primaryFacing; // For use in blocks with only horizontal rotation
@@ -354,15 +349,13 @@ public class Printer {
                         continue;
 
                     BlockPos pos = new BlockPos(x, y, z);
-                    if (range.isPositionWithinRange(pos) == false && !ClearArea)
+                    if (!range.isPositionWithinRange(pos) && !ClearArea)
                         continue;
                     BlockState stateSchematic = world.getBlockState(pos);
                     BlockState stateClient = mc.world.getBlockState(pos);
                     if (!ClearArea && breakBlocks && stateSchematic != null && !(stateClient.getBlock() instanceof SnowBlock) &&
-                            !stateClient.isAir() && !stateClient.getBlock().getTranslationKey().contains((String) "water") &&
-                            !stateClient.getBlock().getTranslationKey().contains((String) "lava") && !stateClient.getBlock().getTranslationKey().contains((String) "column") &&
-                            !stateClient.getBlock().getTranslationKey().contains((String) "piston_head") &&
-                            !stateClient.getBlock().equals(Blocks.MOVING_PISTON)) {
+                            !stateClient.isAir() && !(stateClient.getBlock() instanceof FluidBlock) && !(stateClient.getBlock() instanceof BubbleColumnBlock) &&
+                            !stateClient.isOf(Blocks.PISTON_HEAD) && !stateClient.isOf(Blocks.MOVING_PISTON)) {
                         if (!stateClient.getBlock().getName().equals(stateSchematic.getBlock().getName()) && dx * dx + Math.pow(dy + 1.5, 2) + dz * dz <= MaxReach * MaxReach) {
 
                             if (mc.player.getAbilities().creativeMode) {
@@ -373,14 +366,14 @@ public class Printer {
                                     lastPlaced = new Date().getTime();
                                     return ActionResult.SUCCESS;
                                 }
-                            } else if (bedrockBreaker.isBlockNotInstantBreakable(stateClient.getBlock()) && BEDROCK_BREAKING.getBooleanValue()) {
-                                bedrockBreaker.scheduledTickHandler(mc, pos);
+                            } else if (BedrockBreaker.isBlockNotInstantBreakable(stateClient.getBlock()) && BEDROCK_BREAKING.getBooleanValue()) {
+                                BedrockBreaker.scheduledTickHandler(mc, pos);
                                 continue;
 
                             } else if (BEDROCK_BREAKING.getBooleanValue()) {
-                                bedrockBreaker.scheduledTickHandler(mc, null);
+                                BedrockBreaker.scheduledTickHandler(mc, null);
                                 continue;
-                            } else if (!bedrockBreaker.isBlockNotInstantBreakable(stateClient.getBlock()) && !BEDROCK_BREAKING.getBooleanValue()){ // For survival
+                            } else if (!BedrockBreaker.isBlockNotInstantBreakable(stateClient.getBlock()) && !BEDROCK_BREAKING.getBooleanValue()){ // For survival
                                 mc.interactionManager.attackBlock(pos, Direction.DOWN); //yes, this seemingly needless line adds functionality but paper would not allow it.
                                 breaker.startBreakingBlock(pos, mc); // it need to avoid unbreakable blocks and just added and lava, but its not block so somehow made it work
                                 return ActionResult.SUCCESS;
@@ -514,29 +507,24 @@ public class Printer {
                             if (cBlock.getName().equals(sBlock.getName())) {
                                 boolean ShapeBoolean = false;
                                 boolean ShouldFix = false;
-                                if (sBlock.getTranslationKey().contains((String) "rail")) {
-
+                                if (sBlock instanceof AbstractRailBlock) {
                                     if (sBlock instanceof RailBlock) {
                                         String SchematicRailShape = stateSchematic.get(RailBlock.SHAPE).toString();
                                         String ClientRailShape = stateClient.get(RailBlock.SHAPE).toString();
-                                        ShouldFix = SchematicRailShape != ClientRailShape;
-                                        ShapeBoolean = SchematicRailShape != ClientRailShape && ((SchematicRailShape == "south_west" || SchematicRailShape == "north_west" || SchematicRailShape == "south_east" || SchematicRailShape == "north_east") && (ClientRailShape == "south_west" || ClientRailShape == "north_west" || ClientRailShape == "south_east" || ClientRailShape == "north_east") || (SchematicRailShape == "east_west" || SchematicRailShape == "north_south") && (ClientRailShape == "east_west" || ClientRailShape == "north_south"));
+                                        ShouldFix = !Objects.equals(SchematicRailShape, ClientRailShape);
+                                        ShapeBoolean = !Objects.equals(SchematicRailShape, ClientRailShape) && ((Objects.equals(SchematicRailShape, "south_west") || SchematicRailShape == "north_west" || SchematicRailShape == "south_east" || SchematicRailShape == "north_east") && (ClientRailShape == "south_west" || ClientRailShape == "north_west" || ClientRailShape == "south_east" || ClientRailShape == "north_east") || (SchematicRailShape == "east_west" || SchematicRailShape == "north_south") && (ClientRailShape == "east_west" || ClientRailShape == "north_south"));
                                     } else {
                                         String SchematicRailShape = stateSchematic.get(PoweredRailBlock.SHAPE).toString();
                                         String ClientRailShape = stateClient.get(PoweredRailBlock.SHAPE).toString();
-                                        ShouldFix = SchematicRailShape != ClientRailShape;
-                                        ShapeBoolean = SchematicRailShape != ClientRailShape && (SchematicRailShape == "east_west" || SchematicRailShape == "north_south") && (ClientRailShape == "east_west" || ClientRailShape == "north_south");
+                                        ShouldFix = !Objects.equals(SchematicRailShape, ClientRailShape);
+                                        ShapeBoolean = !Objects.equals(SchematicRailShape, ClientRailShape) && (Objects.equals(SchematicRailShape, "east_west") || SchematicRailShape == "north_south") && (ClientRailShape == "east_west" || ClientRailShape == "north_south");
                                     }
-
-                                } else if (sBlock instanceof ObserverBlock || sBlock instanceof PistonBlock) {
-                                    String facingSchematicName = fi.dy.masa.malilib.util.BlockUtils.getFirstPropertyFacingValue(stateSchematic).getName();
-                                    String facingClientName = fi.dy.masa.malilib.util.BlockUtils.getFirstPropertyFacingValue(stateClient).getName();
-                                    ShouldFix = facingSchematicName != facingClientName;
-                                    ShapeBoolean = (facingSchematicName == "north" && facingClientName == "south") || (facingSchematicName == "east" && facingClientName == "west") || (facingSchematicName == "up" && facingClientName == "down") ||
-                                            (facingSchematicName == "south" && facingClientName == "north") || (facingSchematicName == "west" && facingClientName == "east") || (facingSchematicName == "down" && facingClientName == "up");
-                                } else if (sBlock instanceof RepeaterBlock || sBlock instanceof ComparatorBlock || sBlock instanceof FenceGateBlock || sBlock instanceof TrapdoorBlock) {
-                                    ShapeBoolean = fi.dy.masa.malilib.util.BlockUtils.getFirstPropertyFacingValue(stateSchematic).getName() != fi.dy.masa.malilib.util.BlockUtils.getFirstPropertyFacingValue(stateClient).getName();
-                                }
+                                } else if (sBlock instanceof ObserverBlock || sBlock instanceof PistonBlock || sBlock instanceof RepeaterBlock || sBlock instanceof ComparatorBlock || sBlock instanceof FenceGateBlock || sBlock instanceof TrapdoorBlock) {
+                                    Direction facingSchematic = fi.dy.masa.malilib.util.BlockUtils.getFirstPropertyFacingValue(stateSchematic);
+                                    Direction facingClient = fi.dy.masa.malilib.util.BlockUtils.getFirstPropertyFacingValue(stateClient);
+                                    ShouldFix = facingSchematic != facingClient;
+                                    ShapeBoolean = facingClient.getOpposite().equals(facingSchematic);
+                                } 
                                 Direction side = Direction.UP;
                                 if (ShapeBoolean) {
                                     Hand hand = Hand.MAIN_HAND;
@@ -544,53 +532,48 @@ public class Printer {
                                     BlockHitResult hitResult = new BlockHitResult(hitPos, side, pos, false);
                                     mc.interactionManager.interactBlock(mc.player, mc.world, hand, hitResult);
                                     interact++;
-                                } else if (breakBlocks && ShouldFix) {
-                                    mc.interactionManager.attackBlock(pos, Direction.DOWN);
-                                    breaker.startBreakingBlock(pos, mc);
+                                } else if (breakBlocks && ShouldFix) { //cannot fix via flippincactus
+                                    mc.interactionManager.attackBlock(pos, Direction.DOWN);//by one hit possible?
+                                    breaker.startBreakingBlock(pos, mc); //register 
                                     return ActionResult.SUCCESS;
                                 }
                                 continue;
                             }
-                            ;
                         } //flip
                         continue;
                     } //cancel normal placing
                     if (!ClearArea && MaxFlip) {
                         continue;
                     }
-                    ;
                     if (isPositionCached(pos, false)) {
                         continue;
                     }
-                    ItemStack stack = ((MaterialCache) MaterialCache.getInstance()).getRequiredBuildItemForState((BlockState) stateSchematic);
+                    ItemStack stack = MaterialCache.getInstance().getRequiredBuildItemForState(stateSchematic);
                     Block cBlock = stateClient.getBlock();
                     Block sBlock = stateSchematic.getBlock();
                     if (ClearArea) {
-                        if (cBlock.getTranslationKey().contains((String) "water") && stateClient.contains(FluidBlock.LEVEL) && stateClient.get(FluidBlock.LEVEL) == 0 || cBlock.getTranslationKey().contains((String) "column")) {
-                            if (true) {
-                                stack = new ItemStack(new Blocks().SPONGE.asItem(), 1);
-                            } else {
-                                stack = new ItemStack(new Blocks().COBBLESTONE.asItem(), 1);
-                            }
-                            ;
-                        } else if (cBlock.getTranslationKey().contains((String) "lava") && stateClient.contains(FluidBlock.LEVEL) && stateClient.get(FluidBlock.LEVEL) == 0) {
+                        if (cBlock instanceof BubbleColumnBlock || stateClient.getFluidState().getFluid() instanceof WaterFluid && stateClient.contains(FluidBlock.LEVEL) && stateClient.get(FluidBlock.LEVEL) == 0) {
                             if (!UseCobble) {
-                                stack = new ItemStack(new Blocks().SLIME_BLOCK.asItem(), 1);
+                                stack = Items.SPONGE.getDefaultStack();
                             } else {
-                                stack = new ItemStack(new Blocks().COBBLESTONE.asItem(), 1);
+                                stack = Items.COBBLESTONE.getDefaultStack();
+                            }
+                        } else if (stateClient.getFluidState().getFluid() instanceof LavaFluid && stateClient.contains(FluidBlock.LEVEL) && stateClient.get(FluidBlock.LEVEL) == 0) {
+                            if (!UseCobble) {
+                                stack = Items.SLIME_BLOCK.getDefaultStack();
+                            } else {
+                                stack = Items.COBBLESTONE.getDefaultStack();
                             }
                         } else if (ClearSnow && cBlock instanceof SnowBlock) {
-                            stack = new ItemStack(new Items().STRING.asItem(), 1);
+                            stack = Items.STRING.getDefaultStack();
                         } else {
                             continue;
                         }
                     } else if (sBlock instanceof NetherPortalBlock) {
-                        stack = new ItemStack(new Items().FIRE_CHARGE.asItem(), 1);
-                    } else {
-                        stack = ((MaterialCache) MaterialCache.getInstance()).getRequiredBuildItemForState((BlockState) stateSchematic);
-                    }
+                        stack = Items.FIRE_CHARGE.getDefaultStack();
+                    } 
 
-                    if ((ClearArea || stack.isEmpty() == false) && (mc.player.getAbilities().creativeMode || mc.player.getInventory().getSlotWithStack(stack) != -1)) {
+                    if ((ClearArea || !stack.isEmpty()) && (mc.player.getAbilities().creativeMode || mc.player.getInventory().getSlotWithStack(stack) != -1)) {
 
                         if (ClearArea) {
                             Hand hand = Hand.MAIN_HAND;
@@ -599,7 +582,7 @@ public class Printer {
                                 Vec3d hitPos = new Vec3d(0.5, 0.5, 0.5);
                                 BlockHitResult hitResult = new BlockHitResult(hitPos, Direction.UP, pos, false);
                                 mc.interactionManager.interactBlock(mc.player, mc.world, hand, hitResult);
-                                if (cBlock.getTranslationKey().contains((String) "water") || (cBlock instanceof SnowBlock) || cBlock.getTranslationKey().contains((String) "column")) {
+                                if (cBlock instanceof FluidBlock || (cBlock instanceof SnowBlock)) {
                                     lastPlaced = new Date().getTime();
                                     return ActionResult.SUCCESS;
                                 }
@@ -640,7 +623,6 @@ public class Printer {
                             if (mc.player.getInventory().getSlotWithStack(stack) == -1 || OffsetstateClient.isAir() || (!OffsetstateClient.getBlock().getName().equals(OffsetstateSchematic.getBlock().getName()))) {
                                 continue;
                             }
-                            ;
                             InventoryUtils.setPickedItemToHand(stack, mc);
                             Vec3d hitPos = new Vec3d(0.5, 0.5, 0.5);
                             BlockHitResult hitResult = new BlockHitResult(hitPos, Direction.DOWN, new BlockPos(x, y + 1, z), false);
@@ -648,7 +630,6 @@ public class Printer {
                             lastPlaced = new Date().getTime();
                             return ActionResult.SUCCESS;
                         }
-                        ;
                         Direction facing = fi.dy.masa.malilib.util.BlockUtils
                                 .getFirstPropertyFacingValue(stateSchematic);
                         if (stateSchematic.getBlock() instanceof AbstractRailBlock) {
@@ -690,7 +671,7 @@ public class Printer {
                             BlockPos Offsetpos = new BlockPos(x, y - 1, z);
                             BlockState OffsetstateSchematic = world.getBlockState(Offsetpos);
                             BlockState OffsetstateClient = mc.world.getBlockState(Offsetpos);
-                            if (OffsetstateClient.getBlock().getTranslationKey().contains((String) "water") || OffsetstateClient.getBlock().getTranslationKey().contains((String) "lava") || OffsetstateClient.getBlock().getTranslationKey().contains((String) "column")) {
+                            if (OffsetstateClient.getBlock() instanceof FluidBlock || OffsetstateClient.getBlock() instanceof BubbleColumnBlock) {
                                 continue;
                             }
                         }
@@ -772,8 +753,7 @@ public class Printer {
 
                         // Abort if the required item was not able to be pick-block'd
                         if (!hasPicked) {
-
-                            if (doSchematicWorldPickBlock(true, mc, stateSchematic, pos) == false) {
+                            if (!doSchematicWorldPickBlock(true, mc, stateSchematic, pos)) {
                                 return ActionResult.FAIL;
                             }
                             hasPicked = true;
@@ -889,18 +869,13 @@ public class Printer {
             }
         }
         BlockState stateSchematic = world.getBlockState(posoffset.down());
-        if (stateSchematic.getBlock() instanceof PistonBlock && !stateSchematic.get(PistonBlock.EXTENDED) && !world.getBlockState(posoffset).getBlock().equals(mc.world.getBlockState(posoffset).getBlock())) {
-            return true;
-        }
-        return false;
+        return stateSchematic.getBlock() instanceof PistonBlock && !stateSchematic.get(PistonBlock.EXTENDED) && !world.getBlockState(posoffset).getBlock().equals(mc.world.getBlockState(posoffset).getBlock());
     }
 
     private static boolean ShouldExtendQC(MinecraftClient mc, World world, BlockPos pos) {
 
         return shouldExtend(mc.world, pos, world.getBlockState(pos).get(PistonBlock.FACING)) == world.getBlockState(pos).get(PistonBlock.EXTENDED);
     }
-
-    ;
 
     private static boolean shouldExtend(World world, BlockPos pos, Direction pistonFace) {
         for (Direction lv : Direction.values()) {
@@ -918,8 +893,6 @@ public class Printer {
         return false;
     }
 
-    ;
-
     private static boolean ObserverUpdateOrder(MinecraftClient mc, World world, BlockPos pos) {
         boolean ExplicitObserver = EASY_PLACE_MODE_OBSERVER_EXPLICIT_ORDER.getBooleanValue();
         BlockState stateSchematic = world.getBlockState(pos);
@@ -929,18 +902,21 @@ public class Printer {
         if (stateSchematic.get(ObserverBlock.POWERED)) {
             return false;
         }
-        String facingSchematicName = fi.dy.masa.malilib.util.BlockUtils.getFirstPropertyFacingValue(stateSchematic).getName();
-        if (facingSchematicName.contains((String) "up")) {
+        Direction facingSchematic = fi.dy.masa.malilib.util.BlockUtils.getFirstPropertyFacingValue(stateSchematic);
+        assert facingSchematic != null;
+        if (facingSchematic.equals(Direction.UP)) {
             Posoffset = pos.up();
             OffsetStateSchematic = world.getBlockState(Posoffset);
             OffsetStateClient = mc.world.getBlockState(Posoffset);
-            if (OffsetStateSchematic.getBlock() instanceof WallBlock || OffsetStateSchematic.getBlock() instanceof ComparatorBlock || OffsetStateSchematic.getBlock() instanceof RepeaterBlock || OffsetStateSchematic.getBlock() instanceof FallingBlock ||
-                    OffsetStateSchematic.getBlock().getTranslationKey().contains((String) "rail") || OffsetStateSchematic.getBlock().getTranslationKey().contains((String) "water") || OffsetStateSchematic.getBlock().getTranslationKey().contains((String) "lava") ||
-                    OffsetStateSchematic.getBlock().getTranslationKey().contains((String) "column") || OffsetStateSchematic.getBlock().getTranslationKey().contains((String) "wire") || ((OffsetStateSchematic.getBlock() instanceof WallMountedBlock) && OffsetStateSchematic.get(WallMountedBlock.FACE) == WallMountLocation.FLOOR)) {
+            if (OffsetStateSchematic.getBlock() instanceof WallBlock || OffsetStateSchematic.getBlock() instanceof ComparatorBlock || 
+                    OffsetStateSchematic.getBlock() instanceof RepeaterBlock || OffsetStateSchematic.getBlock() instanceof FallingBlock ||
+                    OffsetStateSchematic.getBlock() instanceof AbstractRailBlock || OffsetStateSchematic.getBlock() instanceof BubbleColumnBlock ||
+                    OffsetStateSchematic.getBlock() instanceof FluidBlock || OffsetStateSchematic.getBlock() instanceof RedstoneWireBlock ||
+                    ((OffsetStateSchematic.getBlock() instanceof WallMountedBlock) && OffsetStateSchematic.get(WallMountedBlock.FACE) == WallMountLocation.FLOOR)) {
                 return false;
             }
         }
-        if (facingSchematicName.contains((String) "down")) {
+        else if (facingSchematic.equals(Direction.DOWN)) {
             Posoffset = pos.down();
             OffsetStateSchematic = world.getBlockState(Posoffset);
             OffsetStateClient = mc.world.getBlockState(Posoffset);
@@ -948,39 +924,12 @@ public class Printer {
                 return false;
             }
         }
-        if (facingSchematicName.contains((String) "north")) {
-            Posoffset = pos.north();
+        else {
+            Posoffset = pos.offset(facingSchematic);
             OffsetStateSchematic = world.getBlockState(Posoffset);
             OffsetStateClient = mc.world.getBlockState(Posoffset);
             if (OffsetStateSchematic.getBlock() instanceof WallBlock || OffsetStateSchematic.getBlock() instanceof WallMountedBlock &&
-                    OffsetStateSchematic.get(WallMountedBlock.FACE) == WallMountLocation.WALL && OffsetStateSchematic.get(WallMountedBlock.FACING) == Direction.NORTH) {
-                return false;
-            }
-        }
-        if (facingSchematicName.contains((String) "south")) {
-            Posoffset = pos.south();
-            OffsetStateSchematic = world.getBlockState(Posoffset);
-            OffsetStateClient = mc.world.getBlockState(Posoffset);
-            if (OffsetStateSchematic.getBlock() instanceof WallBlock || OffsetStateSchematic.getBlock() instanceof WallMountedBlock && OffsetStateSchematic.get(WallMountedBlock.FACE) == WallMountLocation.WALL &&
-                    OffsetStateSchematic.get(WallMountedBlock.FACING) == Direction.SOUTH) {
-                return false;
-            }
-        }
-        if (facingSchematicName.contains((String) "west")) {
-            Posoffset = pos.west();
-            OffsetStateSchematic = world.getBlockState(Posoffset);
-            OffsetStateClient = mc.world.getBlockState(Posoffset);
-            if (OffsetStateSchematic.getBlock() instanceof WallBlock || OffsetStateSchematic.getBlock() instanceof WallMountedBlock && OffsetStateSchematic.get(WallMountedBlock.FACE) == WallMountLocation.WALL &&
-                    OffsetStateSchematic.get(WallMountedBlock.FACING) == Direction.WEST) {
-                return false;
-            }
-        }
-        if (facingSchematicName.contains((String) "east")) {
-            Posoffset = pos.east();
-            OffsetStateSchematic = world.getBlockState(Posoffset);
-            OffsetStateClient = mc.world.getBlockState(Posoffset);
-            if (OffsetStateSchematic.getBlock() instanceof WallBlock || OffsetStateSchematic.getBlock() instanceof WallMountedBlock && OffsetStateSchematic.get(WallMountedBlock.FACE) == WallMountLocation.WALL &&
-                    OffsetStateSchematic.get(WallMountedBlock.FACING) == Direction.EAST) {
+                    OffsetStateSchematic.get(WallMountedBlock.FACE) == WallMountLocation.WALL && OffsetStateSchematic.get(WallMountedBlock.FACING) == facingSchematic) {
                 return false;
             }
         }
@@ -1040,7 +989,7 @@ public class Printer {
         if (blockSchematic instanceof SeaPickleBlock && stateSchematic.get(SeaPickleBlock.PICKLES) > 1) {
             Block blockClient = stateClient.getBlock();
 
-            if (blockClient instanceof SeaPickleBlock && stateClient.get(SeaPickleBlock.PICKLES) != stateSchematic.get(SeaPickleBlock.PICKLES)) {
+            if (blockClient instanceof SeaPickleBlock && !Objects.equals(stateClient.get(SeaPickleBlock.PICKLES), stateSchematic.get(SeaPickleBlock.PICKLES))) {
                 return blockSchematic != blockClient;
             }
         }
@@ -1059,14 +1008,14 @@ public class Printer {
             }
         }
         if (blockSchematic instanceof ComposterBlock && stateSchematic.get(ComposterBlock.LEVEL) > 0 && stateClient.getBlock() instanceof ComposterBlock) {
-            return stateClient.get(ComposterBlock.LEVEL) != stateSchematic.get(ComposterBlock.LEVEL);
+            return !Objects.equals(stateClient.get(ComposterBlock.LEVEL), stateSchematic.get(ComposterBlock.LEVEL));
         }
         Block blockClient = stateClient.getBlock();
         if (blockClient instanceof SnowBlock && stateClient.get(SnowBlock.LAYERS) < 3 && !(stateSchematic.getBlock() instanceof SnowBlock)) {
             return false;
         }
-        if (stateClient.isAir() || stateClient.getBlock().getTranslationKey().contains((String) "water") || stateClient.getBlock().getTranslationKey().contains((String) "lava") || stateClient.getBlock().getTranslationKey().contains((String) "column")) // This is a lot simpler than below. But slightly lacks functionality.
-            return false;
+        // This is a lot simpler than below. But slightly lacks functionality.
+        return !stateClient.isAir() && !stateClient.getMaterial().isReplaceable();
         /*
          * if (trace.getType() != HitResult.Type.BLOCK) { return false; }
          */
@@ -1077,8 +1026,6 @@ public class Printer {
         // if (stateClient.canReplace(ctx) == false) {
         // return true;
         // }
-
-        return true;
     }
 
     /**
@@ -1170,11 +1117,8 @@ public class Printer {
         if (SchematicBlock instanceof WallMountedBlock || SchematicBlock instanceof WallSkullBlock) {
             return false;
         }
-        if (ADVANCED_ACCURATE_BLOCK_PLACEMENT.getBooleanValue() || SchematicBlock instanceof GlazedTerracottaBlock || SchematicBlock instanceof ObserverBlock || SchematicBlock instanceof RepeaterBlock || SchematicBlock instanceof TrapdoorBlock ||
-                SchematicBlock instanceof ComparatorBlock || SchematicBlock instanceof DispenserBlock || SchematicBlock instanceof PistonBlock || SchematicBlock instanceof StairsBlock) {
-            return true;
-        }
-        return false;
+        return ADVANCED_ACCURATE_BLOCK_PLACEMENT.getBooleanValue() || SchematicBlock instanceof GlazedTerracottaBlock || SchematicBlock instanceof ObserverBlock || SchematicBlock instanceof RepeaterBlock || SchematicBlock instanceof TrapdoorBlock ||
+                SchematicBlock instanceof ComparatorBlock || SchematicBlock instanceof DispenserBlock || SchematicBlock instanceof PistonBlock || SchematicBlock instanceof StairsBlock;
     }
 
     private static Direction applyPlacementFacing(BlockState stateSchematic, Direction side, BlockState stateClient) {
