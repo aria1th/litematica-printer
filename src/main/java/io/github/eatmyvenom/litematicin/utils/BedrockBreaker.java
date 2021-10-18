@@ -42,6 +42,7 @@ import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class BedrockBreaker {
     private final static List<PositionCache> positionCache = new ArrayList<>();
@@ -185,12 +186,22 @@ public class BedrockBreaker {
     }
 
     public static void removeScheduledPos(MinecraftClient mc) {
-        for (Long position : targetPosMap.keySet()) {
+        for (Long position : targetPosMap.keySet().stream().filter(position ->
+                targetPosMap.get(position) != null && CurrentTick - targetPosMap.get(position).getSysTime() > 200L && targetPosMap.get(position).isClear()).collect(Collectors.toList())){
+            targetPosMap.remove(position);
+        }
+        for (Long position : targetPosMap.keySet().stream().filter(position ->
+                targetPosMap.get(position).canSafeRemove(mc.world)).collect(Collectors.toList())){
+            targetPosMap.remove(position);
+        }
+        /*
+         for (Long position : targetPosMap.keySet()) {
             PositionCache item = targetPosMap.get(position);
             if (item != null && CurrentTick - item.getSysTime() > 10000L && item.isClear() ) {
                 targetPosMap.put(position,null);
             }
         }
+        */
     }
 
     public static boolean canPlaceAt(Direction lv, World world, BlockPos pos) {
@@ -308,10 +319,11 @@ public class BedrockBreaker {
     }
 
     public static boolean positionAnyNear(MinecraftClient mc,BlockPos pos, double distance) {
+        //targetPosMap.keySet().stream().anyMatch(longPos -> pos.isWithinDistance(BlockPos.fromLong(longPos),distance) && targetPosMap.get(longPos)!= null && !targetPosMap.get(longPos).isClear() )
         for (Long position : targetPosMap.keySet()) {
             @Nullable PositionCache item = targetPosMap.get(position);
             if (item == null) {continue;}
-            if (isPositionInRange(mc, BlockPos.fromLong(position)) && item.distanceLessThan(pos, distance) && !item.isClear()) {
+            if (!isPositionInRange(mc, BlockPos.fromLong(position)) || item.distanceLessThan(pos, distance) && !item.isClear()) {
                 return true;
             }
         }
@@ -335,16 +347,29 @@ public class BedrockBreaker {
     }
 
     public static void switchTool(MinecraftClient mc, BlockPos pos) {
-        int bestSlotId = Breaker.getBestItemSlotIdToMineBlock(mc, pos);
+        int bestSlotId = getBestItemSlotIdToMineBlock(mc);
         PlayerInventory inv = mc.player.getInventory();
         if (mc.player.getInventory().selectedSlot != bestSlotId) {
             mc.player.getInventory().selectedSlot = bestSlotId;
         }
         mc.getNetworkHandler().sendPacket(new UpdateSelectedSlotC2SPacket(inv.selectedSlot));
     }
-
+    public static int getBestItemSlotIdToMineBlock(MinecraftClient mc) {
+        int bestSlot = 0;
+        float bestSpeed = 0;
+        BlockState state = Blocks.PISTON.getDefaultState();
+        for (int i = 8; i >= 0; i--) {
+            float speed = Breaker.getBlockBreakingSpeed(state, mc, i);
+            if ((speed > bestSpeed && speed > 1.0F)
+                    || (speed >= bestSpeed && !mc.player.getInventory().getStack(i).isDamageable())) {
+                bestSlot = i;
+                bestSpeed = speed;
+            }
+        }
+        return bestSlot;
+    }
     public static void ProcessBreaking(MinecraftClient mc, BlockPos pos, Direction facing, BlockPos torchPos) {
-        System.out.println(pos.toShortString());
+        //System.out.println(pos.toShortString()); //debug where?
         switchTool(mc, pos);
         if (mc.world.getBlockState(torchPos.down()).getBlock() instanceof SlimeBlock) {
             attackBlock(mc, torchPos.down(), Direction.UP);
@@ -357,6 +382,8 @@ public class BedrockBreaker {
     }
 
     public static void attackBlock(MinecraftClient mc, BlockPos pos, Direction direction) {
+        if(mc.world.getBlockState(pos).isAir()){return;}
+        //System.out.println(pos.toShortString());
         if (mc.interactionManager.attackBlock(pos,direction) && mc.world.getBlockState(pos).isAir()){
         positionStorage.registerPos(pos, false);}
         //mc.getNetworkHandler().sendPacket(new PlayerActionC2SPacket(PlayerActionC2SPacket.Action.START_DESTROY_BLOCK, pos, direction));
@@ -393,12 +420,16 @@ public class BedrockBreaker {
         }
     }
     public static void scheduledTickHandler(MinecraftClient mc, @Nullable BlockPos pos) {
+        rangeX = EASY_PLACE_MODE_RANGE_X.getIntegerValue();
+        rangeY = EASY_PLACE_MODE_RANGE_Y.getIntegerValue();
+        rangeZ = EASY_PLACE_MODE_RANGE_Z.getIntegerValue(); //reset range values
+        MaxReach = Math.max(Math.max(rangeX, rangeY), rangeZ);
         removeScheduledPos(mc);
         processRemainder(mc);
         if (pos != null && isPositionInRange(mc, pos)  && canProcess(mc, pos) && new Date().getTime() - lastPlaced > 1000.0 * EASY_PLACE_MODE_DELAY.getDoubleValue()
         ) {
             TorchPath torch = getPistonTorchPosDir(mc, pos);
-            if (torch != null) {
+            if (torch != null && torch.isAllPosInRange(mc)) {
                 lastPlaced = new Date().getTime();
                 BlockPos TorchPos = torch.TorchPos;
                 Direction TorchFacing = torch.Torchfacing;
@@ -414,7 +445,7 @@ public class BedrockBreaker {
         for (Long posLong : targetPosMap.keySet()) {
             PositionCache item = targetPosMap.get(posLong);
             BlockPos position = BlockPos.fromLong(posLong);
-            if (item == null) {continue;}
+            if (item == null || !item.isAllPosInRange(mc)) {continue;}
             if (!isPositionInRange(mc, position)  && !item.isAvailable()) { //
                 continue;
             }
@@ -435,16 +466,19 @@ public class BedrockBreaker {
                 resetFailure(mc, item);
                 item.markFail();
                 item.markClear();
+                continue;
             }
             if (item.isHandled() && item.isAvailable() && isBlockNotInstantBreakable(mc.world.getBlockState(item.gettargetPos()).getBlock())) {
                 item.markFail();
                 attackBlock(mc, item.getPos(), Direction.DOWN);
                 resetFailure(mc, item);
                 item.markClear();
+                continue;
             } else if (item.isHandled() && item.isAvailable() && !isBlockNotInstantBreakable(mc.world.getBlockState(item.gettargetPos()).getBlock())) {
                 attackBlock(mc, item.getPos(), Direction.DOWN);
                 resetFailure(mc, item);
                 item.markClear();
+                continue;
             }
             if (!item.isClear() && item.isAvailable()) {
                 attackBlock(mc, item.getPos(), Direction.DOWN);
@@ -515,7 +549,12 @@ public class BedrockBreaker {
             this.SysTime = CurrentTick;
             //this.SysTime = now;
         }
-
+        public boolean isAllPosInRange(MinecraftClient mc){
+            return mc.player.squaredDistanceTo(Vec3d.ofCenter(this.pos))< MaxReach* MaxReach && mc.player.squaredDistanceTo(Vec3d.ofCenter(this.torchPos))< MaxReach* MaxReach && mc.player.squaredDistanceTo(Vec3d.ofCenter(this.targetPos))< MaxReach* MaxReach;
+        }
+        public boolean canSafeRemove(World world){
+            return world.getBlockState(this.targetPos).isAir() && world.getBlockState(this.torchPos).isAir() && world.getBlockState(this.pos).isAir();
+        }
         public boolean isHandled() {
             return this.Handled;
         }
@@ -582,6 +621,9 @@ public class BedrockBreaker {
             System.out.println(this.Pistonfacing);
             System.out.println("piston2");
             System.out.println(this.PistonBreakableFacing);
+        }
+        public boolean isAllPosInRange(MinecraftClient mc){
+            return  mc.player.squaredDistanceTo(Vec3d.ofCenter(this.TorchPos))< MaxReach* MaxReach && mc.player.squaredDistanceTo(Vec3d.ofCenter(this.PistonPos))< MaxReach* MaxReach;
         }
 
     }
