@@ -49,7 +49,7 @@ public class BedrockBreaker {
     public static boolean Lock = false;
     public static Long CurrentTick = 0L;
     static List<Direction> HORIZONTAL = List.of(Direction.EAST, Direction.WEST, Direction.NORTH, Direction.SOUTH);
-    private static Map<Long, PositionCache> targetPosMap = new LinkedHashMap<Long, PositionCache>();
+    private static final Map<Long, PositionCache> targetPosMap = new LinkedHashMap<Long, PositionCache>();
     static int rangeX = EASY_PLACE_MODE_RANGE_X.getIntegerValue();
     static int rangeY = EASY_PLACE_MODE_RANGE_Y.getIntegerValue();
     static int rangeZ = EASY_PLACE_MODE_RANGE_Z.getIntegerValue();
@@ -64,18 +64,18 @@ public class BedrockBreaker {
             if (!mc.world.getBlockState(pistonPos).isAir() || !isBlockPosinYRange(pistonPos)) {
                 continue;
             }
-            for (Direction Pistonfacing : Direction.values()) {
-                if (Pistonfacing.getOpposite() == lv) {
+            for (Direction pistonFacing : Direction.values()) {
+                if (pistonFacing.getOpposite() == lv) {
                     continue;
                 }
-                BlockPos checkAir = pistonPos.offset(Pistonfacing);
+                BlockPos checkAir = pistonPos.offset(pistonFacing);
                 if (!isBlockPosinYRange(checkAir)) {
                     continue;
                 }
                 if (mc.world.getBlockState(checkAir).isAir() || mc.world.getBlockState(checkAir).getMaterial().isReplaceable()) {
                     TorchData torchdata = getPossiblePowerableTorchPosFace(mc, bedrockPos, pistonPos, checkAir);
                     if (torchdata != null) {
-                        TorchPath torchPath = new TorchPath(torchdata.TorchPos, torchdata.Torchfacing, pistonPos, Pistonfacing, lv.getOpposite());
+                        TorchPath torchPath = new TorchPath(torchdata.TorchPos, torchdata.Torchfacing, pistonPos, pistonFacing, lv.getOpposite());
                         if (torchdata.SlimePos != null) {
                             torchPath.slimePos = torchdata.SlimePos;
                         }
@@ -200,7 +200,7 @@ public class BedrockBreaker {
     }
 
     public static void placePiston(MinecraftClient mc, BlockPos pos, Direction facing) {
-        positionStorage.registerPos(pos, true);
+        if (positionStorage.hasPos(pos)){return;}
         ItemStack PistonStack = Items.PISTON.getDefaultStack();
         InventoryUtils.setPickedItemToHand(PistonStack, mc);
         mc.getNetworkHandler().sendPacket(new UpdateSelectedSlotC2SPacket(mc.player.getInventory().selectedSlot));
@@ -302,11 +302,7 @@ public class BedrockBreaker {
             return false;
         }
         if (!(targetPosMap.get(pos.asLong()) == null)) {
-            if (targetPosMap.get(pos.asLong()).isFail()) {
-                return true;
-            } else {
-                return false;
-            }
+            return targetPosMap.get(pos.asLong()).isFail();
         }
         return true;
     }
@@ -326,22 +322,16 @@ public class BedrockBreaker {
         PlayerInventory inv = mc.player.getInventory();
         ItemStack PistonStack = Items.PISTON.getDefaultStack();
         ItemStack RedstoneTorchStack = Items.REDSTONE_TORCH.getDefaultStack();
-        if (inv.getSlotWithStack(PistonStack) == -1 || inv.getSlotWithStack(RedstoneTorchStack) == -1) {
-            return false;
-        }
+        return inv.getSlotWithStack(PistonStack) != -1 && inv.getSlotWithStack(RedstoneTorchStack) != -1;
         //if (inv.getSlotWithStack(Breakable)== -1 && inv.getSlotWithStack(Alternative)==-1){
         //    System.out.println("no pickaxe");
         //    return false;
         //}
-        return true;
     }
     public static boolean canPlaceSlime(MinecraftClient mc) {
         PlayerInventory inv = mc.player.getInventory();
         ItemStack SlimeStack = Items.SLIME_BLOCK.getDefaultStack();
-        if (inv.getSlotWithStack(SlimeStack) == -1) {
-            return false;
-        }
-        return true;
+        return inv.getSlotWithStack(SlimeStack) != -1;
     }
 
     public static void switchTool(MinecraftClient mc, BlockPos pos) {
@@ -354,30 +344,35 @@ public class BedrockBreaker {
     }
 
     public static void ProcessBreaking(MinecraftClient mc, BlockPos pos, Direction facing, BlockPos torchPos) {
+        System.out.println(pos.toShortString());
         switchTool(mc, pos);
-        attackBlock(mc, torchPos, Direction.UP);
-        attackBlock(mc, pos, Direction.UP);
-        placePiston(mc, pos, facing);
         if (mc.world.getBlockState(torchPos.down()).getBlock() instanceof SlimeBlock) {
             attackBlock(mc, torchPos.down(), Direction.UP);
+        } else {
+            attackBlock(mc, torchPos, Direction.UP);
         }
+        attackBlock(mc, pos, Direction.UP);
+        placePiston(mc, pos, facing);
+
     }
 
     public static void attackBlock(MinecraftClient mc, BlockPos pos, Direction direction) {
-        positionStorage.registerPos(pos, false);
-        mc.getNetworkHandler().sendPacket(new PlayerActionC2SPacket(PlayerActionC2SPacket.Action.START_DESTROY_BLOCK, pos, direction));
+        if (mc.interactionManager.attackBlock(pos,direction) && mc.world.getBlockState(pos).isAir()){
+        positionStorage.registerPos(pos, false);}
+        //mc.getNetworkHandler().sendPacket(new PlayerActionC2SPacket(PlayerActionC2SPacket.Action.START_DESTROY_BLOCK, pos, direction));
     }
 
     public static void resetFailure(MinecraftClient mc, PositionCache FailedCache) {
         BlockPos pos = FailedCache.getPos();
         BlockPos torchPos = FailedCache.getTorch();
-        switchTool(mc, pos);
-        attackBlock(mc, torchPos, Direction.UP);
-        attackBlock(mc, pos, Direction.UP);
-
         if (mc.world.getBlockState(torchPos.down()).getBlock() instanceof SlimeBlock) {
             attackBlock(mc, torchPos.down(), Direction.UP);
+        } else {
+            attackBlock(mc, torchPos, Direction.UP);
         }
+        switchTool(mc, pos);
+        attackBlock(mc, pos, Direction.UP);
+        FailedCache.setFalse();
     }
     public static boolean isBlockNotInstantBreakable (Block block) {
         return block.equals(Blocks.BEDROCK) || block.equals(Blocks.OBSIDIAN);
@@ -414,6 +409,7 @@ public class BedrockBreaker {
                 placePiston(mc, PistonPos, PistonFacing);
                 targetPosMap.put(pos.asLong(), new PositionCache(PistonPos, PistonExtendFacing, TorchPos, pos, lastPlaced));
             }
+            positionStorage.refresh(mc.world);
         }
         for (Long posLong : targetPosMap.keySet()) {
             PositionCache item = targetPosMap.get(posLong);
@@ -483,7 +479,10 @@ public class BedrockBreaker {
             this.Fail = false;
             this.Clear = false;
         }
-
+        public void setFalse(){
+            positionStorage.registerPos(this.pos, false);
+            positionStorage.registerPos(this.torchPos, false);
+        }
         public BlockPos getPos() {
             return this.pos;
         }
@@ -530,7 +529,7 @@ public class BedrockBreaker {
         }
 
         public boolean isAvailable() {
-            return CurrentTick - this.SysTime > 2L;
+            return CurrentTick - this.SysTime > Math.max(4, (int) (20 * EASY_PLACE_MODE_DELAY.getDoubleValue()));
             //return new Date().getTime() - SysTime > 2000.0 * EASY_PLACE_MODE_DELAY.getDoubleValue();
         }
         public long getSysTime() {

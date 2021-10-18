@@ -16,18 +16,18 @@ import net.minecraft.util.math.Direction;
  * The breaking needs to be done every tick, since the WorldUtils.easyPlaceOnUseTick (which calls our Printer)
  * is called multiple times per tick we cannot break blocks through that method. Or the speed will be twice the
  * normal speed and detectable by anti-cheats.
- * 
+ *
  *
  */
 public class Breaker implements IClientTickHandler {
-	
+
 	private boolean breakingBlock = false;
 	private BlockPos pos;
-	
+
 	public Breaker() {
 		TickHandler.getInstance().registerClientTickHandler(this);
 	}
-	
+
 	public void startBreakingBlock(BlockPos pos, MinecraftClient mc) {
 		this.breakingBlock = true;
 		this.pos = pos;
@@ -40,11 +40,11 @@ public class Breaker implements IClientTickHandler {
 		// Start breaking
 		TickHandler.getInstance().registerClientTickHandler(this);
 	}
-	
+
 	public boolean isBreakingBlock() {
 		return this.breakingBlock;
 	}
-	
+
 	public static int getBestItemSlotIdToMineBlock(MinecraftClient mc, BlockPos blockToMine) {
 		int bestSlot = 0;
 		float bestSpeed = 0;
@@ -59,39 +59,39 @@ public class Breaker implements IClientTickHandler {
 		}
 		return bestSlot;
 	}
-	
+
 	private static float getBlockBreakingSpeed(BlockState block, MinecraftClient mc, int slotId) {
 		float f = ((ItemStack)mc.player.getInventory().main.get(slotId)).getMiningSpeedMultiplier(block);
-	    if (f > 1.0F) {
-	       int i = EnchantmentHelper.getEfficiency(mc.player);
-	       ItemStack itemStack = mc.player.getInventory().getMainHandStack();
-	       if (i > 0 && !itemStack.isEmpty()) {
-	          f += (float)(i * i + 1);
-	       }
-	    }
-	    return f;
+		if (f > 1.0F) {
+			int i = EnchantmentHelper.getEfficiency(mc.player);
+			ItemStack itemStack = mc.player.getInventory().getMainHandStack();
+			if (i > 0 && !itemStack.isEmpty()) {
+				f += (float)(i * i + 1);
+			}
+		}
+		return f;
 	}
 
 	@Override
 	public void onClientTick(MinecraftClient mc) {
 		if (!isBreakingBlock()) return;
 		if (mc.player == null) return;
-		
+
 		if (Hotkeys.EASY_PLACE_ACTIVATION.getKeybind().isKeybindHeld() &&
-	            KeybindMulti.isKeyDown(KeybindMulti.getKeyCode(mc.options.keyUse))) { // Only continue mining while the correct keys are pressed
+				KeybindMulti.isKeyDown(KeybindMulti.getKeyCode(mc.options.keyUse))) { // Only continue mining while the correct keys are pressed
 			Direction side = Direction.values()[0];
-			
+
 			if (mc.interactionManager.updateBlockBreakingProgress(pos, side)) {
 				mc.particleManager.addBlockBreakingParticles(pos, side);
 				mc.player.swingHand(Hand.MAIN_HAND);
 			}
 		}
-		
+
 		if (!mc.world.getBlockState(pos).isAir()) return; // If block isn't broken yet, dont stop
-		
+
 		// Stop breaking
 		this.breakingBlock = false;
 		mc.interactionManager.cancelBlockBreaking();
 	}
-	
+
 }
