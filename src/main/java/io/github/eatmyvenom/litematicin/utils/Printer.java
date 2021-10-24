@@ -406,7 +406,7 @@ public class Printer {
                                 if (facingSchematic == facingClient) {
                                     int clickTimes = 0;
                                     Direction side = Direction.NORTH;
-                                    if (sBlock instanceof RepeaterBlock) {
+                                    if (sBlock instanceof RepeaterBlock && !ACCURATE_BLOCK_PLACEMENT.getBooleanValue()) {
                                         int clientDelay = stateClient.get(RepeaterBlock.DELAY);
                                         int schematicDelay = stateSchematic.get(RepeaterBlock.DELAY);
                                         if (clientDelay != schematicDelay) {
@@ -418,7 +418,7 @@ public class Printer {
                                             }
                                         }
                                         side = Direction.UP;
-                                    } else if (sBlock instanceof ComparatorBlock) {
+                                    } else if (sBlock instanceof ComparatorBlock &&!ACCURATE_BLOCK_PLACEMENT.getBooleanValue()) {
                                         if (stateSchematic.get(ComparatorBlock.MODE) != stateClient
                                                 .get(ComparatorBlock.MODE))
                                             clickTimes = 1;
@@ -524,7 +524,7 @@ public class Printer {
                                     Direction facingClient = fi.dy.masa.malilib.util.BlockUtils.getFirstPropertyFacingValue(stateClient);
                                     ShouldFix = facingSchematic != facingClient;
                                     ShapeBoolean = facingClient.getOpposite().equals(facingSchematic);
-                                } 
+                                }
                                 Direction side = Direction.UP;
                                 if (ShapeBoolean) {
                                     Hand hand = Hand.MAIN_HAND;
@@ -534,7 +534,7 @@ public class Printer {
                                     interact++;
                                 } else if (breakBlocks && ShouldFix) { //cannot fix via flippincactus
                                     mc.interactionManager.attackBlock(pos, Direction.DOWN);//by one hit possible?
-                                    breaker.startBreakingBlock(pos, mc); //register 
+                                    breaker.startBreakingBlock(pos, mc); //register
                                     return ActionResult.SUCCESS;
                                 }
                                 continue;
@@ -571,7 +571,7 @@ public class Printer {
                         }
                     } else if (sBlock instanceof NetherPortalBlock) {
                         stack = Items.FIRE_CHARGE.getDefaultStack();
-                    } 
+                    }
 
                     if ((ClearArea || !stack.isEmpty()) && (mc.player.getAbilities().creativeMode || mc.player.getInventory().getSlotWithStack(stack) != -1)) {
 
@@ -781,7 +781,7 @@ public class Printer {
                         // checked above)
                         cacheEasyPlacePosition(pos, false);
                         float originYaw = mc.player.getYaw(1.0f);
-                        if (stateSchematic.getBlock() instanceof AbstractRailBlock) {
+                        if (stateSchematic.getBlock() instanceof AbstractRailBlock && !ADVANCED_ACCURATE_BLOCK_PLACEMENT.getBooleanValue()) {
                             float yaw;
                             if (facing == Direction.NORTH) {
                                 yaw = 0f;
@@ -807,7 +807,7 @@ public class Printer {
                         }
                         mc.interactionManager.interactBlock(mc.player, mc.world, hand, hitResult);
                         interact++;
-                        if (stateSchematic.getBlock() instanceof AbstractRailBlock) {
+                        if (stateSchematic.getBlock() instanceof AbstractRailBlock && !ADVANCED_ACCURATE_BLOCK_PLACEMENT.getBooleanValue()) {
                             mc.getNetworkHandler().sendPacket(new PlayerMoveC2SPacket.LookAndOnGround(originYaw, mc.player.getPitch(1.0f), mc.player.isOnGround()));
                         }
                         if (stateSchematic.getBlock() instanceof SlabBlock
@@ -908,7 +908,7 @@ public class Printer {
             Posoffset = pos.up();
             OffsetStateSchematic = world.getBlockState(Posoffset);
             OffsetStateClient = mc.world.getBlockState(Posoffset);
-            if (OffsetStateSchematic.getBlock() instanceof WallBlock || OffsetStateSchematic.getBlock() instanceof ComparatorBlock || 
+            if (OffsetStateSchematic.getBlock() instanceof WallBlock || OffsetStateSchematic.getBlock() instanceof ComparatorBlock ||
                     OffsetStateSchematic.getBlock() instanceof RepeaterBlock || OffsetStateSchematic.getBlock() instanceof FallingBlock ||
                     OffsetStateSchematic.getBlock() instanceof AbstractRailBlock || OffsetStateSchematic.getBlock() instanceof BubbleColumnBlock ||
                     OffsetStateSchematic.getBlock() instanceof FluidBlock || OffsetStateSchematic.getBlock() instanceof RedstoneWireBlock ||
@@ -1261,7 +1261,7 @@ public class Printer {
         Integer railEnumCode = getRailShapeOrder(state);
         final int propertyIncrement = 16;
         double relX = hitVecIn.x - pos.getX();
-        if (facing == null && railEnumCode == null)
+        if (facing == null && railEnumCode == 32 && !(block instanceof SlabBlock))
         {
             return new Vec3d (code, y, z);
         }
@@ -1269,7 +1269,7 @@ public class Printer {
         {
             code = facing.getId();
         }
-        else if (railEnumCode != null)
+        else if (railEnumCode != 32)
         {
             code = railEnumCode;
         }
@@ -1291,9 +1291,10 @@ public class Printer {
         }
         else if (block instanceof SlabBlock && state.get(SlabBlock.TYPE) != SlabType.DOUBLE)
         {
-            if (state.get(SlabBlock.TYPE) == SlabType.TOP)
+            if (state.get(SlabBlock.TYPE) == SlabType.TOP) //side should not be down
             {
                 y = pos.getY() + 0.9;
+                //code += propertyIncrement; //slab type by protocol soon?
             }
             else
             {
