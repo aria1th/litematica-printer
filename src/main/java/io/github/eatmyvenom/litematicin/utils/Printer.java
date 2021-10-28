@@ -204,21 +204,28 @@ public class Printer {
 
     @Environment(EnvType.CLIENT)
     public static ActionResult doPrinterAction(MinecraftClient mc) {
-        if (breaker.isBreakingBlock()) return ActionResult.SUCCESS;
-        if (new Date().getTime() < lastPlaced + 1000.0 * EASY_PLACE_MODE_DELAY.getDoubleValue())
-            return ActionResult.PASS;
-
-
-        RayTraceWrapper traceWrapper = RayTraceUtils.getGenericTrace(mc.world, mc.player, 6);
-        //RayTraceWrapper traceWrapper = RayTraceUtils.getGenericTrace(mc.world, mc.player, 6, true);
-        if (traceWrapper == null) {
-            return ActionResult.FAIL;
+        if (breaker.isBreakingBlock()) {
+            return ActionResult.SUCCESS;
         }
-        BlockHitResult trace = traceWrapper.getBlockHitResult();
-        BlockPos tracePos = trace.getBlockPos();
+        if (new Date().getTime() < lastPlaced + 1000.0 * EASY_PLACE_MODE_DELAY.getDoubleValue())
+        {
+            return ActionResult.PASS;
+        }
+        BlockPos tracePos = mc.player.getBlockPos();
         int posX = tracePos.getX();
         int posY = tracePos.getY();
         int posZ = tracePos.getZ();
+
+        RayTraceWrapper traceWrapper = RayTraceUtils.getGenericTrace(mc.world, mc.player, 6);
+        //RayTraceWrapper traceWrapper = RayTraceUtils.getGenericTrace(mc.world, mc.player, 6, true); previous litematica code
+        if (traceWrapper!= null){
+            BlockHitResult trace = traceWrapper.getBlockHitResult();
+            tracePos = trace.getBlockPos();
+            posX = tracePos.getX();
+            posY = tracePos.getY();
+            posZ = tracePos.getZ();
+        }
+
         boolean ClearArea = CLEAR_AREA_MODE.getBooleanValue(); // if its true, will ignore everything and remove fluids.
         boolean UseCobble = CLEAR_AREA_MODE_COBBLESTONE.getBooleanValue() && ClearArea;
         boolean ClearSnow = CLEAR_AREA_MODE_SNOWPREVENT.getBooleanValue() && ClearArea;
@@ -356,7 +363,9 @@ public class Printer {
                     if (!ClearArea && breakBlocks && stateSchematic != null && !(stateClient.getBlock() instanceof SnowBlock) &&
                             !stateClient.isAir() && !(stateClient.getBlock() instanceof FluidBlock) && !(stateClient.getBlock() instanceof BubbleColumnBlock) &&
                             !stateClient.isOf(Blocks.PISTON_HEAD) && !stateClient.isOf(Blocks.MOVING_PISTON)) {
-                        if (!stateClient.getBlock().getName().equals(stateSchematic.getBlock().getName()) && dx * dx + Math.pow(dy + 1.5, 2) + dz * dz <= MaxReach * MaxReach) {
+                        if (!stateClient.getBlock().getName().equals(stateSchematic.getBlock().getName()) ||
+                                (stateClient.getBlock() instanceof SlabBlock && stateSchematic.getBlock() instanceof SlabBlock && stateClient.get(SlabBlock.TYPE)!= stateSchematic.get(SlabBlock.TYPE))
+                                && dx * dx + Math.pow(dy + 1.5, 2) + dz * dz <= MaxReach * MaxReach) {
 
                             if (mc.player.getAbilities().creativeMode) {
                                 mc.interactionManager.attackBlock(pos, Direction.DOWN);
@@ -373,14 +382,14 @@ public class Printer {
                             } else if (BEDROCK_BREAKING.getBooleanValue()) {
                                 BedrockBreaker.scheduledTickHandler(mc, null);
                                 continue;
-                            } else if (!BedrockBreaker.isBlockNotInstantBreakable(stateClient.getBlock()) && !BEDROCK_BREAKING.getBooleanValue()){ // For survival
+                            } else { // For survival
                                 mc.interactionManager.attackBlock(pos, Direction.DOWN); //yes, this seemingly needless line adds functionality but paper would not allow it.
                                 breaker.startBreakingBlock(pos, mc); // it need to avoid unbreakable blocks and just added and lava, but its not block so somehow made it work
                                 return ActionResult.SUCCESS;
                             }
                         }
                     }
-                    if (BEDROCK_BREAKING.getBooleanValue()) {continue;} // don't process other actions
+                    if (BEDROCK_BREAKING.getBooleanValue() || (mc.player.isSneaking() && breakBlocks)) {continue;} // don't process other actions
                     if (!(stateSchematic.getBlock() instanceof NetherPortalBlock) && stateSchematic.isAir() && !ClearArea)
                         continue;
 
@@ -584,7 +593,7 @@ public class Printer {
                                 mc.interactionManager.interactBlock(mc.player, mc.world, hand, hitResult);
                                 if (cBlock instanceof FluidBlock || (cBlock instanceof SnowBlock)) {
                                     lastPlaced = new Date().getTime();
-                                    return ActionResult.SUCCESS;
+                                    continue;
                                 }
                                 continue;
                             }
@@ -628,7 +637,7 @@ public class Printer {
                             BlockHitResult hitResult = new BlockHitResult(hitPos, Direction.DOWN, new BlockPos(x, y + 1, z), false);
                             mc.interactionManager.interactBlock(mc.player, mc.world, hand, hitResult);
                             lastPlaced = new Date().getTime();
-                            return ActionResult.SUCCESS;
+                            return ActionResult.SUCCESS; //wait for next tick
                         }
                         Direction facing = fi.dy.masa.malilib.util.BlockUtils
                                 .getFirstPropertyFacingValue(stateSchematic);
@@ -754,7 +763,7 @@ public class Printer {
                         // Abort if the required item was not able to be pick-block'd
                         if (!hasPicked) {
                             if (!doSchematicWorldPickBlock(true, mc, stateSchematic, pos)) {
-                                return ActionResult.FAIL;
+                                continue;
                             }
                             hasPicked = true;
                             pickedBlock = stateSchematic.getBlock().getName();
