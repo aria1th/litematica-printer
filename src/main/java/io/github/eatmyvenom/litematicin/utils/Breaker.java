@@ -5,6 +5,7 @@ import fi.dy.masa.malilib.event.TickHandler;
 import fi.dy.masa.malilib.hotkeys.KeybindMulti;
 import fi.dy.masa.malilib.interfaces.IClientTickHandler;
 import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.item.ItemStack;
@@ -77,10 +78,8 @@ public class Breaker implements IClientTickHandler {
 		if (!isBreakingBlock()) return;
 		if (mc.player == null) return;
 
-		if (Hotkeys.EASY_PLACE_ACTIVATION.getKeybind().isKeybindHeld() &&
-				KeybindMulti.isKeyDown(KeybindMulti.getKeyCode(mc.options.keyUse))) { // Only continue mining while the correct keys are pressed
+		if (Hotkeys.EASY_PLACE_ACTIVATION.getKeybind().isKeybindHeld()) { // Only continue mining while the correct keys are pressed
 			Direction side = Direction.values()[0];
-
 			if (mc.interactionManager.updateBlockBreakingProgress(pos, side)) {
 				mc.particleManager.addBlockBreakingParticles(pos, side);
 				mc.player.swingHand(Hand.MAIN_HAND);

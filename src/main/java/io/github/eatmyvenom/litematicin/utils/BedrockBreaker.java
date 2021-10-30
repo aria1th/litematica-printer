@@ -107,7 +107,7 @@ public class BedrockBreaker {
                 continue;
             }
             // check torch can be placed
-            if (TorchBlock.sideCoversSmallSquare(world, torchCheck, Direction.UP)) {
+            if (TorchBlock.sideCoversSmallSquare(world, torchCheck.down(), Direction.DOWN)) {
                 return new TorchData(torchCheck, Direction.DOWN);
             } else if (forceSlimeBlock && canPlaceSlime(mc)) {
                 BlockPos slimePos = torchCheck.down();
@@ -139,7 +139,7 @@ public class BedrockBreaker {
                 continue;
             }
             // check torch can be placed
-            if (TorchBlock.sideCoversSmallSquare(world, torchCheck, Direction.UP)) {
+            if (TorchBlock.sideCoversSmallSquare(world, torchCheck.down(), Direction.DOWN)) {
                 return new TorchData(torchCheck, Direction.DOWN);
             } else if (forceSlimeBlock && canPlaceSlime(mc)) {
                 BlockPos slimePos = torchCheck.down();
@@ -149,7 +149,7 @@ public class BedrockBreaker {
                 }
                 if (world.getBlockState(slimePos).isAir() || world.getBlockState(slimePos).getMaterial().isReplaceable()) {
                     TorchData torchData = new TorchData(torchCheck, Direction.DOWN);
-                    placeSlime(mc, slimePos);
+                    //placeSlime(mc, slimePos);
                     torchData.registerSlimePos(slimePos);
                     return torchData;
                 }
@@ -169,14 +169,14 @@ public class BedrockBreaker {
             if (!world.getBlockState(torchCheck).isAir() && !world.getBlockState(torchCheck).getMaterial().isReplaceable()) {
                 return null;
             }
-            if (TorchBlock.sideCoversSmallSquare(world, torchCheck, Direction.UP)) {
+            if (TorchBlock.sideCoversSmallSquare(world, torchCheck.down(), Direction.DOWN)) {
                 return new TorchData(torchCheck, Direction.DOWN);
             } else if (forceSlimeBlock && canPlaceSlime(mc)) {
                 BlockPos slimePos = torchCheck.down();
                 if (slimePos.equals(pos2)) {return null;}
                 if (isBlockPosinYRange(slimePos) && world.getBlockState(slimePos).isAir() || world.getBlockState(slimePos).getMaterial().isReplaceable()) {
                     TorchData torchData = new TorchData(torchCheck, Direction.DOWN);
-                    placeSlime(mc, slimePos);
+                    //placeSlime(mc, slimePos);
                     torchData.registerSlimePos(slimePos);
                     return torchData;
                 }
@@ -312,7 +312,7 @@ public class BedrockBreaker {
         if (positionAnyNear(mc, pos, SafetyDistance)) {
             return false;
         }
-        if (!(targetPosMap.get(pos.asLong()) == null)) {
+        if (targetPosMap.containsKey(pos.asLong())) {
             return targetPosMap.get(pos.asLong()).isFail();
         }
         return true;
@@ -323,7 +323,7 @@ public class BedrockBreaker {
         for (Long position : targetPosMap.keySet()) {
             @Nullable PositionCache item = targetPosMap.get(position);
             if (item == null) {continue;}
-            if (!isPositionInRange(mc, BlockPos.fromLong(position)) || item.distanceLessThan(pos, distance) && !item.isClear()) {
+            if (isPositionInRange(mc, BlockPos.fromLong(position)) && item.distanceLessThan(pos, distance) && !item.isClear()) {
                 return true;
             }
         }
@@ -368,11 +368,11 @@ public class BedrockBreaker {
         }
         return bestSlot;
     }
-    public static void ProcessBreaking(MinecraftClient mc, BlockPos pos, Direction facing, BlockPos torchPos) {
+    public static void ProcessBreaking(MinecraftClient mc, BlockPos pos, Direction facing, BlockPos torchPos, BlockPos slimePos) {
         //System.out.println(pos.toShortString()); //debug where?
         switchTool(mc, pos);
-        if (mc.world.getBlockState(torchPos.down()).getBlock() instanceof SlimeBlock) {
-            attackBlock(mc, torchPos.down(), Direction.UP);
+        if (slimePos != null && !mc.world.getBlockState(slimePos).isAir()) {
+            attackBlock(mc, slimePos, Direction.UP);
         } else {
             attackBlock(mc, torchPos, Direction.UP);
         }
@@ -392,8 +392,9 @@ public class BedrockBreaker {
     public static void resetFailure(MinecraftClient mc, PositionCache FailedCache) {
         BlockPos pos = FailedCache.getPos();
         BlockPos torchPos = FailedCache.getTorch();
-        if (mc.world.getBlockState(torchPos.down()).getBlock() instanceof SlimeBlock) {
-            attackBlock(mc, torchPos.down(), Direction.UP);
+        BlockPos slimePos = FailedCache.getSlimePos();
+        if (slimePos != null && !mc.world.getBlockState(slimePos).isAir()) {
+            attackBlock(mc, slimePos, Direction.UP);
         } else {
             attackBlock(mc, torchPos, Direction.UP);
         }
@@ -428,6 +429,7 @@ public class BedrockBreaker {
         processRemainder(mc);
         if (pos != null && isPositionInRange(mc, pos)  && canProcess(mc, pos) && new Date().getTime() - lastPlaced > 1000.0 * EASY_PLACE_MODE_DELAY.getDoubleValue()
         ) {
+            System.out.println(pos.toShortString());
             TorchPath torch = getPistonTorchPosDir(mc, pos);
             if (torch != null && torch.isAllPosInRange(mc)) {
                 lastPlaced = new Date().getTime();
@@ -436,9 +438,13 @@ public class BedrockBreaker {
                 BlockPos PistonPos = torch.PistonPos;
                 Direction PistonFacing = torch.Pistonfacing;
                 Direction PistonExtendFacing = torch.PistonBreakableFacing;
+                BlockPos SlimePos = torch.slimePos;
+                if (SlimePos != null) {
+                    placeSlime(mc, SlimePos);
+                }
                 placeTorch(mc, TorchPos, TorchFacing);
                 placePiston(mc, PistonPos, PistonFacing);
-                targetPosMap.put(pos.asLong(), new PositionCache(PistonPos, PistonExtendFacing, TorchPos, pos, lastPlaced));
+                targetPosMap.put(pos.asLong(), new PositionCache(PistonPos, PistonExtendFacing, TorchPos, pos, SlimePos, lastPlaced));
             }
             positionStorage.refresh(mc.world);
         }
@@ -456,7 +462,7 @@ public class BedrockBreaker {
                 continue;
             }
             if (isPistonPowered(mc, item.getPos()) && !item.isHandled() && item.isAvailable()) {
-                ProcessBreaking(mc, item.getPos(), item.getFacing(), item.getTorch());
+                ProcessBreaking(mc, item.getPos(), item.getFacing(), item.getTorch(), item.getSlimePos());
                 item.markHandle();
                 item.updateSystime(new Date().getTime());
                 continue;
@@ -501,6 +507,7 @@ public class BedrockBreaker {
         private boolean Handled;
         private boolean Fail;
         private boolean Clear;
+        private BlockPos slimePos = null;
 
         private PositionCache(BlockPos pos, Direction facing, BlockPos torchPos, BlockPos targetPos, long SysTime) {
             this.pos = pos;
@@ -513,6 +520,18 @@ public class BedrockBreaker {
             this.Fail = false;
             this.Clear = false;
         }
+        private PositionCache(BlockPos pos, Direction facing, BlockPos torchPos, BlockPos targetPos, BlockPos slimePos, long SysTime) {
+            this.pos = pos;
+            this.facing = facing;
+            this.torchPos = torchPos;
+            this.targetPos = targetPos;
+            this.SysTime = CurrentTick;
+            //this.SysTime = SysTime;
+            this.Handled = false;
+            this.Fail = false;
+            this.Clear = false;
+            this.slimePos = slimePos;
+        }
         public void setFalse(){
             positionStorage.registerPos(this.pos, false);
             positionStorage.registerPos(this.torchPos, false);
@@ -520,6 +539,8 @@ public class BedrockBreaker {
         public BlockPos getPos() {
             return this.pos;
         }
+
+        public BlockPos getSlimePos(){ return this.slimePos;}
 
         public BlockPos gettargetPos() {
             return this.targetPos;
@@ -550,10 +571,11 @@ public class BedrockBreaker {
             //this.SysTime = now;
         }
         public boolean isAllPosInRange(MinecraftClient mc){
-            return mc.player.squaredDistanceTo(Vec3d.ofCenter(this.pos))< MaxReach* MaxReach && mc.player.squaredDistanceTo(Vec3d.ofCenter(this.torchPos))< MaxReach* MaxReach && mc.player.squaredDistanceTo(Vec3d.ofCenter(this.targetPos))< MaxReach* MaxReach;
+            return mc.player.squaredDistanceTo(Vec3d.ofCenter(this.pos))< MaxReach* MaxReach && mc.player.squaredDistanceTo(Vec3d.ofCenter(this.torchPos))< MaxReach* MaxReach &&
+                    mc.player.squaredDistanceTo(Vec3d.ofCenter(this.targetPos))< MaxReach* MaxReach && (this.slimePos == null || mc.player.squaredDistanceTo(Vec3d.ofCenter(this.slimePos))< MaxReach* MaxReach );
         }
         public boolean canSafeRemove(World world){
-            return world.getBlockState(this.targetPos).isAir() && world.getBlockState(this.torchPos).isAir() && world.getBlockState(this.pos).isAir();
+            return world.getBlockState(this.targetPos).isAir() && world.getBlockState(this.torchPos).isAir() && world.getBlockState(this.pos).isAir() && (this.slimePos == null || world.getBlockState(this.slimePos).isAir());
         }
         public boolean isHandled() {
             return this.Handled;
@@ -597,11 +619,11 @@ public class BedrockBreaker {
     }
 
     public static class TorchPath {
-        private BlockPos TorchPos;
-        private Direction Torchfacing;
-        private BlockPos PistonPos;
-        private Direction Pistonfacing;
-        private Direction PistonBreakableFacing;
+        private final BlockPos TorchPos;
+        private final Direction Torchfacing;
+        private final BlockPos PistonPos;
+        private final Direction Pistonfacing;
+        private final Direction PistonBreakableFacing;
         private BlockPos slimePos;
 
         public TorchPath(BlockPos TorchPos, Direction Torchfacing, BlockPos PistonPos, Direction Pistonfacing, Direction PistonBreakableFacing) {
@@ -611,7 +633,14 @@ public class BedrockBreaker {
             this.PistonPos = PistonPos;
             this.PistonBreakableFacing = PistonBreakableFacing;
         }
-
+        public TorchPath(BlockPos TorchPos, Direction Torchfacing, BlockPos PistonPos, Direction Pistonfacing, Direction PistonBreakableFacing, BlockPos slimePos) {
+            this.TorchPos = TorchPos;
+            this.Torchfacing = Torchfacing;
+            this.Pistonfacing = Pistonfacing;
+            this.PistonPos = PistonPos;
+            this.slimePos = slimePos;
+            this.PistonBreakableFacing = PistonBreakableFacing;
+        }
         public void toStr() {
             System.out.println("torch");
             System.out.println(this.TorchPos);
@@ -621,16 +650,19 @@ public class BedrockBreaker {
             System.out.println(this.Pistonfacing);
             System.out.println("piston2");
             System.out.println(this.PistonBreakableFacing);
+            System.out.println("slimepos");
+            System.out.println(this.slimePos);
         }
         public boolean isAllPosInRange(MinecraftClient mc){
-            return  mc.player.squaredDistanceTo(Vec3d.ofCenter(this.TorchPos))< MaxReach* MaxReach && mc.player.squaredDistanceTo(Vec3d.ofCenter(this.PistonPos))< MaxReach* MaxReach;
+            return  mc.player.squaredDistanceTo(Vec3d.ofCenter(this.TorchPos))< MaxReach* MaxReach && mc.player.squaredDistanceTo(Vec3d.ofCenter(this.PistonPos))< MaxReach* MaxReach &&
+                    (this.slimePos == null || mc.player.squaredDistanceTo(Vec3d.ofCenter(this.slimePos))< MaxReach* MaxReach );
         }
 
     }
 
     public static class TorchData {
-        private BlockPos TorchPos;
-        private Direction Torchfacing;
+        private final BlockPos TorchPos;
+        private final Direction Torchfacing;
         private BlockPos SlimePos = null;
 
         public TorchData(BlockPos TorchPos, Direction Torchfacing) {

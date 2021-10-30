@@ -382,7 +382,7 @@ public class Printer {
                             } else if (BEDROCK_BREAKING.getBooleanValue()) {
                                 BedrockBreaker.scheduledTickHandler(mc, null);
                                 continue;
-                            } else { // For survival
+                            } else if (!positionStorage.hasPos(pos)){ // For survival
                                 mc.interactionManager.attackBlock(pos, Direction.DOWN); //yes, this seemingly needless line adds functionality but paper would not allow it.
                                 breaker.startBreakingBlock(pos, mc); // it need to avoid unbreakable blocks and just added and lava, but its not block so somehow made it work
                                 return ActionResult.SUCCESS;
