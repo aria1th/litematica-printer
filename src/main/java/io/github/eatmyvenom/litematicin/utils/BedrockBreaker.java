@@ -113,8 +113,10 @@ public class BedrockBreaker {
                 BlockPos slimePos = torchCheck.down();
                 if (slimePos.equals(pos2)) {continue;}
                 if (world.getBlockState(slimePos).isAir() || world.getBlockState(slimePos).getMaterial().isReplaceable()) {
-                    placeSlime(mc, slimePos);
-                    return new TorchData(torchCheck, Direction.DOWN);
+                    //placeSlime(mc, slimePos);
+                    TorchData torchData = new TorchData(torchCheck, Direction.DOWN);
+                    torchData.registerSlimePos(slimePos);
+                    return torchData;
                 }
             } else {
                 for (Direction hd2 : HORIZONTAL) {
@@ -429,7 +431,7 @@ public class BedrockBreaker {
         processRemainder(mc);
         if (pos != null && isPositionInRange(mc, pos)  && canProcess(mc, pos) && new Date().getTime() - lastPlaced > 1000.0 * EASY_PLACE_MODE_DELAY.getDoubleValue()
         ) {
-            System.out.println(pos.toShortString());
+            //System.out.println(pos.toShortString());
             TorchPath torch = getPistonTorchPosDir(mc, pos);
             if (torch != null && torch.isAllPosInRange(mc)) {
                 lastPlaced = new Date().getTime();
