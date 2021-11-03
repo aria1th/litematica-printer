@@ -60,10 +60,7 @@ import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.math.*;
 import net.minecraft.world.World;
 
 public class Printer {
@@ -198,9 +195,51 @@ public class Printer {
         return true;
     }
 
-    public static ActionResult doAccuratePlacePrinter(MinecraftClient mc) {
-        return null;
+    public static ActionResult doEasyPlaceNormally(MinecraftClient mc) { //force normal easyplace action, ignore condition checks
+        RayTraceWrapper traceWrapper = RayTraceUtils.getGenericTrace(mc.world, mc.player, 6);
+        if (traceWrapper == null){
+            return ActionResult.PASS;
+        }
+        BlockHitResult trace = traceWrapper.getBlockHitResult();
+        if (trace == null){
+            return ActionResult.PASS;
+        }
+        World world = SchematicWorldHandler.getSchematicWorld();
+        World clientWorld = mc.world;
+        BlockPos blockPos = trace.getBlockPos();
+        BlockState schematicState = world.getBlockState(blockPos);
+        BlockState clientState = clientWorld.getBlockState(blockPos);
+        if (schematicState.getBlock().getName().equals(clientState.getBlock().getName())) {return ActionResult.FAIL;}
+        ItemStack stack = MaterialCache.getInstance().getRequiredBuildItemForState(schematicState);
+        if (!stack.isEmpty()){
+            InventoryUtils.schematicWorldPickBlock(stack, blockPos, world, mc);
+            Hand hand = EntityUtils.getUsedHandForItem(mc.player, stack);
+            if (hand == null)
+            {
+                return ActionResult.FAIL;
+            }
+            Vec3d hitPos = trace.getPos();
+            Direction sideOrig = trace.getSide();
+            Direction side = applyPlacementFacing(schematicState, sideOrig, clientState);
+            if (ACCURATE_BLOCK_PLACEMENT.getBooleanValue()){
+                hitPos = applyCarpetProtocolHitVec(blockPos,schematicState,hitPos);
+            }
+            else {
+                hitPos = applyHitVec(blockPos,schematicState,hitPos,side);
+            }
+            BlockHitResult hitResult = new BlockHitResult(hitPos, side, blockPos, false);
+            ActionResult actionResult = mc.interactionManager.interactBlock(mc.player, mc.world, hand, hitResult);
+            if (actionResult.isAccepted()){
+                return ActionResult.SUCCESS;
+            }
+            else {
+                return ActionResult.FAIL;
+            }
+        }
+        return ActionResult.FAIL;
     }
+
+
 
     @Environment(EnvType.CLIENT)
     public static ActionResult doPrinterAction(MinecraftClient mc) {
@@ -247,6 +286,9 @@ public class Printer {
         int rangeX = EASY_PLACE_MODE_RANGE_X.getIntegerValue();
         int rangeY = EASY_PLACE_MODE_RANGE_Y.getIntegerValue();
         int rangeZ = EASY_PLACE_MODE_RANGE_Z.getIntegerValue();
+        if (rangeX == 0 && rangeY == 0 && rangeZ == 0 && traceWrapper != null){
+            return doEasyPlaceNormally(mc);
+        }
         boolean foundBox = false;
         if (ClearArea) {
             foundBox = true;
