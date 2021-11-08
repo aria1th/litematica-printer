@@ -385,7 +385,7 @@ public class Printer {
         for (int y = fromY; y <= toY; y++) {
             for (int x = fromX; x <= toX; x++) {
                 for (int z = fromZ; z <= toZ; z++) {
-
+                    boolean shouldReverse = false;
 
                     double dx = mc.player.getX() - x - 0.5;
                     double dy = mc.player.getY() - y - 0.5;
@@ -663,7 +663,12 @@ public class Printer {
                             }
                         } else if (sBlock instanceof ObserverBlock) {
                             if (ObserverUpdateOrder(mc, world, pos)) {
-                                continue;
+                                if (FLIPPIN_CACTUS.getBooleanValue() && canBypass(mc, world, pos)){
+                                    shouldReverse = true;
+                                }
+                                else {
+                                    continue;
+                                }
                             }
                         }
                         if (sBlock instanceof NetherPortalBlock && !sBlock.getName().equals(cBlock.getName())) {
@@ -683,6 +688,9 @@ public class Printer {
                         }
                         Direction facing = fi.dy.masa.malilib.util.BlockUtils
                                 .getFirstPropertyFacingValue(stateSchematic);
+                        if (shouldReverse && facing != null) {
+                            facing = facing.getOpposite();
+                        }
                         if (stateSchematic.getBlock() instanceof AbstractRailBlock) {
                             facing = convertRailShapetoFace(stateSchematic);
                         }
@@ -1171,6 +1179,18 @@ public class Printer {
             }
         }
         return new Vec3d(x + dx, y + dy, z + dz);
+    }
+    private static boolean canBypass(MinecraftClient mc, World world, BlockPos pos){
+        Direction direction =  world.getBlockState(pos).get(ObserverBlock.FACING);
+        BlockPos posOffset = pos.offset(direction.getOpposite());
+        return !hasPowerRelatedState(mc.world.getBlockState(posOffset).getBlock()) && mc.world.getBlockState(posOffset).getBlock().getName() == world.getBlockState(posOffset).getBlock().getName();
+
+    }
+    private static boolean hasPowerRelatedState(Block block){
+        return block instanceof LeavesBlock || block instanceof FluidBlock || block instanceof ObserverBlock || block instanceof PistonBlock || block instanceof PoweredRailBlock || block instanceof DetectorRailBlock ||
+                block instanceof DispenserBlock || block instanceof AbstractRedstoneGateBlock || block instanceof LeverBlock || block instanceof TrapdoorBlock || block instanceof RedstoneTorchBlock ||
+                block instanceof DoorBlock || block instanceof RedstoneWireBlock || block instanceof RedstoneOreBlock || block instanceof RedstoneLampBlock || block instanceof NoteBlock || block instanceof FenceGateBlock ||
+                block instanceof ScaffoldingBlock;
     }
     public static Vec3d applyTorchHitVec(BlockPos pos, Vec3d hitVecIn, Direction side) {
         double x = pos.getX();
