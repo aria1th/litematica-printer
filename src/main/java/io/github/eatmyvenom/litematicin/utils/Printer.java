@@ -665,6 +665,7 @@ public class Printer {
                             if (ObserverUpdateOrder(mc, world, pos)) {
                                 if (FLIPPIN_CACTUS.getBooleanValue() && canBypass(mc, world, pos)){
                                     shouldReverse = true;
+                                    stateSchematic = stateSchematic.with(ObserverBlock.FACING, stateSchematic.get(ObserverBlock.FACING).getOpposite());
                                 }
                                 else {
                                     continue;
@@ -688,7 +689,7 @@ public class Printer {
                         }
                         Direction facing = fi.dy.masa.malilib.util.BlockUtils
                                 .getFirstPropertyFacingValue(stateSchematic);
-                        if (shouldReverse && facing != null) {
+                        if (facing != null) {
                             facing = facing.getOpposite();
                         }
                         if (stateSchematic.getBlock() instanceof AbstractRailBlock) {
@@ -941,6 +942,9 @@ public class Printer {
             if (!isCorrectDustState(mc, world, pos.offset(direction).up())){
                 return true;
             }
+            if (!isCorrectDustState(mc, world, pos.offset(direction,2).up())){
+                return true;
+            }
         }
         return false;
     }
@@ -1181,9 +1185,9 @@ public class Printer {
         return new Vec3d(x + dx, y + dy, z + dz);
     }
     private static boolean canBypass(MinecraftClient mc, World world, BlockPos pos){
-        Direction direction =  world.getBlockState(pos).get(ObserverBlock.FACING);
+        Direction direction = world.getBlockState(pos).get(ObserverBlock.FACING);
         BlockPos posOffset = pos.offset(direction.getOpposite());
-        return !hasPowerRelatedState(mc.world.getBlockState(posOffset).getBlock()) && mc.world.getBlockState(posOffset).getBlock().getName() == world.getBlockState(posOffset).getBlock().getName();
+        return world.getBlockState(posOffset) == null || world.getBlockState(posOffset).isAir()|| (!hasPowerRelatedState(mc.world.getBlockState(posOffset).getBlock())) && mc.world.getBlockState(posOffset).getBlock().getName() == world.getBlockState(posOffset).getBlock().getName();
 
     }
     private static boolean hasPowerRelatedState(Block block){
