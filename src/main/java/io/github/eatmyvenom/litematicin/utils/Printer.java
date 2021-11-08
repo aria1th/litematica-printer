@@ -38,12 +38,10 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 
 import net.minecraft.block.*;
-import net.minecraft.fluid.Fluids;
 import net.minecraft.fluid.LavaFluid;
 import net.minecraft.fluid.WaterFluid;
 import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
 
-import net.minecraft.block.AbstractBlock.Settings;
 import net.minecraft.block.enums.ComparatorMode;
 import net.minecraft.block.enums.BedPart;
 import net.minecraft.block.enums.BlockHalf;
@@ -55,7 +53,6 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.Items;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.ItemConvertible;
 import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
@@ -658,7 +655,10 @@ public class Printer {
                                 continue;
                             }
                         } else if (sBlock instanceof PistonBlock) {
-                            if (!ShouldExtendQC(mc, world, pos)) {
+                            if (!ShouldExtendQC(mc, world, pos) || hasNearbyRedirectDust(mc, world, pos)) {
+                                continue;
+                            }
+                            if (cantAvoidExtend(world, pos)){
                                 continue;
                             }
                         } else if (sBlock instanceof ObserverBlock) {
@@ -922,7 +922,42 @@ public class Printer {
         BlockState stateSchematic = world.getBlockState(posoffset.down());
         return stateSchematic.getBlock() instanceof PistonBlock && !stateSchematic.get(PistonBlock.EXTENDED) && !world.getBlockState(posoffset).getBlock().equals(mc.world.getBlockState(posoffset).getBlock());
     }
+    private static boolean hasNearbyRedirectDust(MinecraftClient mc, World world, BlockPos pos){ //temporary code, just direct redirection check nearby
+        for (Direction direction : Direction.values()){
+            if (!isCorrectDustState(mc, world, pos.offset(direction))){
+                return true;
+            }
+            if (!isCorrectDustState(mc, world, pos.offset(direction,2))){
+                return true;
+            }
+            if (!isCorrectDustState(mc, world, pos.offset(direction).up())){
+                return true;
+            }
+        }
+        return false;
+    }
+    private static boolean cantAvoidExtend(World world, BlockPos pos){
+        if (!world.getBlockState(pos).get(PistonBlock.EXTENDED)){
+            return shouldExtend(world, pos, world.getBlockState(pos).get(PistonBlock.FACING));
+        }
+        return false;
+    }
 
+    private static boolean isCorrectDustState(MinecraftClient mc, World world, BlockPos pos){
+        BlockState ClientState = mc.world.getBlockState(pos);
+        BlockState SchematicState = world.getBlockState(pos);
+        if (!SchematicState.isOf(Blocks.REDSTONE_WIRE)){
+            return true;
+        }
+        if (!ClientState.isOf(Blocks.REDSTONE_WIRE)){
+            return false;
+        }
+        return SchematicState.get(RedstoneWireBlock.WIRE_CONNECTION_EAST) == ClientState.get(RedstoneWireBlock.WIRE_CONNECTION_EAST) &&
+                SchematicState.get(RedstoneWireBlock.WIRE_CONNECTION_WEST) == ClientState.get(RedstoneWireBlock.WIRE_CONNECTION_WEST) &&
+                SchematicState.get(RedstoneWireBlock.WIRE_CONNECTION_SOUTH) == ClientState.get(RedstoneWireBlock.WIRE_CONNECTION_SOUTH) &&
+                SchematicState.get(RedstoneWireBlock.WIRE_CONNECTION_NORTH) == ClientState.get(RedstoneWireBlock.WIRE_CONNECTION_NORTH) &&
+                Objects.equals(SchematicState.get(RedstoneWireBlock.POWER), ClientState.get(RedstoneWireBlock.POWER));
+    }
     private static boolean ShouldExtendQC(MinecraftClient mc, World world, BlockPos pos) {
 
         return shouldExtend(mc.world, pos, world.getBlockState(pos).get(PistonBlock.FACING)) == world.getBlockState(pos).get(PistonBlock.EXTENDED);
