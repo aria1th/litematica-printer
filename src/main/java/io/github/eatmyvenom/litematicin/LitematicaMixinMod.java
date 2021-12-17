@@ -10,7 +10,7 @@ import fi.dy.masa.malilib.config.options.ConfigInteger;
 import net.fabricmc.api.ModInitializer;
 
 public class LitematicaMixinMod implements ModInitializer {
-
+	public static ImmutableList.Builder<IConfigBase> originalList = new ImmutableList.Builder<IConfigBase>().addAll(Configs.Generic.OPTIONS);
 	public static final ConfigInteger EASY_PLACE_MODE_RANGE_X      	= new ConfigInteger("easyPlaceModeRangeX", 3, 0, 1024, "X Range for EasyPlace");
 	public static final ConfigInteger EASY_PLACE_MODE_RANGE_Y      	= new ConfigInteger("easyPlaceModeRangeY", 3, 0, 1024, "Y Range for EasyPlace");
 	public static final ConfigInteger EASY_PLACE_MODE_RANGE_Z      	= new ConfigInteger("easyPlaceModeRangeZ", 3, 0, 1024, "Z Range for EasyPlace");
@@ -28,34 +28,7 @@ public class LitematicaMixinMod implements ModInitializer {
 	public static final ConfigBoolean ADVANCED_ACCURATE_BLOCK_PLACEMENT = new  ConfigBoolean("CarpetExtraFixedVersion",false,"If carpet extra is updated, turn on to allow all facingblock rotation");
 	public static final ConfigBoolean BEDROCK_BREAKING = new ConfigBoolean("BedrockBreaking", false, "Clear Bedrock mismatch with Bedrock Breaker");
 	public static final ConfigBoolean BEDROCK_BREAKING_FORCE_TORCH = new ConfigBoolean("BedrockBreakingUseSlimeblock", false, "BecrockBreaker uses slime block to force torch location");
-	public static final ImmutableList<IConfigBase> betterList = ImmutableList.of(
-			Configs.Generic.AREAS_PER_WORLD,
-			Configs.Generic.BETTER_RENDER_ORDER,
-			Configs.Generic.CHANGE_SELECTED_CORNER,
-			Configs.Generic.EASY_PLACE_FIRST,
-			Configs.Generic.EASY_PLACE_SP_HANDLING,
-			Configs.Generic.EASY_PLACE_MODE,
-			Configs.Generic.EASY_PLACE_HOLD_ENABLED,
-			Configs.Generic.EXECUTE_REQUIRE_TOOL,
-			Configs.Generic.FIX_RAIL_ROTATION,
-			Configs.Generic.GENERATE_LOWERCASE_NAMES,
-			Configs.Generic.LOAD_ENTIRE_SCHEMATICS,
-			Configs.Generic.PASTE_IGNORE_INVENTORY,
-			Configs.Generic.PICK_BLOCK_ENABLED,
-			Configs.Generic.PLACEMENT_RESTRICTION,
-			Configs.Generic.RENDER_MATERIALS_IN_GUI,
-			Configs.Generic.RENDER_THREAD_NO_TIMEOUT,
-			Configs.Generic.TOOL_ITEM_ENABLED,
-
-			Configs.Generic.PASTE_REPLACE_BEHAVIOR,
-			Configs.Generic.SELECTION_CORNERS_MODE,
-
-			Configs.Generic.PASTE_COMMAND_INTERVAL,
-			Configs.Generic.PASTE_COMMAND_LIMIT,
-			Configs.Generic.PASTE_COMMAND_SETBLOCK,
-			Configs.Generic.PICK_BLOCKABLE_SLOTS,
-			Configs.Generic.TOOL_ITEM,
-
+	public static final ImmutableList<IConfigBase> betterList = originalList.addAll(ImmutableList.of(
 			EASY_PLACE_MODE_RANGE_X,
 			EASY_PLACE_MODE_RANGE_Y,
 			EASY_PLACE_MODE_RANGE_Z,
@@ -72,10 +45,8 @@ public class LitematicaMixinMod implements ModInitializer {
 			ADVANCED_ACCURATE_BLOCK_PLACEMENT,
 			EASY_PLACE_MODE_OBSERVER_EXPLICIT_ORDER,
 			BEDROCK_BREAKING,
-			BEDROCK_BREAKING_FORCE_TORCH
-
-
-	);
+			BEDROCK_BREAKING_FORCE_TORCH)
+	).build();
 	@Override
 	public void onInitialize() {
 		System.out.println("YeeFuckinHaw");
