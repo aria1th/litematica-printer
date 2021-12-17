@@ -72,4 +72,3 @@ Fix block "face" rounding(rotation) issue, due to player rotation while using ri
 
 Sorter item filling - not likely
 
-1.18 updates - after my final exams and papers
