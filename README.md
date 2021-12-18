@@ -14,8 +14,8 @@ in singleplayer, ping is 0 so whatever.
 (WON'T FIX) paper, spigot or other types can have their own anti cheat to prevent 'not-looking' placement, which means you can't do anything with this. There's some option to nerf printing action at https://github.com/jensvh/litematica-printer/releases/tag/v1.0.4, but still we can't assure if it would work or not. Use this if you are sure about it.
 
 # Issue tracker
-Mainly 1.17 is supported, 1.16.5 is being supported only partially (without some recent updates) since I'm not really good at java.
-1.18 version might be there if I learn how to use gradlew properly...
+Mainly 1.17-1.18 is supported, 1.16.5 is being supported only partially (without some recent updates) since I'm not really good at java.
+
 Feel free to clean up my code or improve things, or use at some other mods, like separating functionalities. I'm not doing it because I don't know how to.
 ## Settings
 
