@@ -400,7 +400,7 @@ public class Printer {
                     BlockState stateSchematic = world.getBlockState(pos);
                     BlockState stateClient = mc.world.getBlockState(pos);
                     if (!ClearArea && breakBlocks && stateSchematic != null && !(stateClient.getBlock() instanceof SnowBlock) &&
-                            !stateClient.isAir() && !(stateClient.getBlock() instanceof FluidBlock) && !(stateClient.getBlock() instanceof BubbleColumnBlock) &&
+                            !stateClient.isAir() && !(stateClient.getBlock() instanceof FluidDrainable)  &&
                             !stateClient.isOf(Blocks.PISTON_HEAD) && !stateClient.isOf(Blocks.MOVING_PISTON)) {
                         if (!stateClient.getBlock().getName().equals(stateSchematic.getBlock().getName()) ||
                                 (stateClient.getBlock() instanceof SlabBlock && stateSchematic.getBlock() instanceof SlabBlock && stateClient.get(SlabBlock.TYPE)!= stateSchematic.get(SlabBlock.TYPE))
@@ -422,6 +422,7 @@ public class Printer {
                                 BedrockBreaker.scheduledTickHandler(mc, null);
                                 continue;
                             } else if (!positionStorage.hasPos(pos)){ // For survival
+								if (world.getBlockState(pos).getHardness(world, pos) == -1){continue;}
                                 mc.interactionManager.attackBlock(pos, Direction.DOWN); //yes, this seemingly needless line adds functionality but paper would not allow it.
                                 breaker.startBreakingBlock(pos, mc); // it need to avoid unbreakable blocks and just added and lava, but its not block so somehow made it work
                                 return ActionResult.SUCCESS;
@@ -630,7 +631,7 @@ public class Printer {
                                 Vec3d hitPos = new Vec3d(0.5, 0.5, 0.5);
                                 BlockHitResult hitResult = new BlockHitResult(hitPos, Direction.UP, pos, false);
                                 mc.interactionManager.interactBlock(mc.player, mc.world, hand, hitResult);
-                                if (cBlock instanceof FluidBlock || (cBlock instanceof SnowBlock)) {
+                                if (cBlock instanceof FluidDrainable || (cBlock instanceof SnowBlock)) {
                                     lastPlaced = new Date().getTime();
                                     continue;
                                 }
@@ -731,7 +732,7 @@ public class Printer {
                             BlockPos Offsetpos = new BlockPos(x, y - 1, z);
                             BlockState OffsetstateSchematic = world.getBlockState(Offsetpos);
                             BlockState OffsetstateClient = mc.world.getBlockState(Offsetpos);
-                            if (OffsetstateClient.getBlock() instanceof FluidBlock || OffsetstateClient.getBlock() instanceof BubbleColumnBlock) {
+                            if (OffsetstateClient.getBlock() instanceof FluidDrainable) {
                                 continue;
                             }
                         }
@@ -1008,8 +1009,8 @@ public class Printer {
             OffsetStateClient = mc.world.getBlockState(Posoffset);
             if (OffsetStateSchematic.getBlock() instanceof WallBlock || OffsetStateSchematic.getBlock() instanceof ComparatorBlock ||
                     OffsetStateSchematic.getBlock() instanceof RepeaterBlock || OffsetStateSchematic.getBlock() instanceof FallingBlock ||
-                    OffsetStateSchematic.getBlock() instanceof AbstractRailBlock || OffsetStateSchematic.getBlock() instanceof BubbleColumnBlock ||
-                    OffsetStateSchematic.getBlock() instanceof FluidBlock || OffsetStateSchematic.getBlock() instanceof RedstoneWireBlock ||
+                    OffsetStateSchematic.getBlock() instanceof AbstractRailBlock ||
+                    OffsetStateSchematic.getBlock() instanceof FluidDrainable || OffsetStateSchematic.getBlock() instanceof RedstoneWireBlock ||
                     ((OffsetStateSchematic.getBlock() instanceof WallMountedBlock) && OffsetStateSchematic.get(WallMountedBlock.FACE) == WallMountLocation.FLOOR)) {
                 return false;
             }
