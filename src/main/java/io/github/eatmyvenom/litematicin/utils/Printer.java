@@ -659,7 +659,7 @@ public class Printer {
                             if (!ShouldExtendQC(mc, world, pos) || hasNearbyRedirectDust(mc, world, pos)) {
                                 continue;
                             }
-                            if (cantAvoidExtend(world, pos)){
+                            if (cantAvoidExtend(mc.world, pos, world) ){
                                 continue;
                             }
                         } else if (sBlock instanceof ObserverBlock) {
@@ -949,9 +949,9 @@ public class Printer {
         }
         return false;
     }
-    private static boolean cantAvoidExtend(World world, BlockPos pos){
-        if (!world.getBlockState(pos).get(PistonBlock.EXTENDED)){
-            return shouldExtend(world, pos, world.getBlockState(pos).get(PistonBlock.FACING));
+    private static boolean cantAvoidExtend(World world, BlockPos pos, World schematicWorld){
+        if (!schematicWorld.getBlockState(pos).get(PistonBlock.EXTENDED)){
+            return shouldExtend(world, pos, schematicWorld.getBlockState(pos).get(PistonBlock.FACING));
         }
         return false;
     }
@@ -969,7 +969,7 @@ public class Printer {
                 SchematicState.get(RedstoneWireBlock.WIRE_CONNECTION_WEST) == ClientState.get(RedstoneWireBlock.WIRE_CONNECTION_WEST) &&
                 SchematicState.get(RedstoneWireBlock.WIRE_CONNECTION_SOUTH) == ClientState.get(RedstoneWireBlock.WIRE_CONNECTION_SOUTH) &&
                 SchematicState.get(RedstoneWireBlock.WIRE_CONNECTION_NORTH) == ClientState.get(RedstoneWireBlock.WIRE_CONNECTION_NORTH) &&
-                Objects.equals(SchematicState.get(RedstoneWireBlock.POWER), ClientState.get(RedstoneWireBlock.POWER));
+                Objects.equals(SchematicState.get(RedstoneWireBlock.POWER)==0, ClientState.get(RedstoneWireBlock.POWER)==0);
     }
     private static boolean ShouldExtendQC(MinecraftClient mc, World world, BlockPos pos) {
 
