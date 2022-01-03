@@ -3,6 +3,11 @@
 ## Setup
 
 To set this up just add the latest litematica version to your mods folder as well as this, it will replace easy place with printer. If carpet extra /quickcarpet enabled accurateblockplacement, you can turn on option, and... here goes the overpowered printer.
+## What's difference?
+It uses accurateblockplacement if available, also advanced protocol if my fork of carpet extra is installed, without protocol it still places everything correctly(should).
+Also it tries to avoid making 'failure', especially related to update orders, observer / BUD / piston / state,falling blocks, etc.
+It also tries blocks with multiple states : composters, snow layers, pickles....
+It has extra feature for removing fluids / clearing area / breaking bedrock (?).
 
 ## Install guide
 
