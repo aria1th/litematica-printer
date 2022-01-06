@@ -40,6 +40,7 @@ import net.fabricmc.api.Environment;
 import net.minecraft.block.*;
 import net.minecraft.fluid.LavaFluid;
 import net.minecraft.fluid.WaterFluid;
+import net.minecraft.item.BlockItem;
 import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
 
 import net.minecraft.block.enums.ComparatorMode;
@@ -601,7 +602,7 @@ public class Printer {
                     Block cBlock = stateClient.getBlock();
                     Block sBlock = stateSchematic.getBlock();
                     if (ClearArea) {
-                        if (cBlock instanceof BubbleColumnBlock || stateClient.getFluidState().getFluid() instanceof WaterFluid && stateClient.contains(FluidBlock.LEVEL) && stateClient.get(FluidBlock.LEVEL) == 0) {
+                        if (cBlock instanceof FluidDrainable || cBlock instanceof FluidFillable && stateClient.getMaterial().isReplaceable() || stateClient.getFluidState().getFluid() instanceof WaterFluid && stateClient.contains(FluidBlock.LEVEL) && stateClient.get(FluidBlock.LEVEL) == 0) {
                             if (!UseCobble) {
                                 stack = Items.SPONGE.getDefaultStack();
                             } else {
@@ -620,6 +621,9 @@ public class Printer {
                         }
                     } else if (sBlock instanceof NetherPortalBlock) {
                         stack = Items.FIRE_CHARGE.getDefaultStack();
+						if(mc.player.getInventory().getSlotWithStack(stack) == -1){
+							stack = Items.FLINT_AND_STEEL.getDefaultStack();
+						}
                     }
 
                     if ((ClearArea || !stack.isEmpty()) && (mc.player.getAbilities().creativeMode || mc.player.getInventory().getSlotWithStack(stack) != -1)) {
@@ -911,6 +915,9 @@ public class Printer {
             lastPlaced = new Date().getTime();
             return ActionResult.SUCCESS;
         }
+		if(!(mc.player.getMainHandStack().getItem() instanceof BlockItem) && !(mc.player.getOffHandStack().getItem() instanceof BlockItem)){
+			return ActionResult.PASS;
+		}
         return ActionResult.FAIL;
     }
 
