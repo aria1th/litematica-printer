@@ -602,7 +602,7 @@ public class Printer {
                     Block cBlock = stateClient.getBlock();
                     Block sBlock = stateSchematic.getBlock();
                     if (ClearArea) {
-                        if (cBlock instanceof FluidDrainable || cBlock instanceof FluidFillable && stateClient.getMaterial().isReplaceable() || stateClient.getFluidState().getFluid() instanceof WaterFluid && stateClient.contains(FluidBlock.LEVEL) && stateClient.get(FluidBlock.LEVEL) == 0) {
+                        if (cBlock instanceof BubbleColumnBlock || cBlock instanceof SeagrassBlock || stateClient.getFluidState().getFluid() instanceof WaterFluid && stateClient.contains(FluidBlock.LEVEL) && stateClient.get(FluidBlock.LEVEL) == 0) {
                             if (!UseCobble) {
                                 stack = Items.SPONGE.getDefaultStack();
                             } else {
