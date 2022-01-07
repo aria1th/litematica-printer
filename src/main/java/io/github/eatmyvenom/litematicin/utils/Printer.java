@@ -401,7 +401,7 @@ public class Printer {
                     BlockState stateSchematic = world.getBlockState(pos);
                     BlockState stateClient = mc.world.getBlockState(pos);
                     if (!ClearArea && breakBlocks && stateSchematic != null && !(stateClient.getBlock() instanceof SnowBlock) &&
-                            !stateClient.isAir() && !(stateClient.getBlock() instanceof FluidDrainable)  &&
+                            !stateClient.isAir() && !(stateClient.getBlock() instanceof FluidDrainable || stateClient.getBlock() instanceof FluidBlock)  &&
                             !stateClient.isOf(Blocks.PISTON_HEAD) && !stateClient.isOf(Blocks.MOVING_PISTON)) {
                         if (!stateClient.getBlock().getName().equals(stateSchematic.getBlock().getName()) ||
                                 (stateClient.getBlock() instanceof SlabBlock && stateSchematic.getBlock() instanceof SlabBlock && stateClient.get(SlabBlock.TYPE)!= stateSchematic.get(SlabBlock.TYPE))
@@ -635,7 +635,7 @@ public class Printer {
                                 Vec3d hitPos = new Vec3d(0.5, 0.5, 0.5);
                                 BlockHitResult hitResult = new BlockHitResult(hitPos, Direction.UP, pos, false);
                                 mc.interactionManager.interactBlock(mc.player, mc.world, hand, hitResult);
-                                if (cBlock instanceof FluidDrainable || (cBlock instanceof SnowBlock)) {
+                                if (cBlock instanceof FluidDrainable || cBlock instanceof SnowBlock || cBlock instanceof FluidBlock) {
                                     lastPlaced = new Date().getTime();
                                     continue;
                                 }
@@ -736,7 +736,7 @@ public class Printer {
                             BlockPos Offsetpos = new BlockPos(x, y - 1, z);
                             BlockState OffsetstateSchematic = world.getBlockState(Offsetpos);
                             BlockState OffsetstateClient = mc.world.getBlockState(Offsetpos);
-                            if (OffsetstateClient.getBlock() instanceof FluidDrainable) {
+                            if (OffsetstateClient.getMaterial().isReplaceable()) {
                                 continue;
                             }
                         }
@@ -1017,7 +1017,7 @@ public class Printer {
             if (OffsetStateSchematic.getBlock() instanceof WallBlock || OffsetStateSchematic.getBlock() instanceof ComparatorBlock ||
                     OffsetStateSchematic.getBlock() instanceof RepeaterBlock || OffsetStateSchematic.getBlock() instanceof FallingBlock ||
                     OffsetStateSchematic.getBlock() instanceof AbstractRailBlock ||
-                    OffsetStateSchematic.getBlock() instanceof FluidDrainable || OffsetStateSchematic.getBlock() instanceof RedstoneWireBlock ||
+                    OffsetStateSchematic.getBlock() instanceof BubbleColumnBlock || OffsetStateSchematic.getBlock() instanceof RedstoneWireBlock ||
                     ((OffsetStateSchematic.getBlock() instanceof WallMountedBlock) && OffsetStateSchematic.get(WallMountedBlock.FACE) == WallMountLocation.FLOOR)) {
                 return false;
             }
