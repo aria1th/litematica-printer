@@ -339,6 +339,7 @@ public class Printer {
         int MaxReach = Math.max(Math.max(rangeX, rangeY), rangeZ);
         boolean breakBlocks = EASY_PLACE_MODE_BREAK_BLOCKS.getBooleanValue();
         boolean Flippincactus = FLIPPIN_CACTUS.getBooleanValue();
+		boolean ExplicitObserver = EASY_PLACE_MODE_OBSERVER_EXPLICIT_ORDER.getBooleanValue();
         ItemStack Mainhandstack = mc.player.getMainHandStack();
         boolean Cactus = Mainhandstack.getItem().getTranslationKey().contains("cactus") && Flippincactus;
         boolean MaxFlip = Flippincactus && Cactus;
@@ -676,6 +677,8 @@ public class Printer {
                                     continue;
                                 }
                             }
+                        } else if (ExplicitObserver && isObserverOutput(mc, world, pos)){
+							continue;
                         }
                         if (sBlock instanceof NetherPortalBlock && !sBlock.getName().equals(cBlock.getName())) {
                             Hand hand = Hand.MAIN_HAND;
@@ -998,6 +1001,15 @@ public class Printer {
         }
         return false;
     }
+	private static boolean isObserverOutput(MinecraftClient mc, World schematicWorld, BlockPos pos){
+		for (Direction direction : Direction.values()){
+			BlockState offsetState = schematicWorld.getBlockState(pos.offset(direction));
+			if (!mc.world.getBlockState(pos).isOf(Blocks.OBSERVER) && offsetState.getBlock() instanceof ObserverBlock && offsetState.get(ObserverBlock.FACING) == direction){
+				return true;
+			}
+		}
+		return false;
+	}
 
     private static boolean ObserverUpdateOrder(MinecraftClient mc, World world, BlockPos pos) {
         boolean ExplicitObserver = EASY_PLACE_MODE_OBSERVER_EXPLICIT_ORDER.getBooleanValue();
