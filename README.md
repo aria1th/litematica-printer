@@ -20,8 +20,12 @@ in singleplayer, ping is 0 so whatever.
 
 # Issue tracker
 Mainly 1.17-1.18 is supported, 1.16.5 is being supported only partially (without some recent updates) since I'm not really good at java.
-
 Feel free to clean up my code or improve things, or use at some other mods, like separating functionalities. I'm not doing it because I don't know how to.
+
+## Before sending DM, check if its my printer....
+https://github.com/aleksilassila/litematica-printer
+I don't really know how it works or produces bug, I just guess its something related to its rotation and face clicking. I can't really help anything not about my printer and its better to ask the author.
+
 ## Settings
 
 ### Printer settings:
