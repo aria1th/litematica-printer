@@ -1004,7 +1004,7 @@ public class Printer {
 	private static boolean isObserverOutput(MinecraftClient mc, World schematicWorld, BlockPos pos){
 		for (Direction direction : Direction.values()){
 			BlockState offsetState = schematicWorld.getBlockState(pos.offset(direction));
-			if (!mc.world.getBlockState(pos).isOf(Blocks.OBSERVER) && offsetState.getBlock() instanceof ObserverBlock && offsetState.get(ObserverBlock.FACING) == direction){
+			if (!mc.world.getBlockState(pos.offset(direction)).isOf(Blocks.OBSERVER) && offsetState.getBlock() instanceof ObserverBlock && offsetState.get(ObserverBlock.FACING) == direction){
 				return true;
 			}
 		}
