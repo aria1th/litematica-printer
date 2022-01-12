@@ -1,6 +1,7 @@
 package io.github.eatmyvenom.litematicin.utils;
 
 import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.EASY_PLACE_MODE_BREAK_BLOCKS;
+import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.EASY_PLACE_MODE_REDSTONE_ORDERS;
 import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.EASY_PLACE_MODE_DELAY;
 import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.EASY_PLACE_MODE_HOTBAR_ONLY;
 import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.EASY_PLACE_MODE_MAX_BLOCKS;
@@ -343,6 +344,7 @@ public class Printer {
         ItemStack Mainhandstack = mc.player.getMainHandStack();
         boolean Cactus = Mainhandstack.getItem().getTranslationKey().contains("cactus") && Flippincactus;
         boolean MaxFlip = Flippincactus && Cactus;
+		boolean smartRedstone = EASY_PLACE_MODE_REDSTONE_ORDERS.getBooleanValue();
         Direction[] facingSides = Direction.getEntityFacingOrder(mc.player);
         Direction primaryFacing = facingSides[0];
         Direction horizontalFacing = primaryFacing; // For use in blocks with only horizontal rotation
@@ -656,18 +658,18 @@ public class Printer {
                                 continue;
                             }
                         }
-                        if (sBlock instanceof RedstoneBlock) {
+                        if (smartRedstone && sBlock instanceof RedstoneBlock) {
                             if (isQCable(mc, world, pos)) {
                                 continue;
                             }
-                        } else if (sBlock instanceof PistonBlock) {
+                        } else if (smartRedstone && sBlock instanceof PistonBlock) {
                             if (!ShouldExtendQC(mc, world, pos) || hasNearbyRedirectDust(mc, world, pos)) {
                                 continue;
                             }
                             if (cantAvoidExtend(mc.world, pos, world) ){
                                 continue;
                             }
-                        } else if (sBlock instanceof ObserverBlock) {
+                        } else if (smartRedstone && sBlock instanceof ObserverBlock) {
                             if (ObserverUpdateOrder(mc, world, pos)) {
                                 if (FLIPPIN_CACTUS.getBooleanValue() && canBypass(mc, world, pos)){
                                     shouldReverse = true;
