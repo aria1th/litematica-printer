@@ -425,9 +425,15 @@ public class Printer {
                                 BedrockBreaker.scheduledTickHandler(mc, null);
                                 continue;
                             } else if (!positionStorage.hasPos(pos)){ // For survival
-								if (world.getBlockState(pos).getHardness(world, pos) == -1){continue;}
-                                mc.interactionManager.attackBlock(pos, Direction.DOWN); //yes, this seemingly needless line adds functionality but paper would not allow it.
-                                breaker.startBreakingBlock(pos, mc); // it need to avoid unbreakable blocks and just added and lava, but its not block so somehow made it work
+	                            boolean replaceable = mc.world.getBlockState(pos).getMaterial().isReplaceable();
+								if (!replaceable && mc.world.getBlockState(pos).getHardness(world, pos) == -1){continue;}
+                                if (replaceable || mc.world.getBlockState(pos).getHardness(world, pos) ==0) {
+									mc.interactionManager.attackBlock(pos, Direction.DOWN);
+									return ActionResult.SUCCESS;
+								}
+                                if(!replaceable) {
+									breaker.startBreakingBlock(pos, mc);
+								} // it need to avoid unbreakable blocks and just added and lava, but its not block so somehow made it work
                                 return ActionResult.SUCCESS;
                             }
                         }
@@ -727,10 +733,6 @@ public class Printer {
                                 continue;
 
                         }
-                        double offX = 0.5; // We dont really need this. But I did it anyway so that I could experiment
-                        // easily.
-                        double offY = 0.5;
-                        double offZ = 0.5;
 
                         Direction sideOrig = Direction.NORTH;
                         BlockPos npos = pos;

@@ -77,8 +77,10 @@ public class Breaker implements IClientTickHandler {
 
 	@Override
 	public void onClientTick(MinecraftClient mc) {
-		if (!isBreakingBlock()) return;
-		if (mc.player == null) return;
+		if (!isBreakingBlock() || mc.player == null) {
+			this.breakingBlock = false;
+			return;
+		}
 
 		if (Hotkeys.EASY_PLACE_ACTIVATION.getKeybind().isKeybindHeld()) { // Only continue mining while the correct keys are pressed
 			Direction side = Direction.values()[0];
@@ -88,8 +90,10 @@ public class Breaker implements IClientTickHandler {
 			}
 		}
 
-		if (!mc.world.getBlockState(pos).getMaterial().isReplaceable()) return; // If block isn't broken yet, dont stop
-
+		if (!mc.world.getBlockState(pos).getMaterial().isReplaceable()) {
+			this.breakingBlock = false;
+			return;
+		} // If block isn't broken yet, dont stop
 		// Stop breaking
 		this.breakingBlock = false;
 		mc.interactionManager.cancelBlockBreaking();
