@@ -43,6 +43,7 @@ public class Breaker implements IClientTickHandler {
 	}
 
 	public boolean isBreakingBlock() {
+		if(MinecraftClient.getInstance().world.getBlockState(pos).getMaterial().isReplaceable()){this.breakingBlock = false;}
 		return this.breakingBlock;
 	}
 
@@ -86,7 +87,7 @@ public class Breaker implements IClientTickHandler {
 			}
 		}
 
-		if (!mc.world.getBlockState(pos).isAir()) return; // If block isn't broken yet, dont stop
+		if (!mc.world.getBlockState(pos).getMaterial().isReplaceable()) return; // If block isn't broken yet, dont stop
 
 		// Stop breaking
 		this.breakingBlock = false;
