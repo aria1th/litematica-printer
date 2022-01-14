@@ -684,8 +684,11 @@ public class Printer {
                                     continue;
                                 }
                             }
-                        } else if (ExplicitObserver && isObserverOutput(mc, world, pos)){
-							continue;
+                        } else if (ExplicitObserver){
+							BlockPos observerPos = isObserverOutput(mc, world, pos);
+							if(observerPos != null && ObserverUpdateOrder(mc, world, observerPos)){
+								continue;
+							}
                         }
                         if (sBlock instanceof NetherPortalBlock && !sBlock.getName().equals(cBlock.getName())) {
                             Hand hand = Hand.MAIN_HAND;
@@ -1004,14 +1007,14 @@ public class Printer {
         }
         return false;
     }
-	private static boolean isObserverOutput(MinecraftClient mc, World schematicWorld, BlockPos pos){
+	private static BlockPos isObserverOutput(MinecraftClient mc, World schematicWorld, BlockPos pos){
 		for (Direction direction : Direction.values()){
 			BlockState offsetState = schematicWorld.getBlockState(pos.offset(direction));
 			if (!mc.world.getBlockState(pos.offset(direction)).isOf(Blocks.OBSERVER) && offsetState.getBlock() instanceof ObserverBlock && offsetState.get(ObserverBlock.FACING) == direction){
-				return true;
+				return pos.offset(direction);
 			}
 		}
-		return false;
+		return null;
 	}
 
     private static boolean ObserverUpdateOrder(MinecraftClient mc, World world, BlockPos pos) {
