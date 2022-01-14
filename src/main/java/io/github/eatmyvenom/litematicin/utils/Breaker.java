@@ -43,6 +43,7 @@ public class Breaker implements IClientTickHandler {
 	}
 
 	public boolean isBreakingBlock() {
+		if (this.pos == null || MinecraftClient.getInstance().world == null) {return false;}
 		if(MinecraftClient.getInstance().world.getBlockState(pos).getMaterial().isReplaceable()){this.breakingBlock = false;}
 		return this.breakingBlock;
 	}
