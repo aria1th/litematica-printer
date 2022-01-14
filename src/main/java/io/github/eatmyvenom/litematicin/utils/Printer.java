@@ -69,7 +69,6 @@ public class Printer {
     // For printing delay
     public static long lastPlaced = new Date().getTime();
     public static Breaker breaker = new Breaker();
-    public static BedrockBreaker bedrockBreaker = new BedrockBreaker();
     public static int worldBottomY = 0;
     public static int worldTopY = 256;
     private static boolean setupFacing = false;
