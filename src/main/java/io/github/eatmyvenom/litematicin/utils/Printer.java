@@ -685,8 +685,8 @@ public class Printer {
                                 }
                             }
                         } else if (ExplicitObserver){
-							BlockPos observerPos = isObserverOutput(mc, world, pos);
-							if(observerPos != null && ObserverUpdateOrder(mc, world, observerPos)){
+							BlockPos observerPos = isObserverCantAvoidOutput(mc, world, pos);
+							if(observerPos != null){
 								continue;
 							}
                         }
@@ -741,7 +741,7 @@ public class Printer {
                         BlockPos npos = pos;
                         Direction side = applyPlacementFacing(stateSchematic, sideOrig, stateClient);
                         Block blockSchematic = stateSchematic.getBlock();
-                        if (blockSchematic instanceof TorchBlock) {
+                        if (blockSchematic instanceof TorchBlock && !(blockSchematic instanceof RedstoneTorchBlock)) {
                             BlockPos Offsetpos = new BlockPos(x, y - 1, z);
                             BlockState OffsetstateSchematic = world.getBlockState(Offsetpos);
                             BlockState OffsetstateClient = mc.world.getBlockState(Offsetpos);
@@ -1007,16 +1007,49 @@ public class Printer {
         }
         return false;
     }
-	private static BlockPos isObserverOutput(MinecraftClient mc, World schematicWorld, BlockPos pos){
+	private static BlockPos isObserverCantAvoidOutput(MinecraftClient mc, World schematicWorld, BlockPos pos){
 		for (Direction direction : Direction.values()){
 			BlockState offsetState = schematicWorld.getBlockState(pos.offset(direction));
-			if (!mc.world.getBlockState(pos.offset(direction)).isOf(Blocks.OBSERVER) && offsetState.getBlock() instanceof ObserverBlock && offsetState.get(ObserverBlock.FACING) == direction){
+			if (offsetState.getBlock() instanceof ObserverBlock && offsetState.get(ObserverBlock.FACING) == direction){
+				if (ObserverCantAvoid(mc, schematicWorld, direction, pos.offset(direction) )) {
 				return pos.offset(direction);
+				}
 			}
 		}
 		return null;
 	}
-
+	private static boolean ObserverCantAvoid(MinecraftClient mc, World world, Direction facingSchematic, BlockPos pos){
+		BlockPos Posoffset = pos.offset(facingSchematic);
+		BlockState OffsetStateSchematic = world.getBlockState(Posoffset);
+		Block offsetBlock = OffsetStateSchematic.getBlock();
+		if (OffsetStateSchematic.isOf(Blocks.NOTE_BLOCK)){
+			if (isNoteBlockInstrumentError(mc, world, Posoffset)){
+				return true;
+			}
+		}
+		if (facingSchematic.equals(Direction.UP)) {
+			return offsetBlock instanceof WallBlock || offsetBlock instanceof ComparatorBlock ||
+				offsetBlock instanceof RepeaterBlock || offsetBlock instanceof FallingBlock ||
+				offsetBlock instanceof AbstractRailBlock || offsetBlock instanceof NoteBlock ||
+				offsetBlock instanceof BubbleColumnBlock || offsetBlock instanceof RedstoneWireBlock ||
+				((offsetBlock instanceof WallMountedBlock) && OffsetStateSchematic.get(WallMountedBlock.FACE) == WallMountLocation.FLOOR);
+		}
+		else if (facingSchematic.equals(Direction.DOWN)) {
+			return offsetBlock instanceof WallBlock || offsetBlock instanceof WallMountedBlock && OffsetStateSchematic.get(WallMountedBlock.FACE) == WallMountLocation.CEILING;
+		}
+		else {
+			return offsetBlock instanceof WallBlock || offsetBlock instanceof WallMountedBlock &&
+				OffsetStateSchematic.get(WallMountedBlock.FACE) == WallMountLocation.WALL && OffsetStateSchematic.get(WallMountedBlock.FACING) == facingSchematic;
+		}
+	}
+	private static boolean isNoteBlockInstrumentError(MinecraftClient mc, World world, BlockPos pos){
+		BlockPos offsetPos = pos.offset(Direction.DOWN);
+		BlockState stateA = world.getBlockState(pos);
+		BlockState stateB = mc.world.getBlockState(pos);
+		return stateA.isOf(Blocks.NOTE_BLOCK) && stateB.isOf(Blocks.NOTE_BLOCK) &&
+			stateA.get(NoteBlock.POWERED) == stateB.get(NoteBlock.POWERED) &&
+			world.getBlockState(pos.offset(Direction.DOWN)).getMaterial().isReplaceable() == mc.world.getBlockState(pos.offset(Direction.DOWN)).getMaterial().isReplaceable();
+	}
     private static boolean ObserverUpdateOrder(MinecraftClient mc, World world, BlockPos pos) {
         boolean ExplicitObserver = EASY_PLACE_MODE_OBSERVER_EXPLICIT_ORDER.getBooleanValue();
         BlockState stateSchematic = world.getBlockState(pos);
@@ -1028,37 +1061,20 @@ public class Printer {
         }
         Direction facingSchematic = fi.dy.masa.malilib.util.BlockUtils.getFirstPropertyFacingValue(stateSchematic);
         assert facingSchematic != null;
-        if (facingSchematic.equals(Direction.UP)) {
-            Posoffset = pos.up();
-            OffsetStateSchematic = world.getBlockState(Posoffset);
-            OffsetStateClient = mc.world.getBlockState(Posoffset);
-            if (OffsetStateSchematic.getBlock() instanceof WallBlock || OffsetStateSchematic.getBlock() instanceof ComparatorBlock ||
-                    OffsetStateSchematic.getBlock() instanceof RepeaterBlock || OffsetStateSchematic.getBlock() instanceof FallingBlock ||
-                    OffsetStateSchematic.getBlock() instanceof AbstractRailBlock ||
-                    OffsetStateSchematic.getBlock() instanceof BubbleColumnBlock || OffsetStateSchematic.getBlock() instanceof RedstoneWireBlock ||
-                    ((OffsetStateSchematic.getBlock() instanceof WallMountedBlock) && OffsetStateSchematic.get(WallMountedBlock.FACE) == WallMountLocation.FLOOR)) {
-                return false;
-            }
-        }
-        else if (facingSchematic.equals(Direction.DOWN)) {
-            Posoffset = pos.down();
-            OffsetStateSchematic = world.getBlockState(Posoffset);
-            OffsetStateClient = mc.world.getBlockState(Posoffset);
-            if (OffsetStateSchematic.getBlock() instanceof WallBlock || OffsetStateSchematic.getBlock() instanceof WallMountedBlock && OffsetStateSchematic.get(WallMountedBlock.FACE) == WallMountLocation.CEILING) {
-                return false;
-            }
-        }
-        else {
-            Posoffset = pos.offset(facingSchematic);
-            OffsetStateSchematic = world.getBlockState(Posoffset);
-            OffsetStateClient = mc.world.getBlockState(Posoffset);
-            if (OffsetStateSchematic.getBlock() instanceof WallBlock || OffsetStateSchematic.getBlock() instanceof WallMountedBlock &&
-                    OffsetStateSchematic.get(WallMountedBlock.FACE) == WallMountLocation.WALL && OffsetStateSchematic.get(WallMountedBlock.FACING) == facingSchematic) {
-                return false;
-            }
-        }
+		boolean observerCantAvoid = ObserverCantAvoid(mc, world, facingSchematic, pos);
+		if (observerCantAvoid) {return false;}
+		Posoffset = pos.offset(facingSchematic);
         OffsetStateSchematic = world.getBlockState(Posoffset);
         OffsetStateClient = mc.world.getBlockState(Posoffset);
+		if(OffsetStateSchematic.isOf(Blocks.OBSERVER) && OffsetStateSchematic.get(ObserverBlock.FACING) == facingSchematic.getOpposite()){
+			return false;
+		}
+	    if(OffsetStateSchematic.getBlock() instanceof DoorBlock &&
+		    OffsetStateSchematic.get(DoorBlock.POWERED) == OffsetStateClient.get(DoorBlock.POWERED) &&
+		    OffsetStateSchematic.get(DoorBlock.FACING) == OffsetStateClient.get(DoorBlock.FACING)) //hinge error
+		{
+		    return false;
+	    }
         if (ExplicitObserver) {
             return !OffsetStateSchematic.toString().equals(OffsetStateClient.toString());
         }
