@@ -403,7 +403,8 @@ public class Printer {
                     BlockState stateSchematic = world.getBlockState(pos);
                     BlockState stateClient = mc.world.getBlockState(pos);
                     if (!ClearArea && breakBlocks && stateSchematic != null && !(stateClient.getBlock() instanceof SnowBlock) &&
-                            !stateClient.isAir() && !(stateClient.getBlock() instanceof FluidDrainable || stateClient.getBlock() instanceof FluidBlock)  &&
+                            !stateClient.isAir() &&
+	                    !(stateClient.isOf(Blocks.WATER) ||stateClient.isOf(Blocks.LAVA) || stateClient.isOf(Blocks.BUBBLE_COLUMN))  &&
                             !stateClient.isOf(Blocks.PISTON_HEAD) && !stateClient.isOf(Blocks.MOVING_PISTON)) {
                         if (!stateClient.getBlock().getName().equals(stateSchematic.getBlock().getName()) ||
                                 (stateClient.getBlock() instanceof SlabBlock && stateSchematic.getBlock() instanceof SlabBlock && stateClient.get(SlabBlock.TYPE)!= stateSchematic.get(SlabBlock.TYPE))
