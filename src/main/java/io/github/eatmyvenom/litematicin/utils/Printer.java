@@ -43,6 +43,7 @@ import net.minecraft.fluid.LavaFluid;
 import net.minecraft.fluid.WaterFluid;
 import net.minecraft.item.BlockItem;
 import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
+import net.minecraft.state.property.Properties;
 
 import net.minecraft.block.enums.ComparatorMode;
 import net.minecraft.block.enums.BedPart;
@@ -439,7 +440,7 @@ public class Printer {
                             }
                         }
                     }
-                    if (BEDROCK_BREAKING.getBooleanValue() || (mc.player.isSneaking() && breakBlocks)) {continue;} // don't process other actions
+                    if (BEDROCK_BREAKING.getBooleanValue()) {continue;} // don't process other actions
                     if (!(stateSchematic.getBlock() instanceof NetherPortalBlock) && stateSchematic.isAir() && !ClearArea)
                         continue;
 
@@ -611,7 +612,7 @@ public class Printer {
                     Block cBlock = stateClient.getBlock();
                     Block sBlock = stateSchematic.getBlock();
                     if (ClearArea) {
-                        if (cBlock instanceof BubbleColumnBlock || cBlock instanceof SeagrassBlock || stateClient.getFluidState().getFluid() instanceof WaterFluid && stateClient.contains(FluidBlock.LEVEL) && stateClient.get(FluidBlock.LEVEL) == 0) {
+                        if (isReplaceableWaterFluidSource(stateClient)) {
                             if (!UseCobble) {
                                 stack = Items.SPONGE.getDefaultStack();
                             } else {
@@ -644,7 +645,7 @@ public class Printer {
                                 Vec3d hitPos = new Vec3d(0.5, 0.5, 0.5);
                                 BlockHitResult hitResult = new BlockHitResult(hitPos, Direction.UP, pos, false);
                                 mc.interactionManager.interactBlock(mc.player, mc.world, hand, hitResult);
-                                if (cBlock instanceof FluidDrainable || cBlock instanceof SnowBlock || cBlock instanceof FluidBlock) {
+                                if (isReplaceableFluidSource(stateClient) || cBlock instanceof SnowBlock ) {
                                     lastPlaced = new Date().getTime();
                                     continue;
                                 }
@@ -1070,13 +1071,14 @@ public class Printer {
 		if(OffsetStateSchematic.isOf(Blocks.OBSERVER) && OffsetStateSchematic.get(ObserverBlock.FACING) == facingSchematic.getOpposite()){
 			return false;
 		}
-	    if(OffsetStateSchematic.getBlock() instanceof DoorBlock &&
+	    if(OffsetStateSchematic.getBlock() instanceof DoorBlock && OffsetStateClient.getBlock() instanceof DoorBlock &&
 		    OffsetStateSchematic.get(DoorBlock.POWERED) == OffsetStateClient.get(DoorBlock.POWERED) &&
 		    OffsetStateSchematic.get(DoorBlock.FACING) == OffsetStateClient.get(DoorBlock.FACING)) //hinge error
 		{
 		    return false;
 	    }
         if (ExplicitObserver) {
+			if (OffsetStateClient.isAir() && OffsetStateSchematic.isAir()){return false;} //cave air wtf
             return !OffsetStateSchematic.toString().equals(OffsetStateClient.toString());
         }
         return !OffsetStateClient.getBlock().equals(OffsetStateSchematic.getBlock());
@@ -1123,7 +1125,18 @@ public class Printer {
             return true;
         }
     }
-
+	private static boolean isReplaceableFluidSource(BlockState checkState){
+		return checkState.getBlock() instanceof FluidBlock && checkState.get(FluidBlock.LEVEL) == 0 ||
+			checkState.getBlock() instanceof BubbleColumnBlock ||
+			checkState.isOf(Blocks.SEAGRASS) || checkState.isOf(Blocks.TALL_SEAGRASS) ||
+		checkState.getBlock() instanceof Waterloggable && checkState.get(Properties.WATERLOGGED) && checkState.getMaterial().isReplaceable();
+	}
+	private static boolean isReplaceableWaterFluidSource(BlockState checkState){
+		return checkState.getFluidState().getFluid() instanceof WaterFluid && checkState.get(FluidBlock.LEVEL) == 0 ||
+			checkState.getBlock() instanceof BubbleColumnBlock ||
+			checkState.isOf(Blocks.SEAGRASS) || checkState.isOf(Blocks.TALL_SEAGRASS) ||
+			checkState.getBlock() instanceof Waterloggable && checkState.get(Properties.WATERLOGGED) && checkState.getMaterial().isReplaceable();
+	}
     private static boolean printerCheckCancel(BlockState stateSchematic, BlockState stateClient,
                                               PlayerEntity player) {
         Block blockSchematic = stateSchematic.getBlock();
