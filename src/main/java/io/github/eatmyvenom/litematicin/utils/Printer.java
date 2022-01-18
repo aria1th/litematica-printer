@@ -1009,6 +1009,13 @@ public class Printer {
         }
         return false;
     }
+	/* * *
+	returns if block is observer output but observer can't avoid update
+	If its true, then block should be placed after observer update is done
+	Case A : Observer is facing wall attached : observer - wall - output
+	Case B : Observer is facing Noteblock from horizontal : observer - block below noteblock - noteblock - output
+
+	 * * */
 	private static BlockPos isObserverCantAvoidOutput(MinecraftClient mc, World schematicWorld, BlockPos pos){
 		for (Direction direction : Direction.values()){
 			BlockState offsetState = schematicWorld.getBlockState(pos.offset(direction));
@@ -1026,7 +1033,8 @@ public class Printer {
 		Block offsetBlock = OffsetStateSchematic.getBlock();
 		if (OffsetStateSchematic.isOf(Blocks.NOTE_BLOCK)){
 			if (isNoteBlockInstrumentError(mc, world, Posoffset)){
-				return true;
+				//everything is correct but litematica error
+				return false;
 			}
 		}
 		if (facingSchematic.equals(Direction.UP)) {
