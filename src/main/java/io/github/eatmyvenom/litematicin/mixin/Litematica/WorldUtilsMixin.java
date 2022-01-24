@@ -16,6 +16,14 @@ public class WorldUtilsMixin {
     @Overwrite
     private static ActionResult doEasyPlaceAction(MinecraftClient mc)
     {
-        return Printer.doPrinterAction(mc);
+		ActionResult defaultResult =  ActionResult.SUCCESS;
+		try {
+			defaultResult =  Printer.doPrinterAction(mc);
+		}
+		catch (NullPointerException e){
+			//in case of NPE, print log instead
+			e.printStackTrace();
+		}
+		return defaultResult;
     }
 }
