@@ -1140,10 +1140,10 @@ public class Printer {
 		checkState.getBlock() instanceof Waterloggable && checkState.get(Properties.WATERLOGGED) && checkState.getMaterial().isReplaceable();
 	}
 	private static boolean isReplaceableWaterFluidSource(BlockState checkState){
-		return checkState.getFluidState().getFluid() instanceof WaterFluid && checkState.get(FluidBlock.LEVEL) == 0 ||
+		return checkState.isOf(Blocks.SEAGRASS) || checkState.isOf(Blocks.TALL_SEAGRASS) ||
+			checkState.getFluidState().getFluid() instanceof WaterFluid && checkState.contains(FluidBlock.LEVEL) && checkState.get(FluidBlock.LEVEL) == 0 ||
 			checkState.getBlock() instanceof BubbleColumnBlock ||
-			checkState.isOf(Blocks.SEAGRASS) || checkState.isOf(Blocks.TALL_SEAGRASS) ||
-			checkState.getBlock() instanceof Waterloggable && checkState.get(Properties.WATERLOGGED) && checkState.getMaterial().isReplaceable();
+			checkState.getBlock() instanceof Waterloggable && checkState.contains(Properties.WATERLOGGED) && checkState.get(Properties.WATERLOGGED) && checkState.getMaterial().isReplaceable();
 	}
     private static boolean printerCheckCancel(BlockState stateSchematic, BlockState stateClient,
                                               PlayerEntity player) {
