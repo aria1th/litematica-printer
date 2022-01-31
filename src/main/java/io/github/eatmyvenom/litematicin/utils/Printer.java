@@ -1,23 +1,5 @@
 package io.github.eatmyvenom.litematicin.utils;
 
-import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.EASY_PLACE_MODE_BREAK_BLOCKS;
-import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.EASY_PLACE_MODE_REDSTONE_ORDERS;
-import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.EASY_PLACE_MODE_DELAY;
-import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.EASY_PLACE_MODE_HOTBAR_ONLY;
-import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.EASY_PLACE_MODE_MAX_BLOCKS;
-import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.EASY_PLACE_MODE_RANGE_X;
-import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.EASY_PLACE_MODE_RANGE_Y;
-import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.EASY_PLACE_MODE_RANGE_Z;
-import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.FLIPPIN_CACTUS; //now only applied for rail blocks, sometimes observer flipping can help redstone order too.
-import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.CLEAR_AREA_MODE;
-import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.BEDROCK_BREAKING;
-import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.CLEAR_AREA_MODE_COBBLESTONE;
-import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.CLEAR_AREA_MODE_SNOWPREVENT;
-import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.ACCURATE_BLOCK_PLACEMENT;
-import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.EASY_PLACE_MODE_USE_COMPOSTER;
-import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.ADVANCED_ACCURATE_BLOCK_PLACEMENT;
-import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.EASY_PLACE_MODE_OBSERVER_EXPLICIT_ORDER;
-
 import java.util.*;
 
 import com.google.common.collect.ImmutableMap;
@@ -62,6 +44,8 @@ import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.*;
 import net.minecraft.world.World;
+
+import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.*;
 
 public class Printer {
 
@@ -743,6 +727,21 @@ public class Printer {
                         BlockPos npos = pos;
                         Direction side = applyPlacementFacing(stateSchematic, sideOrig, stateClient);
                         Block blockSchematic = stateSchematic.getBlock();
+						//Don't place waterlogged block's original block before fluid since its painful
+						if (isReplaceableWaterFluidSource(stateSchematic) || (stateSchematic.contains(Properties.WATERLOGGED) && stateSchematic.get(Properties.WATERLOGGED)) &&
+							stateClient.getMaterial().isReplaceable() && !isReplaceableWaterFluidSource(stateClient)){
+							if (EASY_PLACE_PLACE_ICE.getBooleanValue()) {
+								ItemStack iceStack = Items.ICE.getDefaultStack();
+								if(mc.player.getInventory().getSlotWithStack(iceStack) == -1){
+									continue;
+								} else {
+									InventoryUtils.setPickedItemToHand(iceStack, mc);
+									mc.interactionManager.interactBlock(mc.player, mc.world, Hand.MAIN_HAND, new BlockHitResult(new Vec3d(pos.getX(), pos.getY(), pos.getZ()), Direction.DOWN, pos, false));
+								}
+							}
+							continue;
+						}
+
                         if (blockSchematic instanceof TorchBlock && !(blockSchematic instanceof RedstoneTorchBlock)) {
                             BlockPos Offsetpos = new BlockPos(x, y - 1, z);
                             BlockState OffsetstateSchematic = world.getBlockState(Offsetpos);
@@ -881,6 +880,7 @@ public class Printer {
                             }
                             continue;
                         }
+						//finally places block
                         mc.interactionManager.interactBlock(mc.player, mc.world, hand, hitResult);
                         interact++;
                         if (stateSchematic.getBlock() instanceof AbstractRailBlock && !ADVANCED_ACCURATE_BLOCK_PLACEMENT.getBooleanValue()) {
@@ -931,7 +931,6 @@ public class Printer {
 		}
         return ActionResult.FAIL;
     }
-
     private static boolean isQCable(MinecraftClient mc, World world, BlockPos pos) {
         BlockPos posoffset = pos.down();
         BlockPos poseast = posoffset.east();
@@ -1020,21 +1019,22 @@ public class Printer {
 		for (Direction direction : Direction.values()){
 			BlockState offsetState = schematicWorld.getBlockState(pos.offset(direction));
 			if (offsetState.getBlock() instanceof ObserverBlock && offsetState.get(ObserverBlock.FACING) == direction){
-				if (ObserverCantAvoid(mc, schematicWorld, direction, pos.offset(direction) )) {
-				return pos.offset(direction);
+				if (mc.world.getBlockState(pos.offset(direction,2)).getMaterial().isReplaceable() != schematicWorld.getBlockState(pos.offset(direction,2)).getMaterial().isReplaceable() && ObserverCantAvoid(mc, schematicWorld, direction, pos.offset(direction) )) {
+					return pos.offset(direction);
 				}
 			}
 		}
 		return null;
 	}
 	private static boolean ObserverCantAvoid(MinecraftClient mc, World world, Direction facingSchematic, BlockPos pos){
+		//returns true if observer should be placed regardless of state
 		BlockPos Posoffset = pos.offset(facingSchematic);
 		BlockState OffsetStateSchematic = world.getBlockState(Posoffset);
 		Block offsetBlock = OffsetStateSchematic.getBlock();
 		if (OffsetStateSchematic.isOf(Blocks.NOTE_BLOCK)){
 			if (isNoteBlockInstrumentError(mc, world, Posoffset)){
 				//everything is correct but litematica error
-				return false;
+				return true;
 			}
 		}
 		if (facingSchematic.equals(Direction.UP)) {
@@ -1053,7 +1053,6 @@ public class Printer {
 		}
 	}
 	private static boolean isNoteBlockInstrumentError(MinecraftClient mc, World world, BlockPos pos){
-		BlockPos offsetPos = pos.offset(Direction.DOWN);
 		BlockState stateA = world.getBlockState(pos);
 		BlockState stateB = mc.world.getBlockState(pos);
 		return stateA.isOf(Blocks.NOTE_BLOCK) && stateB.isOf(Blocks.NOTE_BLOCK) &&
@@ -1061,6 +1060,7 @@ public class Printer {
 			world.getBlockState(pos.offset(Direction.DOWN)).getMaterial().isReplaceable() == mc.world.getBlockState(pos.offset(Direction.DOWN)).getMaterial().isReplaceable();
 	}
     private static boolean ObserverUpdateOrder(MinecraftClient mc, World world, BlockPos pos) {
+		//returns true if observer should not be placed
         boolean ExplicitObserver = EASY_PLACE_MODE_OBSERVER_EXPLICIT_ORDER.getBooleanValue();
         BlockState stateSchematic = world.getBlockState(pos);
         BlockPos Posoffset = pos;
