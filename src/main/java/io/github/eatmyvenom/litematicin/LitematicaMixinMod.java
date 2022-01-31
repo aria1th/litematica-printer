@@ -29,6 +29,7 @@ public class LitematicaMixinMod implements ModInitializer {
 	public static final ConfigBoolean ADVANCED_ACCURATE_BLOCK_PLACEMENT = new  ConfigBoolean("CarpetExtraFixedVersion",false,"If carpet extra is updated, turn on to allow all facingblock rotation");
 	public static final ConfigBoolean BEDROCK_BREAKING = new ConfigBoolean("BedrockBreaking", false, "Clear Bedrock mismatch with Bedrock Breaker");
 	public static final ConfigBoolean BEDROCK_BREAKING_FORCE_TORCH = new ConfigBoolean("BedrockBreakingUseSlimeblock", false, "BecrockBreaker uses slime block to force torch location");
+	public static final ConfigBoolean EASY_PLACE_PLACE_ICE = new ConfigBoolean("easyPlaceModeUseIceForWater", false, "Should printer place ice where water/waterlogged should be?");
 	public static final ImmutableList<IConfigBase> betterList = originalList.addAll(ImmutableList.of(
 			EASY_PLACE_MODE_RANGE_X,
 			EASY_PLACE_MODE_RANGE_Y,
@@ -39,6 +40,7 @@ public class LitematicaMixinMod implements ModInitializer {
 			EASY_PLACE_MODE_HOTBAR_ONLY,
 			FLIPPIN_CACTUS,
 			CLEAR_AREA_MODE,
+			EASY_PLACE_PLACE_ICE,
 			CLEAR_AREA_MODE_COBBLESTONE,
 			CLEAR_AREA_MODE_SNOWPREVENT,
 			ACCURATE_BLOCK_PLACEMENT,
@@ -51,7 +53,7 @@ public class LitematicaMixinMod implements ModInitializer {
 	).build();
 	@Override
 	public void onInitialize() {
-		System.out.println("YeeFuckinHaw");
+		System.out.println("[Printer] : YeeFuckinHaw");
 	}
 }
 
