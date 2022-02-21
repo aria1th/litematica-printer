@@ -30,18 +30,20 @@ I don't really know how it works or produces bug, I just guess its something rel
 
 ### Printer settings:
 
-`easyPlaceModeRange (x,y,z)`:&emsp;	"X,Y,Z Range for EasyPlace"<br/>
+`easyPlaceModeRange (x,y,z)`:&emsp;	"X,Y,Z Range for EasyPlace, Set to 000 if you want normal easyplace."<br/>
 `easyPlaceModeMaxBlocks`:&emsp;		"Max block interactions per cycle"<br/>
-`easyPlaceModeBreakBlocks`:&emsp;	"Automatically breaks blocks."<br/>
+`easyPlaceModeBreakBlocks`:&emsp;	"Printer will break blocks when its mismatch / extra"<br/>
 `easyPlaceModeDelay`:&emsp;			"Delay between printing blocks.Do not set to 0 if you are playing on a server."<br/>
 `easyPlaceModeHotbarOnly`:&emsp;	"Only place blocks from your hotbar. This bypasses some anti-cheats."<br/>
 `easyPlaceModeFlippincactus`:&emsp;			"Allows Rotating incorrect blocks when carpet option is enabled and holding cactus on your mainhand"<br/>
-`easyPlaceModeClearArea`:&emsp;			"Remove nearby fluids, within easyplace range, to prevent errors. uses slime block to remove lava, sponges for water. WILL STOP OTHER ACTIONS"<br/>
-`easyPlaceModeClearAreaCobblestone`:&emsp;			"Use cobblestones instead of slime block to remove lava <br/> REQUIRES : easyPlaceModeClearArea TRUE"<br/>
+`easyPlaceModeClearFluids`:&emsp;			"Remove nearby fluids, within easyplace range, to prevent errors. uses slime block to remove lava, sponges for water. WILL STOP OTHER ACTIONS"<br/>
+`easyPlaceModeUseIceForWater`:&emsp;			"Printer places ice at waterlogged blocks positions"<br/>
+`ClearFluidUseCobblestone`:&emsp;			"Use cobblestones instead of slime block to remove lava <br/> REQUIRES : easyPlaceModeClearFluids TRUE"<br/>
 `ClearSnowLayer`:&emsp;			"It will place string where snow layer exists, ignores placement boxes, Only use if you need to. DEFAULT : FALSE"<br/>
 `AccurateBlockPlacement`:&emsp;			"If carpet mod AccurateBlockPlacement is enabled (from extra or quickcarpet), you can turn on and printer will be rotation-free"<br/>
 `easyPlaceModeUsePumpkinPie`:&emsp;			"If composter Level filling is needed, printer will use pumpkin pie to adjust its level"<br/>
 `CarpetExtraFixedVersion`:&emsp;			"Carpet extra currently not supports some blocks, if its updated or server is using Quickcarpet, test this."<br/>
+`easyPlaceModeSmartRedstoneAvoid`:&emsp;			"Pistons/Redstones /QC will be calculated and printer will place it in correct orders"<br/>
 `easyPlaceModeObserverAvoidAll`:&emsp;			" Observer will avoid being placed when its watching state(not block) is not correct"<br/>
 `BedrockBreaking`:&emsp;			"Removes bedrock when it needs to, will stop other actions, it needs BreakBlocks TRUE and haste 2, eff 5 pickaxe, works more well with accurateblockplacement.<br/> REQUIRES : easyPlaceModeBreakBlocks TRUE"<br/>
 `BedrockBreakingUseSlimeBlocks`:&emsp;			"Places slime block to easily remove it"<br/>
