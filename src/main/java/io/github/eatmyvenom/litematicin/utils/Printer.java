@@ -21,6 +21,7 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 
 import net.minecraft.block.*;
+import net.minecraft.fluid.Fluids;
 import net.minecraft.fluid.LavaFluid;
 import net.minecraft.fluid.WaterFluid;
 import net.minecraft.item.BlockItem;
@@ -641,7 +642,10 @@ public class Printer {
                         }
                         if (stateSchematic == stateClient) {
                             continue;
-                        } else if (sBlock instanceof SandBlock || sBlock instanceof DragonEggBlock || sBlock instanceof ConcretePowderBlock || sBlock instanceof GravelBlock || sBlock instanceof AnvilBlock) {
+                        } else if (willFall(stateSchematic, mc.world, pos))
+						{
+							continue;
+						} else if (sBlock instanceof SandBlock || sBlock instanceof DragonEggBlock || sBlock instanceof ConcretePowderBlock || sBlock instanceof GravelBlock || sBlock instanceof AnvilBlock) {
                             BlockPos Offsetpos = new BlockPos(x, y - 1, z);
                             BlockState OffsetstateSchematic = world.getBlockState(Offsetpos);
                             BlockState OffsetstateClient = mc.world.getBlockState(Offsetpos);
@@ -931,7 +935,15 @@ public class Printer {
 		}
         return ActionResult.FAIL;
     }
-    private static boolean isQCable(MinecraftClient mc, World world, BlockPos pos) {
+
+	private static boolean willFall(BlockState stateSchematic, World clientWorld, BlockPos pos) {
+		if(stateSchematic.getBlock() instanceof ScaffoldingBlock){
+			return !stateSchematic.getBlock().canPlaceAt(stateSchematic, clientWorld, pos);
+		}
+		return false;
+	}
+
+	private static boolean isQCable(MinecraftClient mc, World world, BlockPos pos) {
         BlockPos posoffset = pos.down();
         BlockPos poseast = posoffset.east();
         BlockPos poswest = posoffset.west();
@@ -1140,7 +1152,8 @@ public class Printer {
 		checkState.getBlock() instanceof Waterloggable && checkState.get(Properties.WATERLOGGED) && checkState.getMaterial().isReplaceable();
 	}
 	private static boolean isReplaceableWaterFluidSource(BlockState checkState){
-		return checkState.isOf(Blocks.SEAGRASS) || checkState.isOf(Blocks.TALL_SEAGRASS) ||
+		return checkState.getBlock() instanceof FluidBlock && checkState.get(FluidBlock.LEVEL) == 0 && checkState.getFluidState().getFluid() instanceof WaterFluid ||
+			checkState.isOf(Blocks.SEAGRASS) || checkState.isOf(Blocks.TALL_SEAGRASS) ||
 			checkState.getFluidState().getFluid() instanceof WaterFluid && checkState.contains(FluidBlock.LEVEL) && checkState.get(FluidBlock.LEVEL) == 0 ||
 			checkState.getBlock() instanceof BubbleColumnBlock ||
 			checkState.getBlock() instanceof Waterloggable && checkState.contains(Properties.WATERLOGGED) && checkState.get(Properties.WATERLOGGED) && checkState.getMaterial().isReplaceable();
