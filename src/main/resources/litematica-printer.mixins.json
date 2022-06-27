@@ -9,7 +9,10 @@
     "Litematica.ConfigsMixin",
     "Litematica.GuiConfigsMixin",
     "Litematica.WorldUtilsMixin",
-	"Litematica.MinecraftClientMixin"
+	"Litematica.MinecraftClientMixin",
+	"quasiEssentialClient.ClientPlayerEntityMixin",
+	"quasiEssentialClient.ItemPlacementContextMixin",
+	"quasiEssentialClient.ItemUsageContextMixin"
   ],
   "injectors": {
     "defaultRequire": 1

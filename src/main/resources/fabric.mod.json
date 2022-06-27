@@ -4,7 +4,7 @@
   "version": "${version}",
 
   "name": "Litematica Printer",
-  "description": "Replaces EasyPlace with a printer to make building even easier. Accurateblockplacement available",
+  "description": "Replaces EasyPlace with a printer to make building even easier.",
   "authors": [
     "eatmyvenom, jensvh, aria1th"
   ],
