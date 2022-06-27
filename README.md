@@ -3,6 +3,11 @@
 ## Setup
 
 To set this up just add the latest litematica version to your mods folder as well as this, it will replace easy place with printer. If carpet extra /quickcarpet enabled accurateblockplacement, you can turn on option, and... here goes the overpowered printer.
+## What's difference?
+It uses accurateblockplacement if available, also advanced protocol if my fork of carpet extra is installed, without protocol it still places everything correctly(should).
+Also it tries to avoid making 'failure', especially related to update orders, observer / BUD / piston / state,falling blocks, etc.
+It also tries blocks with multiple states : composters, snow layers, pickles....
+It has extra feature for removing fluids / clearing area / breaking bedrock (?).
 
 ## Install guide
 
@@ -13,26 +18,35 @@ in singleplayer, ping is 0 so whatever.
 
 (WON'T FIX) paper, spigot or other types can have their own anti cheat to prevent 'not-looking' placement, which means you can't do anything with this. There's some option to nerf printing action at https://github.com/jensvh/litematica-printer/releases/tag/v1.0.4, but still we can't assure if it would work or not. Use this if you are sure about it.
 
+Masagadget now breaks printer due to old accurateBlockPlacement protocol fix, so you need to remove it when you want to use this printer.
+This printer redirects whole method.
+
 # Issue tracker
 Mainly 1.17-1.18 is supported, 1.16.5 is being supported only partially (without some recent updates) since I'm not really good at java.
-
 Feel free to clean up my code or improve things, or use at some other mods, like separating functionalities. I'm not doing it because I don't know how to.
+
+## Before sending DM, check if its my printer....
+https://github.com/aleksilassila/litematica-printer
+I don't really know how it works or produces bug, I just guess its something related to its rotation and face clicking. I can't really help anything not about my printer and its better to ask the author.
+
 ## Settings
 
 ### Printer settings:
 
-`easyPlaceModeRange (x,y,z)`:&emsp;	"X,Y,Z Range for EasyPlace"<br/>
+`easyPlaceModeRange (x,y,z)`:&emsp;	"X,Y,Z Range for EasyPlace, Set to 000 if you want normal easyplace."<br/>
 `easyPlaceModeMaxBlocks`:&emsp;		"Max block interactions per cycle"<br/>
-`easyPlaceModeBreakBlocks`:&emsp;	"Automatically breaks blocks."<br/>
+`easyPlaceModeBreakBlocks`:&emsp;	"Printer will break blocks when its mismatch / extra"<br/>
 `easyPlaceModeDelay`:&emsp;			"Delay between printing blocks.Do not set to 0 if you are playing on a server."<br/>
 `easyPlaceModeHotbarOnly`:&emsp;	"Only place blocks from your hotbar. This bypasses some anti-cheats."<br/>
 `easyPlaceModeFlippincactus`:&emsp;			"Allows Rotating incorrect blocks when carpet option is enabled and holding cactus on your mainhand"<br/>
-`easyPlaceModeClearArea`:&emsp;			"Remove nearby fluids, within easyplace range, to prevent errors. uses slime block to remove lava, sponges for water. WILL STOP OTHER ACTIONS"<br/>
-`easyPlaceModeClearAreaCobblestone`:&emsp;			"Use cobblestones instead of slime block to remove lava <br/> REQUIRES : easyPlaceModeClearArea TRUE"<br/>
+`easyPlaceModeClearFluids`:&emsp;			"Remove nearby fluids, within easyplace range, to prevent errors. uses slime block to remove lava, sponges for water. WILL STOP OTHER ACTIONS"<br/>
+`easyPlaceModeUseIceForWater`:&emsp;			"Printer places ice at waterlogged blocks positions"<br/>
+`ClearFluidUseCobblestone`:&emsp;			"Use cobblestones instead of slime block to remove lava <br/> REQUIRES : easyPlaceModeClearFluids TRUE"<br/>
 `ClearSnowLayer`:&emsp;			"It will place string where snow layer exists, ignores placement boxes, Only use if you need to. DEFAULT : FALSE"<br/>
 `AccurateBlockPlacement`:&emsp;			"If carpet mod AccurateBlockPlacement is enabled (from extra or quickcarpet), you can turn on and printer will be rotation-free"<br/>
 `easyPlaceModeUsePumpkinPie`:&emsp;			"If composter Level filling is needed, printer will use pumpkin pie to adjust its level"<br/>
 `CarpetExtraFixedVersion`:&emsp;			"Carpet extra currently not supports some blocks, if its updated or server is using Quickcarpet, test this."<br/>
+`easyPlaceModeSmartRedstoneAvoid`:&emsp;			"Pistons/Redstones /QC will be calculated and printer will place it in correct orders"<br/>
 `easyPlaceModeObserverAvoidAll`:&emsp;			" Observer will avoid being placed when its watching state(not block) is not correct"<br/>
 `BedrockBreaking`:&emsp;			"Removes bedrock when it needs to, will stop other actions, it needs BreakBlocks TRUE and haste 2, eff 5 pickaxe, works more well with accurateblockplacement.<br/> REQUIRES : easyPlaceModeBreakBlocks TRUE"<br/>
 `BedrockBreakingUseSlimeBlocks`:&emsp;			"Places slime block to easily remove it"<br/>
