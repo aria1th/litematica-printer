@@ -290,7 +290,9 @@ public class BedrockBreaker {
     }
 
     public static void handleTweakPlacementPacket(MinecraftClient mc, BlockHitResult hitResult) {
-        mc.getNetworkHandler().sendPacket(new PlayerInteractBlockC2SPacket(Hand.MAIN_HAND, hitResult));
+		mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, hitResult);
+		//now we don't need to do this
+        //mc.getNetworkHandler().sendPacket(new PlayerInteractBlockC2SPacket(Hand.MAIN_HAND, hitResult, 0));
     }
 
     public static void placeTorch(MinecraftClient mc, BlockPos pos, Direction TorchFacing) {

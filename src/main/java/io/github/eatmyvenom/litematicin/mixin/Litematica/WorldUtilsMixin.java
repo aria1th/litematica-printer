@@ -7,13 +7,15 @@ import fi.dy.masa.litematica.util.WorldUtils;
 import io.github.eatmyvenom.litematicin.utils.Printer;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.util.ActionResult;
+import org.spongepowered.asm.mixin.injection.Redirect;
 
-@Mixin(value = WorldUtils.class, remap = false)
+@Mixin(value = WorldUtils.class, remap = false, priority = 1010)
 public class WorldUtilsMixin {
     /**
-     * @author joe mama
+     * @author joe mama // fixed by AngelBottomless
      */
-    @Overwrite
+    //@Overwrite
+    @Overwrite()
     private static ActionResult doEasyPlaceAction(MinecraftClient mc)
     {
 		ActionResult defaultResult =  ActionResult.SUCCESS;

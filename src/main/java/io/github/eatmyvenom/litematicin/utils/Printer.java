@@ -25,6 +25,7 @@ import net.minecraft.fluid.Fluids;
 import net.minecraft.fluid.LavaFluid;
 import net.minecraft.fluid.WaterFluid;
 import net.minecraft.item.BlockItem;
+import net.minecraft.item.ItemPlacementContext;
 import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
 import net.minecraft.state.property.Properties;
 
@@ -117,6 +118,30 @@ public class Printer {
     }
 
     // TODO: This must be moved to another class and not be static.
+	private static boolean simulateFacingData(BlockState state, BlockPos blockPos, Vec3d hitVec) {
+		if(!state.getProperties().contains(Properties.FACING)){
+			return true;
+		}
+		// int 0 : none, 1 : clockwise, 2 : counterclockwise, 3 : reverse
+		PlayerEntity player = MinecraftClient.getInstance().player;
+		Direction playerHorizontalFacing = player.getHorizontalFacing();
+		Direction playerFacing = Direction.getEntityFacingOrder(player)[0];
+		BlockHitResult hitResult = new BlockHitResult(hitVec, Direction.NORTH, blockPos, false);
+		Block block = state.getBlock();
+		ItemPlacementContext ctx = new ItemPlacementContext(player, Hand.MAIN_HAND, state.getBlock().asItem().getDefaultStack(), hitResult);
+		BlockState testState;
+		try{
+			testState = block.getPlacementState(ctx);
+		}
+		catch (Exception e){ //doors wtf
+			return false;
+		}
+		if (testState == null){
+			return true;
+		}
+		Direction testFacing = fi.dy.masa.malilib.util.BlockUtils.getFirstPropertyFacingValue(testState);
+		return testFacing == fi.dy.masa.malilib.util.BlockUtils.getFirstPropertyFacingValue(state);
+	}
     private static FacingData getFacingData(BlockState state) {
         if (!setupFacing) {
             setUpFacingData();
@@ -212,7 +237,7 @@ public class Printer {
                 hitPos = applyHitVec(blockPos,schematicState,hitPos,side);
             }
             BlockHitResult hitResult = new BlockHitResult(hitPos, side, blockPos, false);
-            ActionResult actionResult = mc.interactionManager.interactBlock(mc.player, mc.world, hand, hitResult);
+            ActionResult actionResult = mc.interactionManager.interactBlock(mc.player, hand, hitResult);
             if (actionResult.isAccepted()){
                 return ActionResult.SUCCESS;
             }
@@ -519,7 +544,7 @@ public class Printer {
                                             }
                                             Vec3d hitPos = new Vec3d(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5);
                                             BlockHitResult hitResult = new BlockHitResult(hitPos, side, pos, false);
-                                            mc.interactionManager.interactBlock(mc.player, mc.world, hand, hitResult);
+                                            mc.interactionManager.interactBlock(mc.player, hand, hitResult);
                                             lastPlaced = new Date().getTime();
                                             return ActionResult.SUCCESS;
                                         } else {
@@ -536,7 +561,7 @@ public class Printer {
 
                                         BlockHitResult hitResult = new BlockHitResult(hitPos, side, pos, false);
 
-                                        mc.interactionManager.interactBlock(mc.player, mc.world, hand, hitResult);
+                                        mc.interactionManager.interactBlock(mc.player, hand, hitResult);
                                         interact++;
                                     }
 
@@ -575,7 +600,7 @@ public class Printer {
                                     Hand hand = Hand.MAIN_HAND;
                                     Vec3d hitPos = new Vec3d(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5);
                                     BlockHitResult hitResult = new BlockHitResult(hitPos, side, pos, false);
-                                    mc.interactionManager.interactBlock(mc.player, mc.world, hand, hitResult);
+                                    mc.interactionManager.interactBlock(mc.player,  hand, hitResult);
                                     interact++;
                                 } else if (breakBlocks && ShouldFix) { //cannot fix via flippincactus
                                     mc.interactionManager.attackBlock(pos, Direction.DOWN);//by one hit possible?
@@ -629,7 +654,7 @@ public class Printer {
                                 InventoryUtils.setPickedItemToHand(stack, mc);
                                 Vec3d hitPos = new Vec3d(0.5, 0.5, 0.5);
                                 BlockHitResult hitResult = new BlockHitResult(hitPos, Direction.UP, pos, false);
-                                mc.interactionManager.interactBlock(mc.player, mc.world, hand, hitResult);
+                                mc.interactionManager.interactBlock(mc.player,  hand, hitResult);
                                 if (isReplaceableFluidSource(stateClient) || cBlock instanceof SnowBlock ) {
                                     lastPlaced = new Date().getTime();
                                     continue;
@@ -691,7 +716,7 @@ public class Printer {
                             InventoryUtils.setPickedItemToHand(stack, mc);
                             Vec3d hitPos = new Vec3d(0.5, 0.5, 0.5);
                             BlockHitResult hitResult = new BlockHitResult(hitPos, Direction.DOWN, new BlockPos(x, y + 1, z), false);
-                            mc.interactionManager.interactBlock(mc.player, mc.world, hand, hitResult);
+                            mc.interactionManager.interactBlock(mc.player, hand, hitResult);
                             lastPlaced = new Date().getTime();
                             return ActionResult.SUCCESS; //wait for next tick
                         }
@@ -705,6 +730,9 @@ public class Printer {
                         }
                         if (facing != null) {
                             FacingData facedata = getFacingData(stateSchematic);
+							if(facedata == null&& !simulateFacingData(stateSchematic, pos, new Vec3d(0.5, 0.5, 0.5))){
+								continue;
+							}
                             if (!(CanUseProtocol && IsBlockSupportedCarpet(stateSchematic.getBlock())) && !canPlaceFace(facedata, stateSchematic, mc.player, primaryFacing, horizontalFacing))
                                 continue;
 
@@ -740,7 +768,7 @@ public class Printer {
 									continue;
 								} else {
 									InventoryUtils.setPickedItemToHand(iceStack, mc);
-									mc.interactionManager.interactBlock(mc.player, mc.world, Hand.MAIN_HAND, new BlockHitResult(new Vec3d(pos.getX(), pos.getY(), pos.getZ()), Direction.DOWN, pos, false));
+									mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, new BlockHitResult(new Vec3d(pos.getX(), pos.getY(), pos.getZ()), Direction.DOWN, pos, false));
 								}
 							}
 							continue;
@@ -879,13 +907,13 @@ public class Printer {
                                     && stateClient.get(SnowBlock.LAYERS) < stateSchematic.get(SnowBlock.LAYERS)) {
                                 side = Direction.UP;
                                 hitResult = new BlockHitResult(hitPos, side, npos, false);
-                                mc.interactionManager.interactBlock(mc.player, mc.world, hand, hitResult);
+                                mc.interactionManager.interactBlock(mc.player, hand, hitResult);
                                 interact++;
                             }
                             continue;
                         }
 						//finally places block
-                        mc.interactionManager.interactBlock(mc.player, mc.world, hand, hitResult);
+                        mc.interactionManager.interactBlock(mc.player, hand, hitResult);
                         interact++;
                         if (stateSchematic.getBlock() instanceof AbstractRailBlock && !ADVANCED_ACCURATE_BLOCK_PLACEMENT.getBooleanValue()) {
                             mc.getNetworkHandler().sendPacket(new PlayerMoveC2SPacket.LookAndOnGround(originYaw, mc.player.getPitch(1.0f), mc.player.isOnGround()));
@@ -898,7 +926,7 @@ public class Printer {
                                     && stateClient.get(SlabBlock.TYPE) != SlabType.DOUBLE) {
                                 side = applyPlacementFacing(stateSchematic, sideOrig, stateClient);
                                 hitResult = new BlockHitResult(hitPos, side, npos, false);
-                                mc.interactionManager.interactBlock(mc.player, mc.world, hand, hitResult);
+                                mc.interactionManager.interactBlock(mc.player, hand, hitResult);
                                 interact++;
                             }
                         }
@@ -909,7 +937,7 @@ public class Printer {
                                     && stateClient.get(SeaPickleBlock.PICKLES) < stateSchematic.get(SeaPickleBlock.PICKLES)) {
                                 side = applyPlacementFacing(stateSchematic, sideOrig, stateClient);
                                 hitResult = new BlockHitResult(hitPos, side, npos, false);
-                                mc.interactionManager.interactBlock(mc.player, mc.world, hand, hitResult);
+                                mc.interactionManager.interactBlock(mc.player, hand, hitResult);
                                 interact++;
                             }
                         }
