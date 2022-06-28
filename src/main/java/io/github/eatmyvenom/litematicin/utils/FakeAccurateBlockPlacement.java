@@ -3,16 +3,21 @@ package io.github.eatmyvenom.litematicin.utils;
 //see https://github.com/senseiwells/EssentialClient/blob/1.19.x/src/main/java/me/senseiwells/essentialclient/feature/BetterAccurateBlockPlacement.java
 
 import fi.dy.masa.litematica.util.InventoryUtils;
-import it.unimi.dsi.fastutil.objects.ObjectSet;
+import fi.dy.masa.malilib.MaLiLib;
+import io.github.eatmyvenom.litematicin.LitematicaMixinMod;
+
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.block.*;
+import net.minecraft.block.enums.BlockHalf;
 import net.minecraft.block.enums.WallMountLocation;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.network.ClientPlayerInteractionManager;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemPlacementContext;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
 import net.minecraft.state.property.Properties;
 import net.minecraft.util.Hand;
@@ -31,47 +36,60 @@ public class FakeAccurateBlockPlacement{
 	// We implement FIFO Queue structure with responsible ticks.
 	// By config, we define 'wait tick' between block placements
 	public static Direction fakeDirection = null;
-	public static int requestedTicks = 0;
+	public static int requestedTicks = -1;
 	public static float fakeYaw = 0;
 	public static float fakePitch = 0;
 	private static float previousFakeYaw = 0;
 	private static float previousFakePitch = 0;
 	private static int tickElapsed = 0;
+	private static Item currentHandling = Items.AIR;
+	private static boolean betweenStartAndEnd = false;
 	private static final Queue<PosWithBlock> waitingQueue = new ArrayDeque<>(1);
 	private static final HashSet<Block> warningSet = new HashSet<>();
 	// Cancel when handling
 	public static boolean isHandling(){
-		return requestedTicks > 0;
+		return requestedTicks >= 0;
 	}
 	// should be called every client tick.
 	static {
-		ClientTickEvents.END_CLIENT_TICK.register(FakeAccurateBlockPlacement::tick);
+		ClientTickEvents.END_CLIENT_TICK.register(FakeAccurateBlockPlacement::endtick);
+		ClientTickEvents.START_CLIENT_TICK.register(FakeAccurateBlockPlacement::starttick);
 	}
-
-	public static void tick(MinecraftClient minecraftClient){
+	public static void starttick(MinecraftClient minecraftClient){
+		betweenStartAndEnd = false;
+	}
+	public static void endtick(MinecraftClient minecraftClient){
+		betweenStartAndEnd = true;
 		ClientPlayNetworkHandler clientPlayNetworkHandler = minecraftClient.getNetworkHandler();
 		ClientPlayerEntity playerEntity = minecraftClient.player;
+		tickElapsed = 0;
 		if (playerEntity == null || clientPlayNetworkHandler == null){
 			return;
 		}
-		if (requestedTicks > 0){
+		//previousFakeYaw = playerEntity.getYaw();
+		//previousFakePitch = playerEntity.getPitch();
+		if (requestedTicks >= 0){
 			if (fakeYaw != previousFakeYaw || fakePitch != previousFakePitch){
 				sendLookPacket(clientPlayNetworkHandler, playerEntity);
 				previousFakePitch = fakePitch;
 				previousFakeYaw = fakeYaw;
 			}
-			requestedTicks --;
-			if (requestedTicks == 1){
+			//we send this at last tick
+			if (requestedTicks == 0){
 				PosWithBlock obj = waitingQueue.poll();
 				if (obj != null) {
 					placeBlock(obj.pos, obj.blockState);
-					System.out.print(obj);
+					//System.out.print(obj);
 				}
 			}
+			requestedTicks --;
 		}
 		else {
-			requestedTicks = 0;
+			requestedTicks = -1;
 			fakeDirection = null;
+			currentHandling = Items.AIR;
+			previousFakePitch = playerEntity.getPitch();
+			previousFakeYaw = playerEntity.getYaw();
 		}
 	}
 
@@ -83,8 +101,8 @@ public class FakeAccurateBlockPlacement{
 				playerEntity.isOnGround()
 			)
 		);
-		System.out.print(fakeYaw);
-		System.out.print(fakePitch);
+		//System.out.print(fakeYaw);
+		//System.out.print(fakePitch);
 	}
 	/*
 	Pure request function by yaw pitch direction
@@ -123,17 +141,18 @@ public class FakeAccurateBlockPlacement{
 	 */
 	public static boolean request(BlockState blockState, BlockPos blockPos){
 		// instant
+		if (!betweenStartAndEnd || !canPlace(blockState)){
+			return false;
+		}
 		if (blockState.isOf(Blocks.HOPPER)){
+			pickFirst(blockState);
 			placeBlock(blockPos,blockState);
 			return true;
 		}
-		if (!blockState.contains(Properties.FACING) && !blockState.contains(Properties.HORIZONTAL_FACING) && !blockState.contains(Properties.AXIS) && !blockState.contains(Properties.HORIZONTAL_AXIS)){
+		if (!blockState.contains(Properties.FACING) && !blockState.contains(Properties.HORIZONTAL_FACING)){
+			pickFirst(blockState);
 			placeBlock(blockPos,blockState);
 			return true; //without facing properties
-		}
-		//delay
-		if (isHandling()){
-			return false;
 		}
 		FacingData facingData = FacingData.getFacingData(blockState);
 		if (facingData == null){
@@ -141,12 +160,15 @@ public class FakeAccurateBlockPlacement{
 				warningSet.add(blockState.getBlock());
 				System.out.printf("WARN : Block %s is not found\n", blockState.getBlock().toString());
 			}
-			return false;
+			pickFirst(blockState);
+			placeBlock(blockPos, blockState);
+			return true;
 		}
 		Direction facing = fi.dy.masa.malilib.util.BlockUtils.getFirstPropertyFacingValue(blockState); //facing of block itself
 		if (facing == null){
-			System.out.print("facing was null\n");
-			System.out.println(blockState);
+			//System.out.print("facing was null\n");
+			//System.out.println(blockState);
+			pickFirst(blockState);
 			placeBlock(blockPos, blockState);
 			return true;
 		}
@@ -163,9 +185,10 @@ public class FakeAccurateBlockPlacement{
 		else if (order == 3){
 			direction1 = facing.rotateYCounterclockwise();
 		}
-		if (direction1 == null){
-			System.out.print("direction was null\n");
-			System.out.println(blockState);
+		if (direction1 == null || fakeDirection == direction1){
+			//System.out.print("direction was null\n");
+			//System.out.println(blockState);
+			pickFirst(blockState);
 			placeBlock(blockPos,blockState);
 			return true;
 		}
@@ -199,30 +222,65 @@ public class FakeAccurateBlockPlacement{
 			fy = 0;
 			fp = 0;
 		}
-		request(fy, fp, lookRefdir, 2, false);
-		waitingQueue.add(new PosWithBlock(blockPos, blockState));
-		System.out.print("Que added\n");
-		System.out.print(lookRefdir);
-		return true;
+		if (LitematicaMixinMod.FAKE_ROTATION_TICKS.getIntegerValue() == 0){
+			//instant place
+			if (lookRefdir != fakeDirection) {
+				if (tickElapsed > LitematicaMixinMod.FAKE_ROTATION_LIMIT.getIntegerValue()){
+					return false;
+				}
+				tickElapsed += 1;
+				request(fy, fp, lookRefdir, LitematicaMixinMod.FAKE_ROTATION_TICKS.getIntegerValue(), true);
+				placeBlock(blockPos, blockState);
+			}
+			else {
+				pickFirst(blockState);
+				placeBlock(blockPos, blockState);
+			}
+			return true;
+		}
+		else {
+			//delay
+			if (isHandling() && lookRefdir != fakeDirection){
+				return false;
+			}
+			request(fy, fp, lookRefdir, LitematicaMixinMod.FAKE_ROTATION_TICKS.getIntegerValue(), false);
+			pickFirst(blockState);
+			waitingQueue.add(new PosWithBlock(blockPos, blockState));
+		}
+		return false;
+	}
+	public static boolean canPlace(BlockState state){
+		return betweenStartAndEnd && state.getBlock().asItem() == currentHandling || currentHandling == Items.AIR;
 	}
 	private static boolean placeBlock(BlockPos pos, BlockState blockState){
 		final MinecraftClient minecraftClient = MinecraftClient.getInstance();
 		final ClientPlayerEntity player = minecraftClient.player;
 		final ClientPlayerInteractionManager interactionManager = minecraftClient.interactionManager;
+		if (!minecraftClient.world.getBlockState(pos).getMaterial().isReplaceable()){
+			return true;
+		}
 		Direction sideOrig = Direction.NORTH;
 		Vec3d hitPos = new Vec3d(pos.getX(), pos.getY(), pos.getZ());
 		Direction side = Printer.applyPlacementFacing(blockState, sideOrig, minecraftClient.world.getBlockState(pos));
 		Vec3d appliedHitVec = Printer.applyHitVec(pos, blockState, hitPos, side);
-		BlockHitResult blockHitResult = new BlockHitResult(appliedHitVec, side, pos, false);
-		ItemStack stack = blockState.getBlock().asItem().getDefaultStack();
-		int slotNum = minecraftClient.player.getInventory().getSlotWithStack(stack);
-		if (slotNum == -1){
-			return false;
+		//Trapdoor actually occasionally refers to player and UP DOWN wtf
+		if (blockState.getBlock() instanceof TrapdoorBlock){
+			side = blockState.get(TrapdoorBlock.HALF) == BlockHalf.BOTTOM ? Direction.UP : Direction.DOWN;
+			appliedHitVec = Vec3d.of(pos);
 		}
-		InventoryUtils.setPickedItemToHand(stack, minecraftClient);
-		System.out.print("Interacted via fake application\n");
+		BlockHitResult blockHitResult = new BlockHitResult(appliedHitVec, side, pos, true);
+		Printer.cacheEasyPlacePosition(pos, false);
+		pickFirst(blockState);
+		//System.out.print("Interacted via fake application\n");
 		interactionManager.interactBlock(player, Hand.MAIN_HAND, blockHitResult);
 		return true;
+	}
+	private static void pickFirst(BlockState blockState){
+		ItemStack stack = blockState.getBlock().asItem().getDefaultStack();
+		final MinecraftClient minecraftClient = MinecraftClient.getInstance();
+		final ClientPlayerEntity player = minecraftClient.player;
+		fi.dy.masa.malilib.util.InventoryUtils.swapItemToMainHand(stack, minecraftClient);
+		currentHandling = blockState.getBlock().asItem();
 	}
 	// we just record pos + block and put in queue.
 	private record PosWithBlock(BlockPos pos,BlockState blockState){
