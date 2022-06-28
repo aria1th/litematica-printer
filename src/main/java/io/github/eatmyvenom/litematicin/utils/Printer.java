@@ -212,6 +212,7 @@ public class Printer {
 
     @Environment(EnvType.CLIENT)
     public static ActionResult doPrinterAction(MinecraftClient mc) {
+		FakeAccurateBlockPlacement.requestedTicks = Math.max(-2, FakeAccurateBlockPlacement.requestedTicks);
         if (breaker.isBreakingBlock()) {
             return ActionResult.SUCCESS;
         }
