@@ -78,7 +78,7 @@ public class FakeAccurateBlockPlacement{
 				}
 			}
 		}
-		requestedTicks --;
+		requestedTicks = requestedTicks -1;
 		if (requestedTicks <= -1){
 			currentHandling = Items.AIR;
 		}
