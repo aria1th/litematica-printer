@@ -2,10 +2,7 @@ package io.github.eatmyvenom.litematicin.utils;
 
 //see https://github.com/senseiwells/EssentialClient/blob/1.19.x/src/main/java/me/senseiwells/essentialclient/feature/BetterAccurateBlockPlacement.java
 
-import fi.dy.masa.litematica.util.InventoryUtils;
-import fi.dy.masa.malilib.MaLiLib;
 import io.github.eatmyvenom.litematicin.LitematicaMixinMod;
-
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.block.*;
 import net.minecraft.block.enums.BlockHalf;
@@ -15,7 +12,6 @@ import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.network.ClientPlayerInteractionManager;
 import net.minecraft.item.Item;
-import net.minecraft.item.ItemPlacementContext;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
@@ -28,7 +24,6 @@ import net.minecraft.util.math.Vec3d;
 
 import java.util.ArrayDeque;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Queue;
 
 public class FakeAccurateBlockPlacement{
@@ -36,7 +31,7 @@ public class FakeAccurateBlockPlacement{
 	// We implement FIFO Queue structure with responsible ticks.
 	// By config, we define 'wait tick' between block placements
 	public static Direction fakeDirection = null;
-	public static int requestedTicks = -1;
+	public static int requestedTicks = -3;
 	public static float fakeYaw = 0;
 	public static float fakePitch = 0;
 	private static float previousFakeYaw = 0;
@@ -84,8 +79,8 @@ public class FakeAccurateBlockPlacement{
 			}
 			requestedTicks --;
 		}
-		else {
-			requestedTicks = -1;
+		else if (requestedTicks <= -3){
+			requestedTicks = -3;
 			fakeDirection = null;
 			currentHandling = Items.AIR;
 			previousFakePitch = playerEntity.getPitch();
@@ -122,9 +117,7 @@ public class FakeAccurateBlockPlacement{
 		final ClientPlayNetworkHandler networkHandler = minecraftClient.getNetworkHandler();
 		final ClientPlayerEntity playerEntity = minecraftClient.player;
 		if (networkHandler != null && playerEntity != null) {
-			if (force) {
-				sendLookPacket(networkHandler, playerEntity);
-			}
+			sendLookPacket(networkHandler, playerEntity);
 			return true;
 		}
 		else {
