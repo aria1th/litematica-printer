@@ -77,12 +77,14 @@ public class FakeAccurateBlockPlacement{
 					//System.out.print(obj);
 				}
 			}
-			requestedTicks --;
 		}
-		else if (requestedTicks <= -3){
+		requestedTicks --;
+		if (requestedTicks <= -1){
+			currentHandling = Items.AIR;
+		}
+		if (requestedTicks <= -3){
 			requestedTicks = -3;
 			fakeDirection = null;
-			currentHandling = Items.AIR;
 			previousFakePitch = playerEntity.getPitch();
 			previousFakeYaw = playerEntity.getYaw();
 		}
