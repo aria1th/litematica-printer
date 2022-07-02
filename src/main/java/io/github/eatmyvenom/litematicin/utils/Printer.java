@@ -1030,6 +1030,13 @@ public class Printer {
 
 	 * * */
 	private static BlockPos isObserverCantAvoidOutput(MinecraftClient mc, World schematicWorld, BlockPos pos){
+		if (isQCableBlock(schematicWorld.getBlockState(pos))){
+			if (schematicWorld.getBlockState(pos.up(2)).isOf(Blocks.OBSERVER) && ObserverCantAvoid(mc, schematicWorld, Direction.UP, pos.up(2) )){
+				if (mc.world.getBlockState(pos.up(3)) != schematicWorld.getBlockState(pos.up(3))){
+					return pos.up(3);
+				}
+			}
+		}
 		for (Direction direction : Direction.values()){
 			BlockState offsetState = schematicWorld.getBlockState(pos.offset(direction));
 			if (offsetState.getBlock() instanceof ObserverBlock && offsetState.get(ObserverBlock.FACING) == direction){
@@ -1072,7 +1079,10 @@ public class Printer {
 		Block block = world.getBlockState(pos).getBlock();
 		return block instanceof DropperBlock || block instanceof PistonBlock || block instanceof NoteBlock;
 	}
-
+	private static boolean isQCableBlock(BlockState blockState){
+		Block block = blockState.getBlock();
+		return block instanceof DropperBlock || block instanceof PistonBlock || block instanceof NoteBlock;
+	}
 	private static boolean isWatchingCorrectState(MinecraftClient mc, World schematicWorld, BlockPos pos, Set<Long> recursive, boolean allowFirst){
 		//observer, then recursive
 		if (recursive == null){
