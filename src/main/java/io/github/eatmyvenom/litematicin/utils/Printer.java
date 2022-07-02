@@ -1,9 +1,6 @@
 package io.github.eatmyvenom.litematicin.utils;
 
-import java.util.*;
-
 import com.google.common.collect.ImmutableMap;
-
 import fi.dy.masa.litematica.data.DataManager;
 import fi.dy.masa.litematica.materials.MaterialCache;
 import fi.dy.masa.litematica.schematic.placement.SchematicPlacementManager.PlacementPart;
@@ -19,33 +16,30 @@ import fi.dy.masa.malilib.util.LayerRange;
 import fi.dy.masa.malilib.util.SubChunkPos;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-
 import net.minecraft.block.*;
-import net.minecraft.fluid.Fluids;
+import net.minecraft.block.enums.*;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.fluid.LavaFluid;
 import net.minecraft.fluid.WaterFluid;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.ItemPlacementContext;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
 import net.minecraft.state.property.Properties;
-
-import net.minecraft.block.enums.ComparatorMode;
-import net.minecraft.block.enums.BedPart;
-import net.minecraft.block.enums.BlockHalf;
-import net.minecraft.block.enums.DoubleBlockHalf;
-import net.minecraft.block.enums.SlabType;
-import net.minecraft.block.enums.WallMountLocation;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.item.Items;
-import net.minecraft.item.ItemStack;
 import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.math.*;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
+
+import java.util.*;
 
 import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.*;
 
@@ -665,9 +659,13 @@ public class Printer {
                                     continue;
                                 }
                             }
-                        } else if (ExplicitObserver){
+                        }
+						if (ExplicitObserver){
 							BlockPos observerPos = isObserverCantAvoidOutput(mc, world, pos);
 							if(observerPos != null){
+								continue;
+							}
+							if (sBlock instanceof ObserverBlock && !isWatchingCorrectState(mc,world, pos,null, true)){
 								continue;
 							}
                         }
@@ -943,7 +941,8 @@ public class Printer {
             BlockState stateClient = mc.world.getBlockState(Position);
             BlockState stateSchematic = world.getBlockState(Position);
             if (stateSchematic.getBlock() instanceof PistonBlock && (stateClient.isAir() && !stateSchematic.get(PistonBlock.EXTENDED) ||
-                    (stateClient.getBlock() instanceof PistonBlock && stateSchematic.get(PistonBlock.FACING).equals(Direction.UP) && !world.getBlockState(Position.up()).getBlock().equals(mc.world.getBlockState(Position.up()).getBlock())))) {
+                    (stateClient.getBlock() instanceof PistonBlock && stateSchematic.get(PistonBlock.FACING).equals(Direction.UP) &&
+	                    !world.getBlockState(Position.up()).getBlock().equals(mc.world.getBlockState(Position.up()).getBlock())))) {
                 return true;
             }
         }
@@ -1020,12 +1019,71 @@ public class Printer {
 		for (Direction direction : Direction.values()){
 			BlockState offsetState = schematicWorld.getBlockState(pos.offset(direction));
 			if (offsetState.getBlock() instanceof ObserverBlock && offsetState.get(ObserverBlock.FACING) == direction){
-				if (mc.world.getBlockState(pos.offset(direction,2)).getMaterial().isReplaceable() != schematicWorld.getBlockState(pos.offset(direction,2)).getMaterial().isReplaceable() && ObserverCantAvoid(mc, schematicWorld, direction, pos.offset(direction) )) {
+				if (!isWatchingCorrectState(mc, schematicWorld, pos.offset(direction), null, false)){
+					return pos.offset(direction);
+				}
+				/*if (mc.world.getBlockState(pos.offset(direction,2)).getMaterial().isReplaceable() != schematicWorld.getBlockState(pos.offset(direction,2)).getMaterial().isReplaceable() &&
+					ObserverCantAvoid(mc, schematicWorld, direction, pos.offset(direction) ))
+				{
+					return pos.offset(direction);
+				}*/
+			}
+			//QC
+			if (direction == Direction.UP || direction == Direction.DOWN || !isQCableBlock(schematicWorld, pos)){
+				continue;
+			}
+			//Horizontal,
+			BlockPos qcPos = pos.offset(direction).up();
+			BlockState qcState = schematicWorld.getBlockState(qcPos);
+			if (qcState.getBlock() instanceof ObserverBlock && qcState.get(ObserverBlock.FACING) == direction){
+				if (!isWatchingCorrectState(mc, schematicWorld, qcPos, null, false)){
 					return pos.offset(direction);
 				}
 			}
+			// again, QC + powerable block uhh
+			else if (qcState.isSolidBlock(schematicWorld, qcPos)){
+				qcPos = qcPos.offset(direction);
+				qcState = schematicWorld.getBlockState(qcPos);
+				if (qcState.getBlock() instanceof ObserverBlock && qcState.get(ObserverBlock.FACING) == direction){
+					if (!isWatchingCorrectState(mc, schematicWorld, qcPos, null, false)){
+						return pos.offset(direction);
+					}
+				}
+			}
+
 		}
 		return null;
+	}
+	private static boolean isQCableBlock(World world, BlockPos pos){
+		Block block = world.getBlockState(pos).getBlock();
+		return block instanceof DropperBlock || block instanceof PistonBlock || block instanceof NoteBlock;
+	}
+
+	private static boolean isWatchingCorrectState(MinecraftClient mc, World schematicWorld, BlockPos pos, Set<Long> recursive, boolean allowFirst){
+		//observer, then recursive
+		if (recursive == null){
+			recursive = new HashSet<>();
+		}
+		if (recursive.contains(pos.asLong())){
+			return true;
+		}
+		BlockState clientState = mc.world.getBlockState(pos);
+		BlockState schematicState = schematicWorld.getBlockState(pos);
+		if (schematicState.getBlock() instanceof ObserverBlock){
+			Direction facing = schematicState.get(ObserverBlock.FACING);
+			recursive.add(pos.asLong());
+			return (allowFirst && ObserverCantAvoid(mc, schematicWorld, facing, pos))|| isWatchingCorrectState(mc, schematicWorld, pos.offset(facing), recursive, allowFirst);
+		}// virtual observers then go recursive
+		else {
+			if (schematicState == Blocks.VOID_AIR.getDefaultState()|| schematicState == Blocks.BARRIER.getDefaultState() || schematicState.isAir()){
+				return true;
+			}
+			else if (clientState != schematicState){
+				//but check wire...
+				return false;
+			}
+		}
+		return true;
 	}
 	private static boolean ObserverCantAvoid(MinecraftClient mc, World world, Direction facingSchematic, BlockPos pos){
 		//returns true if observer should be placed regardless of state
@@ -1077,6 +1135,9 @@ public class Printer {
 		Posoffset = pos.offset(facingSchematic);
         OffsetStateSchematic = world.getBlockState(Posoffset);
         OffsetStateClient = mc.world.getBlockState(Posoffset);
+	    if (OffsetStateSchematic.isOf(Blocks.BARRIER)){
+		    return false;
+	    }
 		if(OffsetStateSchematic.isOf(Blocks.OBSERVER) && OffsetStateSchematic.get(ObserverBlock.FACING) == facingSchematic.getOpposite()){
 			return false;
 		}
@@ -1087,9 +1148,12 @@ public class Printer {
 		    return false;
 	    }
         if (ExplicitObserver) {
-			if (OffsetStateClient.isAir() && OffsetStateSchematic.isAir()){return false;} //cave air wtf
+			if (OffsetStateSchematic.isOf(Blocks.BARRIER) ||OffsetStateClient.isAir() && OffsetStateSchematic.isAir()){
+				return false;
+			} //cave air wtf
             return !OffsetStateSchematic.toString().equals(OffsetStateClient.toString());
         }
+
         return !OffsetStateClient.getBlock().equals(OffsetStateSchematic.getBlock());
     }
 
