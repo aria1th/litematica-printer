@@ -12,7 +12,6 @@ import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.network.ClientPlayerInteractionManager;
 import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
 import net.minecraft.state.property.Properties;
@@ -171,47 +170,53 @@ public class FakeAccurateBlockPlacement{
 		boolean reversed = facingData.isReversed;
 		int order = facingData.type;
 		Direction direction1 = null;
+		boolean shouldPitch = false;
+		float fy = 0, fp = 0;
 		if (order == 0 || order == 1){
 			direction1 = reversed ? facing.getOpposite() : facing;
 		}
 		else if (order == 2){
-			direction1 = blockState.contains(WallMountedBlock.FACE) && blockState.get(WallMountedBlock.FACE) == WallMountLocation.WALL ? null : facing;
+			facing = blockState.get(WallMountedBlock.FACING);
+			direction1 = blockState.contains(WallMountedBlock.FACE) && blockState.get(WallMountedBlock.FACE) == WallMountLocation.WALL ? facing.getOpposite() : facing;
+			if (blockState.get(WallMountedBlock.FACE) == WallMountLocation.CEILING){
+				fp = -90;
+			}
+			else if (blockState.get(WallMountedBlock.FACE) == WallMountLocation.FLOOR){
+				fp = 90;
+			}
+			else {
+				fp = 0;
+			}
 		}
 		else if (order == 3){
 			direction1 = facing.rotateYCounterclockwise();
 		}
-		if (direction1 == null || fakeDirection == direction1){
+		if (order != 2 && (direction1 == null || fakeDirection == direction1)){
 			//System.out.print("direction was null\n");
 			//System.out.println(blockState);
 			pickFirst(blockState);
 			placeBlock(blockPos,blockState);
 			return true;
 		}
-		float fy, fp;
+
 		Direction lookRefdir = direction1;
 		if (lookRefdir  == Direction.UP) {
-			fy = 0;
 			fp = -90;
 		}
 		else if (lookRefdir  == Direction.DOWN) {
-			fy = 0;
 			fp = 90;
 		}
 		else if (lookRefdir  == Direction.EAST) {
-			fy = -90;
-			fp = 0;
+			fy = -87;
 		}
 		else if (lookRefdir  == Direction.WEST) {
-			fy = 90;
-			fp = 0;
+			fy = 87;
 		}
 		else if (lookRefdir  == Direction.NORTH) {
-			fy = 180;
-			fp = 0;
+			fy = 177;
 		}
 		else if (lookRefdir  == Direction.SOUTH) {
-			fy = 0;
-			fp = 0;
+			fy = 3;
 		}
 		else {
 			fy = 0;
