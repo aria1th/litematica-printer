@@ -1365,6 +1365,9 @@ public class Printer {
         } else if (blockSchematic instanceof LadderBlock) {
             return stateSchematic.get(LadderBlock.FACING);
         } else if (blockSchematic instanceof TrapdoorBlock) {
+			if (ACCURATE_BLOCK_PLACEMENT.getBooleanValue()){
+				return Direction.UP; //Placement State fixing first
+			}
             return stateSchematic.get(TrapdoorBlock.FACING);
         } else if (blockSchematic instanceof TripwireHookBlock) {
             return stateSchematic.get(TripwireHookBlock.FACING);
@@ -1437,9 +1440,9 @@ public class Printer {
 
     public static Vec3d applyCarpetProtocolHitVec(BlockPos pos, BlockState state, Vec3d hitVecIn)
     {
-        double code = hitVecIn.x;
-        double y = hitVecIn.y;
-        double z = hitVecIn.z;
+        double code = 0;
+        double y = 0;
+        double z = 0;
         Block block = state.getBlock();
         Direction facing = fi.dy.masa.malilib.util.BlockUtils.getFirstPropertyFacingValue(state);
         Integer railEnumCode = getRailShapeOrder(state);

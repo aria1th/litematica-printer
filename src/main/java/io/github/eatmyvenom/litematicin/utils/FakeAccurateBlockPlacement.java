@@ -267,15 +267,14 @@ public class FakeAccurateBlockPlacement{
 		Printer.cacheEasyPlacePosition(pos, false);
 		pickFirst(blockState);
 		//System.out.print("Interacted via fake application\n");
-		interactionManager.interactBlock(player, Hand.MAIN_HAND, blockHitResult);
+		if (blockState.getBlock().asItem() == currentHandling)
+			interactionManager.interactBlock(player, Hand.MAIN_HAND, blockHitResult);
 		return true;
 	}
 	private static void pickFirst(BlockState blockState){
-		ItemStack stack = blockState.getBlock().asItem().getDefaultStack();
 		final MinecraftClient minecraftClient = MinecraftClient.getInstance();
-		final ClientPlayerEntity player = minecraftClient.player;
-		fi.dy.masa.malilib.util.InventoryUtils.swapItemToMainHand(stack, minecraftClient);
 		currentHandling = blockState.getBlock().asItem();
+		fi.dy.masa.malilib.util.InventoryUtils.swapItemToMainHand(currentHandling.getDefaultStack(), minecraftClient);
 	}
 	// we just record pos + block and put in queue.
 	private record PosWithBlock(BlockPos pos,BlockState blockState){
