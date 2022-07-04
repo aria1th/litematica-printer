@@ -2,11 +2,17 @@
 
 ## Setup
 
-To set this up just add the latest litematica version to your mods folder as well as this, it will replace easy place with printer. If carpet extra /quickcarpet enabled accurateblockplacement, you can turn on option, and... here goes the overpowered printer.
+To set this up just add the latest litematica version to your mods folder as well as this, it will replace easy place with printer. 
+
+Now it can place directional blocks in vanilla server with "Fake Rotation", or faster with "accurateBlockPlacement" with carpet-extra on server.
+
 ## What's difference?
 It uses accurateblockplacement if available, also advanced protocol if my fork of carpet extra is installed, without protocol it still places everything correctly(should).
+
 Also it tries to avoid making 'failure', especially related to update orders, observer / BUD / piston / state,falling blocks, etc.
+
 It also tries blocks with multiple states : composters, snow layers, pickles....
+
 It has extra feature for removing fluids / clearing area / breaking bedrock (?).
 
 ## Install guide
@@ -14,6 +20,7 @@ It has extra feature for removing fluids / clearing area / breaking bedrock (?).
 Install fabric (well, use MultiMC), litematica, malilib, and put this into mods folder. then you can just use easyplace. 
 Bedrock breaking is highly dependent on your ping, so you should set up delay higher than ping. for example if your ping is 200ms, then set delay to upper than 0.2.
 in singleplayer, ping is 0 so whatever.
+
 ## Caution
 
 (WON'T FIX) paper, spigot or other types can have their own anti cheat to prevent 'not-looking' placement, which means you can't do anything with this. There's some option to nerf printing action at https://github.com/jensvh/litematica-printer/releases/tag/v1.0.4, but still we can't assure if it would work or not. Use this if you are sure about it.
@@ -22,12 +29,14 @@ Masagadget now breaks printer due to old accurateBlockPlacement protocol fix, so
 This printer redirects whole method.
 
 # Issue tracker
-Mainly 1.17-1.18 is supported, 1.16.5 is being supported only partially (without some recent updates) since I'm not really good at java.
+Mainly 1.19 is supported. You can use Multiconnect to connect previous versions, which works properly.
 Feel free to clean up my code or improve things, or use at some other mods, like separating functionalities. I'm not doing it because I don't know how to.
 
 ## Before sending DM, check if its my printer....
+
 https://github.com/aleksilassila/litematica-printer
-I don't really know how it works or produces bug, I just guess its something related to its rotation and face clicking. I can't really help anything not about my printer and its better to ask the author.
+
+Of course, I can't help other's mod, so check if its correct printer.
 
 ## Settings
 
@@ -71,18 +80,14 @@ If you have any issues with this mod **DO NOT** contact and bother masa with it.
 
 ## Credits
 Masa is the writer of the actual litematica mod and allowed all of this to be possible.
-Andrews is the one who made the litematica printer implimentation, I just converted it to mixin.
+Andrews is the one who made the litematica printer implimentation, EatMyVenom converted it to mixin.
+AngelBottomless, completed AccurateBlockPlacement and Orders / Fake rotations.
 
 ## License
 
 This template is available under the CC0 license. Feel free to learn from it and incorporate it in your own projects.
 
 ## TODO List (most possible to least possible)
-Water placement - should be done with ice placement and request breaking.
-
-Waterlogged block placement - will be placed when water source is there because it will automatically waterlog it
-
-Fix block "face" rounding(rotation) issue, due to player rotation while using right click. 
 
 Sorter item filling - not likely
 
