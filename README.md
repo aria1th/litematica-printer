@@ -18,6 +18,8 @@ It has extra feature for removing fluids / clearing area / breaking bedrock (?).
 ## Install guide
 
 Install fabric (well, use MultiMC), litematica, malilib, and put this into mods folder. then you can just use easyplace. 
+Also, install Fabric API for mod compatibility with EssentialClient.
+
 Bedrock breaking is highly dependent on your ping, so you should set up delay higher than ping. for example if your ping is 200ms, then set delay to upper than 0.2.
 in singleplayer, ping is 0 so whatever.
 
