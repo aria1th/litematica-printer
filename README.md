@@ -2,7 +2,7 @@
 
 ## Setup
 
-To set this up just add the latest litematica version to your mods folder as well as this, it will replace easy place with printer. 
+This mod requires Fabric with Litematica, Malilib, Fabric API. Install MultiMC and Fabric, for previous versions, use MultiConnect.
 
 Now it can place directional blocks in vanilla server with "Fake Rotation", or faster with "accurateBlockPlacement" with carpet-extra on server.
 
