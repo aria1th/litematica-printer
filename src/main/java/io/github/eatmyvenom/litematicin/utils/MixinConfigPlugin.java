@@ -21,11 +21,11 @@ public class MixinConfigPlugin implements IMixinConfigPlugin {
 
 	@Override
 	public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
-		List<String> reachDistanceMixins = Lists.newArrayList(
+		List<String> fakeLookMixins = Lists.newArrayList(
 			"io.github.eatmyvenom.litematicin.mixin.EssentialClient.FakeLookMixin"
 		);
 
-		if (reachDistanceMixins.contains(mixinClassName)) {
+		if (fakeLookMixins.contains(mixinClassName)) {
 			Optional<ModContainer> container = FabricLoader.getInstance().getModContainer("essential-client");
 			return container.isPresent();
 		}
