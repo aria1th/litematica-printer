@@ -1360,21 +1360,21 @@ public class Printer {
 		dz = clickPos.z;
 		if (block instanceof StairsBlock) {
 			if (state.get(StairsBlock.HALF) == BlockHalf.TOP) {
-				dy = 0.9;
+				dy += 0.9;
 			} else {
-				dy = 0;
+				dy += 0;
 			}
 		} else if (block instanceof SlabBlock && state.get(SlabBlock.TYPE) != SlabType.DOUBLE) {
 			if (state.get(SlabBlock.TYPE) == SlabType.TOP) {
-				dy = 0.9;
+				dy += 0.9;
 			} else {
-				dy = 0;
+				dy += 0;
 			}
 		} else if (block instanceof TrapdoorBlock) {
 			if (state.get(TrapdoorBlock.HALF) == BlockHalf.TOP) {
-				dy = 0.9;
+				dy += 0.9;
 			} else {
-				dy = 0;
+				dy += 0;
 			}
 		}
 		return new Vec3d(dx, dy, dz);
