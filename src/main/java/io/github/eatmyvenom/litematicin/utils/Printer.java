@@ -19,6 +19,7 @@ import net.fabricmc.api.Environment;
 import net.minecraft.block.*;
 import net.minecraft.block.enums.*;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.fluid.LavaFluid;
@@ -741,22 +742,20 @@ public class Printer {
 							}
 							continue;
 						}
-
-						if (blockSchematic instanceof TorchBlock && !(blockSchematic instanceof RedstoneTorchBlock)) {
-							BlockPos Offsetpos = new BlockPos(x, y - 1, z);
-							//BlockState OffsetstateSchematic = world.getBlockState(Offsetpos);
-							BlockState OffsetstateClient = mc.world.getBlockState(Offsetpos);
-							if (OffsetstateClient.getMaterial().isReplaceable()) {
-								continue;
-							}
-						}
 						if (!canPickBlock(mc, stateSchematic, pos)){
 							//mc.player.sendMessage(Text.of("Can't pick block"),true);
 							continue;
 						}
-						if (blockSchematic instanceof WallMountedBlock || blockSchematic instanceof TorchBlock || blockSchematic instanceof WallSkullBlock
-							|| blockSchematic instanceof LadderBlock || (blockSchematic instanceof TrapdoorBlock && !CanUseProtocol && !FAKE_ROTATION_BETA.getBooleanValue())
-							|| blockSchematic instanceof TripwireHookBlock || blockSchematic instanceof SignBlock ||
+						if (!blockSchematic.canPlaceAt(stateSchematic, mc.world, pos)){
+							continue;
+						}
+						if (blockSchematic instanceof TrapdoorBlock && !CanUseProtocol && !FAKE_ROTATION_BETA.getBooleanValue()){
+							placeTrapDoor(stateSchematic, mc, pos);
+							continue;
+						}
+						if (blockSchematic instanceof WallMountedBlock || blockSchematic instanceof WallTorchBlock|| blockSchematic instanceof WallRedstoneTorchBlock || blockSchematic instanceof WallSkullBlock
+							|| blockSchematic instanceof LadderBlock
+							|| blockSchematic instanceof TripwireHookBlock || blockSchematic instanceof WallSignBlock ||
 							blockSchematic instanceof EndRodBlock || blockSchematic instanceof DeadCoralWallFanBlock) {
 
 							/*
@@ -764,7 +763,7 @@ public class Printer {
 							 * directionality to work Basically, the block pos sent must be a "clicked"
 							 * block.
 							 */
-							if (blockSchematic instanceof AbstractButtonBlock || blockSchematic instanceof LeverBlock){
+							if (blockSchematic instanceof AbstractButtonBlock || blockSchematic instanceof LeverBlock ){
 								WallMountLocation wallMountLocation = stateSchematic.get(WallMountedBlock.FACE);
 								if (wallMountLocation == WallMountLocation.FLOOR){
 									npos = pos.down();
@@ -776,9 +775,18 @@ public class Printer {
 									npos = pos.offset(stateSchematic.get(WallMountedBlock.FACING).getOpposite());
 								}
 							}
+							else if (blockSchematic instanceof TorchBlock){
+								if (blockSchematic instanceof WallTorchBlock || blockSchematic instanceof  WallRedstoneTorchBlock){
+									npos = pos.offset(stateSchematic.get(WallTorchBlock.FACING).getOpposite());
+								}
+								else {
+									npos = pos.down();
+								}
+							}
 							else {
 								npos = pos.offset(side.getOpposite()); //offset block for 'side'
 							}
+
 							//Any : if we have block in testPos, then we can place with wanted direction.
 							//Trapdoors : it can be placed in air with player direction's opposite.
 							//Else : can't be placed except End Rod.
@@ -793,9 +801,12 @@ public class Printer {
 									checkGui instanceof BedBlock || checkGui instanceof BarrelBlock
 								)
 								{
+									//Has GUI so clickPos can't be clicked.
+									continue;
 								}
 								else if (canPlaceFace(FacingData.getFacingData(stateSchematic), stateSchematic, mc.player, primaryFacing, horizontalFacing)){ // no gui
 									Direction required = fi.dy.masa.malilib.util.BlockUtils.getFirstPropertyFacingValue(stateSchematic);
+									required = applyPlacementFacing(stateSchematic, required, stateClient);
 									Vec3d hitVec = applyHitVec(npos, stateSchematic, Vec3d.ZERO, required);
 									doSchematicWorldPickBlock(true, mc, stateSchematic, pos);
 									cacheEasyPlacePosition(pos, false);
@@ -1135,6 +1146,30 @@ public class Printer {
 				OffsetStateSchematic.get(WallMountedBlock.FACE) == WallMountLocation.WALL && OffsetStateSchematic.get(WallMountedBlock.FACING) == facingSchematic;
 		}
 	}
+	private static void placeTrapDoor(BlockState state, MinecraftClient client, BlockPos pos){
+		//check if it can be clicked on face, then place inside block
+		Direction side = state.get(TrapdoorBlock.FACING);
+		BlockPos clickPos;
+		Vec3d hitVec;
+		if (client.world.getBlockState(pos.offset(side.getOpposite())).getMaterial().isReplaceable()){
+			//place inside block
+			clickPos = pos;
+			if (client.player.getHorizontalFacing().getOpposite() == side){
+				side = state.get(TrapdoorBlock.HALF) == BlockHalf.TOP ? Direction.DOWN : Direction.UP;
+			}
+			else {
+				return;
+			}
+			hitVec = Vec3d.of(clickPos).add(0.5,0.5,0.5);
+		}
+		else {
+			clickPos = pos.offset(side.getOpposite());
+			hitVec = Vec3d.of(clickPos).add(0.5, 0.5, 0.5).add(Vec3d.of(side.getVector()).multiply(0.5));
+		}
+		doSchematicWorldPickBlock(true, client, state, pos);
+		cacheEasyPlacePosition(pos, false);
+		client.interactionManager.interactBlock(client.player, Hand.MAIN_HAND, new BlockHitResult(hitVec, side, clickPos, false)); //place block
+	}
 	private static boolean isNoteBlockInstrumentError(MinecraftClient mc, World world, BlockPos pos){
 		BlockState stateA = world.getBlockState(pos);
 		BlockState stateB = mc.world.getBlockState(pos);
@@ -1304,27 +1339,25 @@ public class Printer {
 		 * I dont know if this is needed, just doing to mimick client According to the
 		 * MC protocol wiki, the protocol expects a 1 on a side that is clicked
 		 */
-
+		Vec3d clickPos = Vec3d.of(pos);
 		if (!(block instanceof GrindstoneBlock) && block instanceof WallMountedBlock || block instanceof TorchBlock || block instanceof WallSkullBlock
 			|| block instanceof LadderBlock
 			|| block instanceof TripwireHookBlock || block instanceof SignBlock ||
 			block instanceof EndRodBlock || block instanceof DeadCoralWallFanBlock){
-			//We are here because we can't use protocol.
-			if (side == Direction.UP) {
-				dy = 1;
-			} else if (side == Direction.DOWN) {
-				dy = 0;
-			} else if (side == Direction.EAST) {
-				dx = 1;
-			} else if (side == Direction.WEST) {
-				dx = 0;
-			} else if (side == Direction.SOUTH) {
-				dz = 1;
-			} else if (side == Direction.NORTH) {
-				dz = 0;
+			if (side == null || state.contains(WallMountedBlock.FACE) && state.get(WallMountedBlock.FACE) != WallMountLocation.WALL){
+				if (state.contains(WallMountedBlock.FACE) && state.get(WallMountedBlock.FACE) == WallMountLocation.CEILING){
+					side = Direction.DOWN;
+				}
+				else {
+					side = Direction.UP;
+				}
 			}
+			clickPos = clickPos.add(0.5, 0.5, 0.5).add(Vec3d.of(side.getVector()).multiply(0.5));
+			//We are here because we can't use protocol.
 		}
-
+		dx = clickPos.x;
+		dy = clickPos.y;
+		dz = clickPos.z;
 		if (block instanceof StairsBlock) {
 			if (state.get(StairsBlock.HALF) == BlockHalf.TOP) {
 				dy = 0.9;
@@ -1344,7 +1377,7 @@ public class Printer {
 				dy = 0;
 			}
 		}
-		return new Vec3d(x + dx + 0.5, y + dy+ 0.5, z + dz + 0.5);
+		return new Vec3d(dx, dy, dz);
 	}
 	private static boolean canBypass(MinecraftClient mc, World world, BlockPos pos){
 		Direction direction = world.getBlockState(pos).get(ObserverBlock.FACING);
@@ -1386,7 +1419,7 @@ public class Printer {
 	 * Need a better way to do this.
 	 */
 	private static Boolean IsBlockSupportedCarpet(Block SchematicBlock) {
-		if (SchematicBlock instanceof WallMountedBlock || SchematicBlock instanceof WallSkullBlock) {
+		if (SchematicBlock instanceof WallMountedBlock || SchematicBlock instanceof WallSkullBlock || SchematicBlock instanceof WallRedstoneTorchBlock || SchematicBlock instanceof WallTorchBlock) {
 			return false;
 		}
 		return ADVANCED_ACCURATE_BLOCK_PLACEMENT.getBooleanValue() || SchematicBlock instanceof GlazedTerracottaBlock || SchematicBlock instanceof ObserverBlock || SchematicBlock instanceof RepeaterBlock || SchematicBlock instanceof TrapdoorBlock ||
@@ -1435,18 +1468,14 @@ public class Printer {
 				return Direction.DOWN;
 			} else {
 				return stateSchematic.get(WallMountedBlock.FACING);
-
 			}
 		} else if (blockSchematic instanceof DeadCoralWallFanBlock) {
 			return stateSchematic.get(DeadCoralWallFanBlock.FACING);
 		} else if (blockSchematic instanceof HopperBlock) {
 			return stateSchematic.get(HopperBlock.FACING).getOpposite();
 		} else if (blockSchematic instanceof TorchBlock) {
-
-			if (blockSchematic instanceof WallTorchBlock) {
+			if (blockSchematic instanceof WallTorchBlock || blockSchematic instanceof WallRedstoneTorchBlock) {
 				return stateSchematic.get(WallTorchBlock.FACING);
-			} else if (blockSchematic instanceof WallRedstoneTorchBlock) {
-				return stateSchematic.get(WallRedstoneTorchBlock.FACING);
 			} else {
 				return Direction.UP;
 			}
@@ -1529,8 +1558,8 @@ public class Printer {
 	public static Vec3d applyCarpetProtocolHitVec(BlockPos pos, BlockState state, Vec3d hitVecIn)
 	{
 		double code = 0;
-		double y = 0;
-		double z = 0;
+		double y = pos.getY();
+		double z = pos.getZ();
 		Block block = state.getBlock();
 		Direction facing = fi.dy.masa.malilib.util.BlockUtils.getFirstPropertyFacingValue(state);
 		Integer railEnumCode = getRailShapeOrder(state);
@@ -1538,7 +1567,7 @@ public class Printer {
 		double relX = hitVecIn.x - pos.getX();
 		if (facing == null && railEnumCode == 32 && !(block instanceof SlabBlock))
 		{
-			return new Vec3d (code, y, z);
+			return new Vec3d (pos.getX(), y, z);
 		}
 		if (facing != null)
 		{
@@ -1568,15 +1597,14 @@ public class Printer {
 		{
 			if (state.get(SlabBlock.TYPE) == SlabType.TOP) //side should not be down
 			{
-				y = pos.getY() + 0.9;
+				y += 0.9;
 				//code += propertyIncrement; //slab type by protocol soon?
 			}
-			else
-			{
-				y = pos.getY();
-			}
 		}
-		return new Vec3d(code * 2 + 2 + pos.getX(), y, z);
+		if (code > 0){
+			return new Vec3d(code * 2 + 2 + pos.getX(), y, z);
+		}
+		return new Vec3d( pos.getX(), y, z);
 	}
 	public static Integer getRailShapeOrder(BlockState state)
 	{

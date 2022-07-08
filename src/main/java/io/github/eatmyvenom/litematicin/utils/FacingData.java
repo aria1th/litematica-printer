@@ -64,7 +64,7 @@ public class FacingData{
 
 		// Top/bottom placable side mountable blocks
 		addFD(LeverBlock.class, new FacingData(2, false));
-		addFD(AbstractButtonBlock.class, new FacingData(2, false));
+		//addFD(AbstractButtonBlock.class, new FacingData(2, false));
 		//addFD(BellBlock.class, new FacingData(2, false));
 		//addFD(GrindstoneBlock.class, new FacingData(2, false));
 
