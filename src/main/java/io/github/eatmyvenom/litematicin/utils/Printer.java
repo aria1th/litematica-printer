@@ -795,7 +795,7 @@ public class Printer {
 								//instead, hitVec should have 1 corresponding to direction property.
 								//but First check if its block with GUI*
 								Block checkGui = mc.world.getBlockState(npos).getBlock();
-								if (!mc.player.shouldCancelInteraction() && checkGui instanceof CraftingTableBlock || checkGui instanceof DropperBlock ||
+								if (!mc.player.shouldCancelInteraction() && checkGui instanceof CraftingTableBlock || checkGui instanceof DispenserBlock ||
 									checkGui instanceof FurnaceBlock || checkGui instanceof ChestBlock || checkGui instanceof GrindstoneBlock || checkGui instanceof LeverBlock || checkGui instanceof  TrapdoorBlock ||
 									checkGui instanceof AbstractButtonBlock || checkGui instanceof DoorBlock || checkGui instanceof FenceGateBlock ||
 									checkGui instanceof BedBlock || checkGui instanceof BarrelBlock
@@ -1088,11 +1088,11 @@ public class Printer {
 	}
 	private static boolean isQCableBlock(World world, BlockPos pos){
 		Block block = world.getBlockState(pos).getBlock();
-		return block instanceof DropperBlock || block instanceof PistonBlock || block instanceof NoteBlock;
+		return block instanceof DispenserBlock || block instanceof PistonBlock || block instanceof NoteBlock;
 	}
 	private static boolean isQCableBlock(BlockState blockState){
 		Block block = blockState.getBlock();
-		return block instanceof DropperBlock || block instanceof PistonBlock || block instanceof NoteBlock;
+		return block instanceof DispenserBlock || block instanceof PistonBlock || block instanceof NoteBlock;
 	}
 	private static boolean isWatchingCorrectState(MinecraftClient mc, World schematicWorld, BlockPos pos, Set<Long> recursive, boolean allowFirst){
 		//observer, then recursive
