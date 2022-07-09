@@ -186,7 +186,7 @@ public class FakeAccurateBlockPlacement{
 		stateGrindStone = state;
 		pickFirst(state);
 		waitingQueue.add(new PosWithBlock(blockPos, state));
-		request(fy, fp, lookRefdir,LitematicaMixinMod.FAKE_ROTATION_LIMIT.getIntegerValue(), false );
+		request(fy, fp, lookRefdir,LitematicaMixinMod.FAKE_ROTATION_TICKS.getIntegerValue(), false );
 		return true;
 	}
 	/***
