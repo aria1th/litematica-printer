@@ -1154,7 +1154,7 @@ public class Printer {
 			if (client.player.getMainHandStack().isItemEqual(Items.MINECART.getDefaultStack())){
 				ActionResult actionResult = client.interactionManager.interactBlock(client.player, Hand.MAIN_HAND, new BlockHitResult(clickPos, Direction.UP, pos, false)); //place block
 				if (actionResult.isAccepted()){
-					cacheEasyPlacePosition(pos, false, 2000);
+					cacheEasyPlacePosition(pos, false, 600);
 					return true;
 				}
 			}
@@ -1625,7 +1625,7 @@ public class Printer {
 				//code += propertyIncrement; //slab type by protocol soon?
 			}
 		}
-		if (code > 0){
+		if (code >= 0){
 			return new Vec3d(code * 2 + 2 + pos.getX(), y, z);
 		}
 		return new Vec3d( pos.getX(), y, z);
