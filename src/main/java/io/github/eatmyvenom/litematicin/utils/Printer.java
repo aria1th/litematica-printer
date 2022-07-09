@@ -764,11 +764,15 @@ public class Printer {
 						if (!blockSchematic.canPlaceAt(stateSchematic, mc.world, pos)){
 							continue;
 						}
+						if (blockSchematic instanceof GrindstoneBlock){
+							placeGrindStone(stateSchematic, mc, pos);
+							continue;
+						}
 						if (blockSchematic instanceof TrapdoorBlock && !CanUseProtocol && !FAKE_ROTATION_BETA.getBooleanValue()){
 							placeTrapDoor(stateSchematic, mc, pos);
 							continue;
 						}
-						if (blockSchematic instanceof WallMountedBlock || blockSchematic instanceof WallTorchBlock|| blockSchematic instanceof WallRedstoneTorchBlock || blockSchematic instanceof WallSkullBlock
+						if (blockSchematic instanceof WallMountedBlock || blockSchematic instanceof WallTorchBlock || blockSchematic instanceof WallRedstoneTorchBlock || blockSchematic instanceof WallSkullBlock
 							|| blockSchematic instanceof LadderBlock
 							|| blockSchematic instanceof TripwireHookBlock || blockSchematic instanceof WallSignBlock ||
 							blockSchematic instanceof EndRodBlock || blockSchematic instanceof DeadCoralWallFanBlock) {
@@ -810,11 +814,7 @@ public class Printer {
 								//instead, hitVec should have 1 corresponding to direction property.
 								//but First check if its block with GUI*
 								Block checkGui = mc.world.getBlockState(npos).getBlock();
-								if (!mc.player.shouldCancelInteraction() && checkGui instanceof CraftingTableBlock || checkGui instanceof DispenserBlock ||
-									checkGui instanceof FurnaceBlock || checkGui instanceof ChestBlock || checkGui instanceof GrindstoneBlock || checkGui instanceof LeverBlock || checkGui instanceof  TrapdoorBlock ||
-									checkGui instanceof AbstractButtonBlock || checkGui instanceof DoorBlock || checkGui instanceof FenceGateBlock ||
-									checkGui instanceof BedBlock || checkGui instanceof BarrelBlock
-								)
+								if (!mc.player.shouldCancelInteraction() && hasGui(checkGui))
 								{
 									//Has GUI so clickPos can't be clicked.
 									continue;
@@ -838,6 +838,20 @@ public class Printer {
 									mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, new BlockHitResult(Vec3d.of(pos),
 										stateSchematic.get(TrapdoorBlock.FACING).getOpposite(), pos, false)); //place block
 									interact++;
+									continue;
+								}
+							}
+							else if (blockSchematic instanceof GrindstoneBlock){
+								Direction direction = stateSchematic.get(GrindstoneBlock.FACING);
+								if ((primaryFacing.getAxis() == Direction.Axis.Y && horizontalFacing == direction ) || (primaryFacing.getAxis() != Direction.Axis.Y && horizontalFacing == direction.getOpposite())){
+									doSchematicWorldPickBlock(true, mc, stateSchematic, pos);
+									cacheEasyPlacePosition(pos, false);
+									mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, new BlockHitResult(Vec3d.of(pos),
+										stateSchematic.get(GrindstoneBlock.FACING).getOpposite(), pos, false)); //place block
+									interact++;
+									continue;
+								}
+								else {
 									continue;
 								}
 							}
@@ -1162,6 +1176,80 @@ public class Printer {
 		}
 		return false;
 	}
+	private static void placeGrindStone(BlockState state, MinecraftClient client, BlockPos pos){
+		if (FAKE_ROTATION_BETA.getBooleanValue()){
+			FakeAccurateBlockPlacement.request(state, pos);
+			return;
+			//place in air
+		}
+		if (!canAttachGrindstone(state, client, pos) && !isFacingCorrectly(state, client.player)){
+			return;
+		}
+		Direction side = state.get(GrindstoneBlock.FACING);
+		WallMountLocation location = state.get(GrindstoneBlock.FACE);
+		BlockPos clickPos;
+		Vec3d hitVec;
+		if (canAttachGrindstone(state, client, pos)){
+			//offset positions
+			if (location == WallMountLocation.CEILING){
+				clickPos = pos.up();
+			}
+			else if (location == WallMountLocation.FLOOR){
+				clickPos = pos.down();
+			}
+			else {
+				clickPos = pos.offset(side.getOpposite());
+			}
+			hitVec = Vec3d.ofCenter(clickPos).add(Vec3d.of(side.getVector()).multiply(0.5));
+			doSchematicWorldPickBlock(true, client, state, pos);
+			cacheEasyPlacePosition(pos, false);
+			client.interactionManager.interactBlock(client.player, Hand.MAIN_HAND, new BlockHitResult(hitVec, side, clickPos, false)); //place block
+		}
+		else {
+			if (isFacingCorrectly(state, client.player)){
+				hitVec = Vec3d.ofCenter(pos);
+				clickPos = pos;
+				doSchematicWorldPickBlock(true, client, state, pos);
+				cacheEasyPlacePosition(pos, false);
+				client.interactionManager.interactBlock(client.player, Hand.MAIN_HAND, new BlockHitResult(hitVec, side, clickPos, false)); //place block
+			}
+		}
+	}
+	private static boolean canAttachGrindstone(BlockState state, MinecraftClient client, BlockPos pos){
+		if (FAKE_ROTATION_BETA.getBooleanValue()){
+			return true;
+			//place in air.
+		}
+		Direction facing = state.get(WallMountedBlock.FACING);
+		WallMountLocation location = state.get(WallMountedBlock.FACE);
+		//case ceil
+		if (location == WallMountLocation.CEILING){
+			return !client.world.getBlockState(pos.up()).getMaterial().isReplaceable() && client.player.getHorizontalFacing() == facing.getOpposite() && !hasGui(client.world.getBlockState(pos.up()).getBlock()) || client.player.shouldCancelInteraction();
+		}
+		else if (location == WallMountLocation.FLOOR){
+			return !client.world.getBlockState(pos.down()).getMaterial().isReplaceable() && client.player.getHorizontalFacing() == facing.getOpposite() && !hasGui(client.world.getBlockState(pos.down()).getBlock()) || client.player.shouldCancelInteraction();
+		}
+		else {
+			return !client.world.getBlockState(pos.offset(facing.getOpposite())).getMaterial().isReplaceable() && !hasGui(client.world.getBlockState(pos.offset(facing.getOpposite())).getBlock()) || client.player.shouldCancelInteraction();
+		}
+	}
+	private static boolean isFacingCorrectly(BlockState state, ClientPlayerEntity player){
+		//if we can't attach, use player's directions
+		Direction facing = state.get(WallMountedBlock.FACING);
+		WallMountLocation location = state.get(WallMountedBlock.FACE);
+		Direction[] facingOrder = Direction.getEntityFacingOrder(player);
+		if (location == WallMountLocation.CEILING){
+			//primary should be UP
+			//secondary should be same as facing
+			return facingOrder[0] == Direction.UP && player.getHorizontalFacing() == facing;
+		}
+		else if (location == WallMountLocation.FLOOR){
+			return facingOrder[0] == Direction.DOWN && player.getHorizontalFacing() == facing;
+		}
+		else {
+			return facingOrder[0] == facing.getOpposite();
+		}
+	}
 	private static void placeTrapDoor(BlockState state, MinecraftClient client, BlockPos pos){
 		//check if it can be clicked on face, then place inside block
 		Direction side = state.get(TrapdoorBlock.FACING);
@@ -1238,6 +1326,9 @@ public class Printer {
 	 */
 	private static boolean canPlaceFace(FacingData facedata, BlockState stateSchematic, PlayerEntity player,
 	                                    Direction primaryFacing, Direction horizontalFacing) {
+		if (stateSchematic.isOf(Blocks.GRINDSTONE)){
+			return true;
+		}
 		Direction facing = fi.dy.masa.malilib.util.BlockUtils.getFirstPropertyFacingValue(stateSchematic);
 		if (stateSchematic.getBlock() instanceof AbstractRailBlock) {
 			facing = convertRailShapetoFace(stateSchematic);
@@ -1401,6 +1492,12 @@ public class Printer {
 		return world.getBlockState(posOffset) == null || world.getBlockState(posOffset).isAir()|| (!hasPowerRelatedState(mc.world.getBlockState(posOffset).getBlock())) && mc.world.getBlockState(posOffset).getBlock().getName() == world.getBlockState(posOffset).getBlock().getName();
 
 	}
+	private static boolean hasGui(Block checkGui){
+		return checkGui instanceof CraftingTableBlock || checkGui instanceof DispenserBlock ||
+			checkGui instanceof FurnaceBlock || checkGui instanceof ChestBlock || checkGui instanceof GrindstoneBlock || checkGui instanceof LeverBlock || checkGui instanceof  TrapdoorBlock ||
+			checkGui instanceof AbstractButtonBlock || checkGui instanceof DoorBlock || checkGui instanceof FenceGateBlock ||
+			checkGui instanceof BedBlock || checkGui instanceof BarrelBlock;
+	}
 	private static boolean hasPowerRelatedState(Block block){
 		return block instanceof LeavesBlock || block instanceof FluidBlock || block instanceof ObserverBlock || block instanceof PistonBlock || block instanceof PoweredRailBlock || block instanceof DetectorRailBlock ||
 			block instanceof DispenserBlock || block instanceof AbstractRedstoneGateBlock || block instanceof LeverBlock || block instanceof TrapdoorBlock || block instanceof RedstoneTorchBlock ||
@@ -1435,7 +1532,7 @@ public class Printer {
 	 * Need a better way to do this.
 	 */
 	private static Boolean IsBlockSupportedCarpet(Block SchematicBlock) {
-		if (SchematicBlock instanceof WallMountedBlock || SchematicBlock instanceof WallSkullBlock || SchematicBlock instanceof WallRedstoneTorchBlock || SchematicBlock instanceof WallTorchBlock ||
+		if (SchematicBlock instanceof WallMountedBlock  || SchematicBlock instanceof WallSkullBlock || SchematicBlock instanceof WallRedstoneTorchBlock || SchematicBlock instanceof WallTorchBlock ||
 			SchematicBlock instanceof AbstractRailBlock) {
 			return false;
 		}

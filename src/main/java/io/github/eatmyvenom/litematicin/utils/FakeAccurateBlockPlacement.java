@@ -30,11 +30,10 @@ public class FakeAccurateBlockPlacement{
 	// We implement FIFO Queue structure with responsible ticks.
 	// By config, we define 'wait tick' between block placements
 	public static Direction fakeDirection = null;
-	public static Direction WallLocation = null; //WallMountedBlock for Ceiling / Floor.
-	public static Direction WallFacing = null;
 	public static int requestedTicks = -3;
 	public static float fakeYaw = 0;
 	public static float fakePitch = 0;
+	private static BlockState stateGrindStone = null;
 	private static float previousFakeYaw = 0;
 	private static float previousFakePitch = 0;
 	private static int tickElapsed = 0;
@@ -82,14 +81,13 @@ public class FakeAccurateBlockPlacement{
 		requestedTicks = requestedTicks -1;
 		if (requestedTicks <= -1){
 			currentHandling = Items.AIR;
+			stateGrindStone = null;
 		}
 		if (requestedTicks <= -3){
 			requestedTicks = -3;
 			fakeDirection = null;
 			previousFakePitch = playerEntity.getPitch();
 			previousFakeYaw = playerEntity.getYaw();
-			WallLocation = null;
-			WallFacing = null;
 		}
 	}
 
@@ -144,6 +142,47 @@ public class FakeAccurateBlockPlacement{
 			return true;
 		}
 	}
+	private static boolean requestGrindStone(BlockState state, BlockPos blockPos){
+		Direction facing = state.get(WallMountedBlock.FACING);
+		WallMountLocation location = state.get(WallMountedBlock.FACE);
+		float fy = 0;
+		float fp = 0;
+		Direction lookRefdir;
+		if (location == WallMountLocation.CEILING){
+			//primary should be UP
+			//secondary should be same as facing
+			fp = -90;
+			lookRefdir = facing;
+		}
+		else if (location == WallMountLocation.FLOOR){
+			fp = 90;
+			lookRefdir = facing;
+		}
+		else {
+			fp = 0;
+			lookRefdir = facing.getOpposite();
+		}
+		if (lookRefdir  == Direction.EAST) {
+			fy = -87;
+		}
+		else if (lookRefdir  == Direction.WEST) {
+			fy = 87;
+		}
+		else if (lookRefdir  == Direction.NORTH) {
+			fy = 177;
+		}
+		else if (lookRefdir  == Direction.SOUTH) {
+			fy = 3;
+		}
+		if (isHandling()){
+			return false;
+		}
+		stateGrindStone = state;
+		pickFirst(state);
+		waitingQueue.add(new PosWithBlock(blockPos, state));
+		request(fy, fp, lookRefdir,LitematicaMixinMod.FAKE_ROTATION_LIMIT.getIntegerValue(), false );
+		return true;
+	}
 	/***
 	 *
 	 * @param blockState : Block object(terracotta, etc...)
@@ -155,6 +194,9 @@ public class FakeAccurateBlockPlacement{
 		// instant
 		if (!betweenStartAndEnd || !canPlace(blockState)){
 			return false;
+		}
+		if (blockState.isOf(Blocks.GRINDSTONE)){
+			return requestGrindStone(blockState, blockPos);
 		}
 		if (blockState.isOf(Blocks.HOPPER)){
 			pickFirst(blockState);
@@ -266,6 +308,10 @@ public class FakeAccurateBlockPlacement{
 		return false;
 	}
 	public static boolean canPlace(BlockState state){
+		if (state.isOf(Blocks.GRINDSTONE)){
+			if (stateGrindStone != null)
+				return stateGrindStone.get(GrindstoneBlock.FACE) == state.get(GrindstoneBlock.FACE) && stateGrindStone.get(GrindstoneBlock.FACING) == state.get(GrindstoneBlock.FACING);
+		}
 		return betweenStartAndEnd && state.getBlock().asItem() == currentHandling || currentHandling == Items.AIR;
 	}
 	private static boolean placeBlock(BlockPos pos, BlockState blockState){
@@ -283,6 +329,15 @@ public class FakeAccurateBlockPlacement{
 		if (blockState.getBlock() instanceof TrapdoorBlock){
 			side = blockState.get(TrapdoorBlock.HALF) == BlockHalf.BOTTOM ? Direction.UP : Direction.DOWN;
 			appliedHitVec = Vec3d.of(pos);
+		}
+		else if (blockState.getBlock() instanceof GrindstoneBlock){
+			appliedHitVec = Vec3d.ofCenter(pos);
+			if (blockState.get(GrindstoneBlock.FACE) == WallMountLocation.CEILING ){
+				side = Direction.DOWN;
+			}
+			else if (blockState.get(GrindstoneBlock.FACE) == WallMountLocation.FLOOR){
+				side = Direction.UP;
+			}
 		}
 		BlockHitResult blockHitResult = new BlockHitResult(appliedHitVec, side, pos, true);
 		Printer.cacheEasyPlacePosition(pos, false);
