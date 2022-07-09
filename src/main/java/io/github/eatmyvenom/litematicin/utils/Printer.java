@@ -24,10 +24,7 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.fluid.LavaFluid;
 import net.minecraft.fluid.WaterFluid;
-import net.minecraft.item.BlockItem;
-import net.minecraft.item.ItemPlacementContext;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
+import net.minecraft.item.*;
 import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
 import net.minecraft.state.property.Properties;
 import net.minecraft.text.Text;
@@ -103,6 +100,21 @@ public class Printer {
 		return true;
 	}
 
+	public static boolean canPickItem(MinecraftClient mc, ItemStack stack){
+		if (!stack.isEmpty()) {
+			PlayerInventory inv = mc.player.getInventory();
+			if (mc.player.getAbilities().creativeMode) {
+				return true;
+			} else {
+				int slot = inv.getSlotWithStack(stack);
+				boolean shouldPick = inv.selectedSlot != slot;
+				boolean canPick = (slot != -1) || (slot < 9 && EASY_PLACE_MODE_HOTBAR_ONLY.getBooleanValue());
+				if (!shouldPick) return true;
+				return canPick;
+			}
+		}
+		return true;
+	}
 	/**
 	 * New doSchematicWorldPickBlock that allows you to choose which block you want
 	 */
@@ -510,8 +522,11 @@ public class Printer {
 										} else {
 											cacheEasyPlacePosition(pos, true);
 										}
+									} else if (!isPositionCached(pos, false) && EASY_PLACE_PLACE_MINECART.getBooleanValue() && sBlock instanceof DetectorRailBlock && cBlock instanceof DetectorRailBlock) {
+										if (placeCart(stateSchematic, mc,pos)){
+											continue;
+										}
 									}
-
 
 									for (int i = 0; i < clickTimes; i++) // Click on the block a few times
 									{
@@ -696,7 +711,7 @@ public class Printer {
 						}
 						if (facing != null) {
 							FacingData facedata = FacingData.getFacingData(stateSchematic);
-							if(facedata == null&& !simulateFacingData(stateSchematic, pos, new Vec3d(0.5, 0.5, 0.5))){
+							if(facedata == null && !simulateFacingData(stateSchematic, pos, new Vec3d(0.5, 0.5, 0.5)) && !(stateSchematic.getBlock() instanceof  AbstractRailBlock)){
 								continue;
 							}
 							if (!(CanUseProtocol && IsBlockSupportedCarpet(stateSchematic.getBlock())) && !FAKE_ROTATION_BETA.getBooleanValue() && !canPlaceFace(facedata, stateSchematic, mc.player, primaryFacing, horizontalFacing))
@@ -851,17 +866,6 @@ public class Printer {
 
 						// Mark that this position has been handled (use the non-offset position that is
 						// checked above)
-						float originYaw = mc.player.getYaw(1.0f);
-						if (stateSchematic.getBlock() instanceof AbstractRailBlock && !ADVANCED_ACCURATE_BLOCK_PLACEMENT.getBooleanValue() && !FAKE_ROTATION_BETA.getBooleanValue()) {
-							float yaw;
-							if (facing == Direction.NORTH) {
-								yaw = 0f;
-							} else {
-								yaw = 90f;
-							}
-							mc.getNetworkHandler().sendPacket(new PlayerMoveC2SPacket.LookAndOnGround(yaw, mc.player.getPitch(1.0f), mc.player.isOnGround()));
-							interact++;
-						}
 						BlockHitResult hitResult = new BlockHitResult(hitPos, side, npos, false);
 
 						//System.out.printf("pos: %s side: %s, hit: %s\n", pos, side, hitPos);
@@ -891,10 +895,6 @@ public class Printer {
 							FakeAccurateBlockPlacement.request(stateSchematic, pos);
 							interact++;
 							//System.out.print("Requested\n");
-						}
-
-						if (stateSchematic.getBlock() instanceof AbstractRailBlock && !ADVANCED_ACCURATE_BLOCK_PLACEMENT.getBooleanValue() && !FAKE_ROTATION_BETA.getBooleanValue()) {
-							mc.getNetworkHandler().sendPacket(new PlayerMoveC2SPacket.LookAndOnGround(originYaw, mc.player.getPitch(1.0f), mc.player.isOnGround()));
 						}
 						if (stateSchematic.getBlock() instanceof SlabBlock
 							&& stateSchematic.get(SlabBlock.TYPE) == SlabType.DOUBLE) {
@@ -1146,6 +1146,22 @@ public class Printer {
 				OffsetStateSchematic.get(WallMountedBlock.FACE) == WallMountLocation.WALL && OffsetStateSchematic.get(WallMountedBlock.FACING) == facingSchematic;
 		}
 	}
+	// returns should call continue in loop
+	private static boolean placeCart(BlockState state, MinecraftClient client, BlockPos pos){
+		if (state.isOf(Blocks.DETECTOR_RAIL) && state.get(DetectorRailBlock.POWERED) != client.world.getBlockState(pos).get(DetectorRailBlock.POWERED) && canPickItem(client, Items.MINECART.getDefaultStack()) && client.player.getPos().distanceTo(Vec3d.of(pos)) < 4.5){
+			Vec3d clickPos = Vec3d.of(pos).add(0.5,0.125,0.5);
+			fi.dy.masa.malilib.util.InventoryUtils.swapItemToMainHand(Items.MINECART.getDefaultStack(), client);
+			if (client.player.getMainHandStack().isItemEqual(Items.MINECART.getDefaultStack())){
+				ActionResult actionResult = client.interactionManager.interactBlock(client.player, Hand.MAIN_HAND, new BlockHitResult(clickPos, Direction.UP, pos, false)); //place block
+				if (actionResult.isAccepted()){
+					cacheEasyPlacePosition(pos, false, 2000);
+					return true;
+				}
+			}
+			return false;
+		}
+		return false;
+	}
 	private static void placeTrapDoor(BlockState state, MinecraftClient client, BlockPos pos){
 		//check if it can be clicked on face, then place inside block
 		Direction side = state.get(TrapdoorBlock.FACING);
@@ -1248,7 +1264,7 @@ public class Printer {
 				case 3: //rotated, why, anvil, WNES order
 					return horizontalFacing.rotateYClockwise() == facing;
 				case 4: //rails
-					return true;
+					return facing == horizontalFacing || facing == horizontalFacing.getOpposite();
 				//return facing == horizontalFacing || facing == horizontalFacing.getOpposite();
 				default: // Ignore rest -> TODO: Other blocks like anvils, etc...
 					return true;
@@ -1419,7 +1435,8 @@ public class Printer {
 	 * Need a better way to do this.
 	 */
 	private static Boolean IsBlockSupportedCarpet(Block SchematicBlock) {
-		if (SchematicBlock instanceof WallMountedBlock || SchematicBlock instanceof WallSkullBlock || SchematicBlock instanceof WallRedstoneTorchBlock || SchematicBlock instanceof WallTorchBlock) {
+		if (SchematicBlock instanceof WallMountedBlock || SchematicBlock instanceof WallSkullBlock || SchematicBlock instanceof WallRedstoneTorchBlock || SchematicBlock instanceof WallTorchBlock ||
+			SchematicBlock instanceof AbstractRailBlock) {
 			return false;
 		}
 		return ADVANCED_ACCURATE_BLOCK_PLACEMENT.getBooleanValue() || SchematicBlock instanceof GlazedTerracottaBlock || SchematicBlock instanceof ObserverBlock || SchematicBlock instanceof RepeaterBlock || SchematicBlock instanceof TrapdoorBlock ||
@@ -1503,7 +1520,7 @@ public class Printer {
 		return side;
 	}
 
-	private static Direction convertRailShapetoFace(BlockState state) {
+	public static Direction convertRailShapetoFace(BlockState state) {
 		String RailShape;
 		if (state.getBlock() instanceof RailBlock) {
 			RailShape = state.get(RailBlock.SHAPE).toString();
@@ -1554,7 +1571,14 @@ public class Printer {
 			item.hasClicked = true;
 		positionCache.add(item);
 	}
-
+	public static void cacheEasyPlacePosition(BlockPos pos, boolean useClicked, int miliseconds) {
+		PositionCache item = new PositionCache(pos, System.nanoTime(), miliseconds * 1000000L);
+		// TODO: Create a separate cache for clickable items, as this just makes
+		// duplicates
+		if (useClicked)
+			item.hasClicked = true;
+		positionCache.add(item);
+	}
 	public static Vec3d applyCarpetProtocolHitVec(BlockPos pos, BlockState state, Vec3d hitVecIn)
 	{
 		double code = 0;

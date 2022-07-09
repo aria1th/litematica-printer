@@ -30,6 +30,7 @@ public class LitematicaMixinMod implements ModInitializer {
 	public static final ConfigBoolean BEDROCK_BREAKING = new ConfigBoolean("BedrockBreaking", false, "Clear Bedrock mismatch with Bedrock Breaker");
 	public static final ConfigBoolean BEDROCK_BREAKING_FORCE_TORCH = new ConfigBoolean("BedrockBreakingUseSlimeblock", false, "BecrockBreaker uses slime block to force torch location");
 	public static final ConfigBoolean EASY_PLACE_PLACE_ICE = new ConfigBoolean("easyPlaceModeUseIceForWater", false, "Should printer place ice where water/waterlogged should be?");
+	public static final ConfigBoolean EASY_PLACE_PLACE_MINECART = new ConfigBoolean("printerPlaceMinecart", false, "Should printer place minecart?");
 	public static final ConfigBoolean FAKE_ROTATION_BETA = new ConfigBoolean("easyPlaceFakeRotation", false, "Beta test, printer tries to fake rotation when protocol is not available");
 	public static final ConfigInteger FAKE_ROTATION_TICKS = new ConfigInteger("FakeRotationTicks", 2, 0, 1000000, "Ticks between fake block packets");
 	public static final ConfigInteger FAKE_ROTATION_LIMIT = new ConfigInteger("FakeRotationLimitPerTicks", 1, 1, 1000000, "Maximum fake placement per tick (require:FakeRotationTick = 0)");
@@ -44,6 +45,7 @@ public class LitematicaMixinMod implements ModInitializer {
 			FLIPPIN_CACTUS,
 			CLEAR_AREA_MODE,
 			EASY_PLACE_PLACE_ICE,
+			EASY_PLACE_PLACE_MINECART,
 			CLEAR_AREA_MODE_COBBLESTONE,
 			CLEAR_AREA_MODE_SNOWPREVENT,
 			ACCURATE_BLOCK_PLACEMENT,

@@ -30,6 +30,8 @@ public class FakeAccurateBlockPlacement{
 	// We implement FIFO Queue structure with responsible ticks.
 	// By config, we define 'wait tick' between block placements
 	public static Direction fakeDirection = null;
+	public static Direction WallLocation = null; //WallMountedBlock for Ceiling / Floor.
+	public static Direction WallFacing = null;
 	public static int requestedTicks = -3;
 	public static float fakeYaw = 0;
 	public static float fakePitch = 0;
@@ -86,6 +88,8 @@ public class FakeAccurateBlockPlacement{
 			fakeDirection = null;
 			previousFakePitch = playerEntity.getPitch();
 			previousFakeYaw = playerEntity.getYaw();
+			WallLocation = null;
+			WallFacing = null;
 		}
 	}
 
@@ -126,6 +130,20 @@ public class FakeAccurateBlockPlacement{
 		}
 	}
 
+	private static boolean canPlaceWallMounted(BlockState blockState){
+		if (blockState.getBlock() instanceof WallMountedBlock){
+			//so we have 2 properties, looking at down / up as first direction, horizontals as second direction.
+			WallMountLocation location = blockState.get(WallMountedBlock.FACE);
+			if (location == WallMountLocation.WALL){
+				return true;
+			}
+			Direction facingSecond = blockState.get(WallMountedBlock.FACING);
+			return fakeDirection == facingSecond;
+		}
+		else {
+			return true;
+		}
+	}
 	/***
 	 *
 	 * @param blockState : Block object(terracotta, etc...)
@@ -143,13 +161,13 @@ public class FakeAccurateBlockPlacement{
 			placeBlock(blockPos,blockState);
 			return true;
 		}
-		if (!blockState.contains(Properties.FACING) && !blockState.contains(Properties.HORIZONTAL_FACING)){
+		if (!blockState.contains(Properties.FACING) && !blockState.contains(Properties.HORIZONTAL_FACING) && !(blockState.getBlock() instanceof AbstractRailBlock)){
 			pickFirst(blockState);
 			placeBlock(blockPos,blockState);
 			return true; //without facing properties
 		}
 		FacingData facingData = FacingData.getFacingData(blockState);
-		if (facingData == null){
+		if (facingData == null && !(blockState.getBlock() instanceof AbstractRailBlock)){
 			if (!warningSet.contains(blockState.getBlock())){
 				warningSet.add(blockState.getBlock());
 				System.out.printf("WARN : Block %s is not found\n", blockState.getBlock().toString());
@@ -159,18 +177,19 @@ public class FakeAccurateBlockPlacement{
 			return true;
 		}
 		Direction facing = fi.dy.masa.malilib.util.BlockUtils.getFirstPropertyFacingValue(blockState); //facing of block itself
+		if (facing == null && blockState.getBlock() instanceof AbstractRailBlock){
+			facing = Printer.convertRailShapetoFace(blockState);
+		}
 		if (facing == null){
-			//System.out.print("facing was null\n");
 			//System.out.println(blockState);
 			pickFirst(blockState);
 			placeBlock(blockPos, blockState);
 			return true;
 		}
 		//assume player is looking at north
-		boolean reversed = facingData.isReversed;
-		int order = facingData.type;
-		Direction direction1 = null;
-		boolean shouldPitch = false;
+		boolean reversed = facingData != null && facingData.isReversed;
+		int order = facingData == null ? 0 : facingData.type;
+		Direction direction1 = facing;
 		float fy = 0, fp = 0;
 		if (order == 0 || order == 1){
 			direction1 = reversed ? facing.getOpposite() : facing;
@@ -191,14 +210,11 @@ public class FakeAccurateBlockPlacement{
 		else if (order == 3){
 			direction1 = facing.rotateYCounterclockwise();
 		}
-		if (order != 2 && (direction1 == null || fakeDirection == direction1)){
-			//System.out.print("direction was null\n");
-			//System.out.println(blockState);
+		if (order != 2 && (direction1 == null || fakeDirection == direction1) && canPlaceWallMounted(blockState)){
 			pickFirst(blockState);
 			placeBlock(blockPos,blockState);
 			return true;
 		}
-
 		Direction lookRefdir = direction1;
 		if (lookRefdir  == Direction.UP) {
 			fp = -90;
@@ -240,7 +256,7 @@ public class FakeAccurateBlockPlacement{
 		}
 		else {
 			//delay
-			if (isHandling() && lookRefdir != fakeDirection){
+			if (isHandling() && (lookRefdir != fakeDirection || !canPlaceWallMounted(blockState))){
 				return false;
 			}
 			request(fy, fp, lookRefdir, LitematicaMixinMod.FAKE_ROTATION_TICKS.getIntegerValue(), false);
