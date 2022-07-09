@@ -775,7 +775,7 @@ public class Printer {
 						if (blockSchematic instanceof WallMountedBlock || blockSchematic instanceof WallTorchBlock || blockSchematic instanceof WallRedstoneTorchBlock || blockSchematic instanceof WallSkullBlock
 							|| blockSchematic instanceof LadderBlock
 							|| blockSchematic instanceof TripwireHookBlock || blockSchematic instanceof WallSignBlock ||
-							blockSchematic instanceof EndRodBlock || blockSchematic instanceof DeadCoralWallFanBlock) {
+							blockSchematic instanceof EndRodBlock || blockSchematic instanceof DeadCoralFanBlock) {
 
 							/*
 							 * Some blocks, especially wall mounted blocks must be placed on another for
@@ -802,10 +802,17 @@ public class Printer {
 									npos = pos.down();
 								}
 							}
+							else if (blockSchematic instanceof DeadCoralFanBlock){
+								if (blockSchematic instanceof DeadCoralWallFanBlock){
+									npos = pos.offset(stateSchematic.get(DeadCoralWallFanBlock.FACING).getOpposite());
+								}
+								else {
+									npos = pos.down();
+								}
+							}
 							else {
 								npos = pos.offset(side.getOpposite()); //offset block for 'side'
 							}
-
 							//Any : if we have block in testPos, then we can place with wanted direction.
 							//Trapdoors : it can be placed in air with player direction's opposite.
 							//Else : can't be placed except End Rod.
@@ -1459,16 +1466,23 @@ public class Printer {
 		if (!(block instanceof GrindstoneBlock) && block instanceof WallMountedBlock || block instanceof TorchBlock || block instanceof WallSkullBlock
 			|| block instanceof LadderBlock
 			|| block instanceof TripwireHookBlock || block instanceof SignBlock ||
-			block instanceof EndRodBlock || block instanceof DeadCoralWallFanBlock){
-			if (side == null || state.contains(WallMountedBlock.FACE) && state.get(WallMountedBlock.FACE) != WallMountLocation.WALL){
+			block instanceof EndRodBlock ||  block instanceof DeadCoralFanBlock){
+			if (block instanceof DeadCoralFanBlock && !(block instanceof DeadCoralWallFanBlock)){
+				side = Direction.UP;
+				clickPos = Vec3d.ofCenter(pos.down()).add(Vec3d.of(side.getVector()).multiply(0.5));
+			}
+			else if (side == null || state.contains(WallMountedBlock.FACE) && state.get(WallMountedBlock.FACE) != WallMountLocation.WALL){
 				if (state.contains(WallMountedBlock.FACE) && state.get(WallMountedBlock.FACE) == WallMountLocation.CEILING){
 					side = Direction.DOWN;
 				}
 				else {
 					side = Direction.UP;
 				}
+				clickPos = clickPos.add(0.5, 0.5, 0.5).add(Vec3d.of(side.getVector()).multiply(0.5));
 			}
-			clickPos = clickPos.add(0.5, 0.5, 0.5).add(Vec3d.of(side.getVector()).multiply(0.5));
+			else {
+				clickPos = clickPos.add(0.5, 0.5, 0.5).add(Vec3d.of(side.getVector()).multiply(0.5));
+			}
 			//We are here because we can't use protocol.
 		}
 		dx = clickPos.x;
@@ -1594,7 +1608,10 @@ public class Printer {
 			}
 		} else if (blockSchematic instanceof DeadCoralWallFanBlock) {
 			return stateSchematic.get(DeadCoralWallFanBlock.FACING);
-		} else if (blockSchematic instanceof HopperBlock) {
+		} else if (blockSchematic instanceof DeadCoralFanBlock){
+			return Direction.UP;
+		}
+		else if (blockSchematic instanceof HopperBlock) {
 			return stateSchematic.get(HopperBlock.FACING).getOpposite();
 		} else if (blockSchematic instanceof TorchBlock) {
 			if (blockSchematic instanceof WallTorchBlock || blockSchematic instanceof WallRedstoneTorchBlock) {
