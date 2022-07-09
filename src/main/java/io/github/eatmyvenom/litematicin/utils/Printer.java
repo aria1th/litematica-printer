@@ -523,7 +523,7 @@ public class Printer {
 											cacheEasyPlacePosition(pos, true);
 										}
 									} else if (!isPositionCached(pos, false) && EASY_PLACE_PLACE_MINECART.getBooleanValue() && sBlock instanceof DetectorRailBlock && cBlock instanceof DetectorRailBlock) {
-										if (placeCart(stateSchematic, mc,pos)){
+										if (!shouldAvoidPlaceCart(pos, world) && placeCart(stateSchematic, mc,pos)){
 											continue;
 										}
 									}
@@ -1159,6 +1159,15 @@ public class Printer {
 			return offsetBlock instanceof WallBlock || offsetBlock instanceof WallMountedBlock &&
 				OffsetStateSchematic.get(WallMountedBlock.FACE) == WallMountLocation.WALL && OffsetStateSchematic.get(WallMountedBlock.FACING) == facingSchematic;
 		}
+	}
+	private static boolean shouldAvoidPlaceCart(BlockPos pos, World schematicWorld){
+		//avoids TNT priming
+		for (Direction direction : Direction.values()){
+			if (schematicWorld.getBlockState(pos.down().offset(direction)).isOf(Blocks.TNT)){
+				return true;
+			}
+		}
+		return false;
 	}
 	// returns should call continue in loop
 	private static boolean placeCart(BlockState state, MinecraftClient client, BlockPos pos){
