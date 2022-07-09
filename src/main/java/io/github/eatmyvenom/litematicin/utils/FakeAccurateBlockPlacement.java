@@ -175,6 +175,12 @@ public class FakeAccurateBlockPlacement{
 			fy = 3;
 		}
 		if (isHandling()){
+			if (requestedTicks == 0 && stateGrindStone != null && canPlace(state)){
+				//instant place
+				pickFirst(state);
+				placeBlock(blockPos, state);
+				return true;
+			}
 			return false;
 		}
 		stateGrindStone = state;
