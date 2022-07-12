@@ -1716,7 +1716,7 @@ public class Printer {
 		return checkGui instanceof CraftingTableBlock || checkGui instanceof DispenserBlock ||
 			checkGui instanceof FurnaceBlock || checkGui instanceof ChestBlock || checkGui instanceof GrindstoneBlock || checkGui instanceof LeverBlock || checkGui instanceof  TrapdoorBlock ||
 			checkGui instanceof AbstractButtonBlock || checkGui instanceof DoorBlock || checkGui instanceof FenceGateBlock ||
-			checkGui instanceof BedBlock || checkGui instanceof BarrelBlock;
+			checkGui instanceof BedBlock || checkGui instanceof BarrelBlock  || checkGui instanceof NoteBlock;
 	}
 	private static boolean hasPowerRelatedState(Block block){
 		return block instanceof LeavesBlock || block instanceof FluidBlock || block instanceof ObserverBlock || block instanceof PistonBlock || block instanceof PoweredRailBlock || block instanceof DetectorRailBlock ||
