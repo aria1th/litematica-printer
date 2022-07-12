@@ -129,6 +129,12 @@ public class FakeAccurateBlockPlacement{
 	}
 
 	private static boolean canPlaceWallMounted(BlockState blockState){
+		if (blockState.getBlock() instanceof TorchBlock){
+			if (blockState.getBlock() instanceof WallTorchBlock || blockState.getBlock() instanceof WallRedstoneTorchBlock){
+				return fakeDirection == blockState.get(WallTorchBlock.FACING).getOpposite();
+			}
+			return fakeDirection == Direction.DOWN;
+		}
 		if (blockState.getBlock() instanceof WallMountedBlock){
 			//so we have 2 properties, looking at down / up as first direction, horizontals as second direction.
 			WallMountLocation location = blockState.get(WallMountedBlock.FACE);
@@ -209,13 +215,13 @@ public class FakeAccurateBlockPlacement{
 			placeBlock(blockPos,blockState);
 			return true;
 		}
-		if (!blockState.contains(Properties.FACING) && !blockState.contains(Properties.HORIZONTAL_FACING) && !(blockState.getBlock() instanceof AbstractRailBlock)){
+		if (!blockState.contains(Properties.FACING) && !blockState.contains(Properties.HORIZONTAL_FACING) && !(blockState.getBlock() instanceof AbstractRailBlock) && !(blockState.getBlock() instanceof TorchBlock)){
 			pickFirst(blockState);
 			placeBlock(blockPos,blockState);
 			return true; //without facing properties
 		}
 		FacingData facingData = FacingData.getFacingData(blockState);
-		if (facingData == null && !(blockState.getBlock() instanceof AbstractRailBlock)){
+		if (facingData == null && !(blockState.getBlock() instanceof AbstractRailBlock) && !(blockState.getBlock() instanceof TorchBlock)){
 			if (!warningSet.contains(blockState.getBlock())){
 				warningSet.add(blockState.getBlock());
 				System.out.printf("WARN : Block %s is not found\n", blockState.getBlock().toString());
@@ -227,6 +233,14 @@ public class FakeAccurateBlockPlacement{
 		Direction facing = fi.dy.masa.malilib.util.BlockUtils.getFirstPropertyFacingValue(blockState); //facing of block itself
 		if (facing == null && blockState.getBlock() instanceof AbstractRailBlock){
 			facing = Printer.convertRailShapetoFace(blockState);
+		}
+		else if (blockState.getBlock() instanceof TorchBlock){
+			if (blockState.getBlock() instanceof WallTorchBlock || blockState.getBlock() instanceof WallRedstoneTorchBlock){
+				facing = blockState.get(WallTorchBlock.FACING).getOpposite();
+			}
+			else {
+				facing = Direction.DOWN;
+			}
 		}
 		if (facing == null){
 			//System.out.println(blockState);
@@ -330,7 +344,7 @@ public class FakeAccurateBlockPlacement{
 		Direction sideOrig = Direction.NORTH;
 		Vec3d hitPos = new Vec3d(pos.getX(), pos.getY(), pos.getZ());
 		Direction side = Printer.applyPlacementFacing(blockState, sideOrig, minecraftClient.world.getBlockState(pos));
-		Vec3d appliedHitVec = Printer.applyHitVec(pos, blockState, hitPos, side);
+		Vec3d appliedHitVec = Printer.applyHitVec(pos, blockState, side);
 		//Trapdoor actually occasionally refers to player and UP DOWN wtf
 		if (blockState.getBlock() instanceof TrapdoorBlock){
 			side = blockState.get(TrapdoorBlock.HALF) == BlockHalf.BOTTOM ? Direction.UP : Direction.DOWN;
@@ -344,6 +358,9 @@ public class FakeAccurateBlockPlacement{
 			else if (blockState.get(GrindstoneBlock.FACE) == WallMountLocation.FLOOR){
 				side = Direction.UP;
 			}
+		}
+		else if (blockState.getBlock() instanceof TorchBlock){
+			appliedHitVec = Vec3d.ofCenter(pos); //follows player looking
 		}
 		BlockHitResult blockHitResult = new BlockHitResult(appliedHitVec, side, pos, true);
 		Printer.cacheEasyPlacePosition(pos, false);
