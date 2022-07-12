@@ -801,8 +801,9 @@ public class Printer {
 						Direction side = applyPlacementFacing(stateSchematic, sideOrig, stateClient);
 						Block blockSchematic = stateSchematic.getBlock();
 						//Don't place waterlogged block's original block before fluid since its painful
-						if (PRINTER_WATERLOGGED_WATER_FIRST.getBooleanValue() && isReplaceableWaterFluidSource(stateSchematic) || (stateSchematic.contains(Properties.WATERLOGGED) && stateSchematic.get(Properties.WATERLOGGED)) &&
-							stateClient.getMaterial().isReplaceable() && !isReplaceableWaterFluidSource(stateClient)){
+						if (PRINTER_WATERLOGGED_WATER_FIRST.getBooleanValue() && (isReplaceableWaterFluidSource(stateSchematic) ||
+							(stateSchematic.contains(Properties.WATERLOGGED) && stateSchematic.get(Properties.WATERLOGGED)) &&
+							stateClient.getMaterial().isReplaceable() && !isReplaceableWaterFluidSource(stateClient))){
 							if (PRINTER_PLACE_ICE.getBooleanValue()) {
 								ItemStack iceStack = Items.ICE.getDefaultStack();
 								if(mc.player.getInventory().getSlotWithStack(iceStack) == -1){
