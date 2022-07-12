@@ -681,6 +681,12 @@ public class Printer {
 						{
 							recordCause(pos, pos.toShortString()+" Block is Falling block", pos.down() );
 							continue;
+						} else if (!PRINTER_PLACE_ICE.getBooleanValue() && stateSchematic.isOf(Blocks.WATER)){
+							recordCause(pos, pos.toShortString()+" block is water");
+							continue;
+						} else if (!PRINTER_PLACE_ICE.getBooleanValue() && stateSchematic.isOf(Blocks.LAVA)){
+							recordCause(pos, pos.toShortString()+" block is lava");
+							continue;
 						}
 						else if (sBlock instanceof SandBlock || sBlock instanceof DragonEggBlock || sBlock instanceof ConcretePowderBlock || sBlock instanceof GravelBlock || sBlock instanceof AnvilBlock) {
 							BlockPos Offsetpos = new BlockPos(x, y - 1, z);
