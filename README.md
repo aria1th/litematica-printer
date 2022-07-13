@@ -43,24 +43,29 @@ Of course, I can't help other's mod, so check if its correct printer.
 ## Settings
 
 ### Printer settings:
-
-`easyPlaceModeRange (x,y,z)`:&emsp;	"X,Y,Z Range for EasyPlace, Set to 000 if you want normal easyplace."<br/>
+`ShowDebugMessage`:&emsp; "Show Debug messages for block order calculations and errors."<br/>
+`easyPlaceModeRange (x,y,z)`:&emsp;	"X,Y,Z Range for Printer, Set to 000 if you want normal easyplace."<br/>
 `easyPlaceModeMaxBlocks`:&emsp;		"Max block interactions per cycle"<br/>
 `easyPlaceModeBreakBlocks`:&emsp;	"Printer will break blocks when its mismatch / extra"<br/>
 `easyPlaceModeDelay`:&emsp;			"Delay between printing blocks.Do not set to 0 if you are playing on a server."<br/>
 `easyPlaceModeHotbarOnly`:&emsp;	"Only place blocks from your hotbar. This bypasses some anti-cheats."<br/>
-`easyPlaceModeFlippincactus`:&emsp;			"Allows Rotating incorrect blocks when carpet option is enabled and holding cactus on your mainhand"<br/>
-`easyPlaceModeClearFluids`:&emsp;			"Remove nearby fluids, within easyplace range, to prevent errors. uses slime block to remove lava, sponges for water. WILL STOP OTHER ACTIONS"<br/>
-`easyPlaceModeUseIceForWater`:&emsp;			"Printer places ice at waterlogged blocks positions"<br/>
+`printerFlippinCactus`:&emsp;			"Allows Rotating incorrect blocks when carpet option is enabled and holding cactus on your mainhand"<br/>
+`printerClearFluids`:&emsp;			"Remove nearby fluids, within easyplace range, to prevent errors. uses slime block to remove lava, sponges for water. WILL STOP OTHER ACTIONS"<br/>
+`printerUseIceForWater`:&emsp;			"Printer places ice at waterlogged blocks positions"<br/>
+`printerPlaceMinecart`:&emsp;			"Printer can place minecart at powered detector rail that won't trigger TNT directly"<br/>
 `ClearFluidUseCobblestone`:&emsp;			"Use cobblestones instead of slime block to remove lava <br/> REQUIRES : easyPlaceModeClearFluids TRUE"<br/>
 `ClearSnowLayer`:&emsp;			"It will place string where snow layer exists, ignores placement boxes, Only use if you need to. DEFAULT : FALSE"<br/>
-`AccurateBlockPlacement`:&emsp;			"If carpet mod AccurateBlockPlacement is enabled (from extra or quickcarpet), you can turn on and printer will be rotation-free"<br/>
-`easyPlaceModeUsePumpkinPie`:&emsp;			"If composter Level filling is needed, printer will use pumpkin pie to adjust its level"<br/>
+`AccurateBlockPlacement`:&emsp;			"If carpet mod AccurateBlockPlacement is enabled (from extra or quickcarpet), you can turn on this.
+`printerUsePumpkinPieForComposter`:&emsp;			"If composter Level filling is needed, printer will use pumpkin pie to adjust its level"<br/>
 `CarpetExtraFixedVersion`:&emsp;			"Carpet extra currently not supports some blocks, if its updated or server is using Quickcarpet, test this."<br/>
-`easyPlaceModeSmartRedstoneAvoid`:&emsp;			"Pistons/Redstones /QC will be calculated and printer will place it in correct orders"<br/>
-`easyPlaceModeObserverAvoidAll`:&emsp;			" Observer will avoid being placed when its watching state(not block) is not correct"<br/>
-`BedrockBreaking`:&emsp;			"Removes bedrock when it needs to, will stop other actions, it needs BreakBlocks TRUE and haste 2, eff 5 pickaxe, works more well with accurateblockplacement.<br/> REQUIRES : easyPlaceModeBreakBlocks TRUE"<br/>
+`printerSmartRedstoneAvoid`:&emsp;			"Pistons/Redstones /QC will be calculated and printer will place it in correct orders"<br/>
+`printerObserverAvoidAll`:&emsp;			" Observer will avoid being placed when its watching state(not block) is not correct"<br/>
+`avoidCheckOnlyPistons`:&emsp;			" QC Check will only be done at Pistons"<br/>
+`printerBedrockBreaking`:&emsp;			"Removes bedrock when it needs to, will stop other actions, it needs BreakBlocks TRUE and haste 2, eff 5 pickaxe, works more well with accurateblockplacement.<br/> REQUIRES : easyPlaceModeBreakBlocks TRUE"<br/>
 `BedrockBreakingUseSlimeBlocks`:&emsp;			"Places slime block to easily remove it"<br/>
+`printerFakeRotation`:&emsp;			"printer tries to fake client rotation for block placements.It can place almost all block correctly, except ceil/floor buttons."<br/>
+`fakeRotationTicks`:&emsp;			"Fake rotation ticks between directions, suggest >= 2"<br/>
+`fakeRotationTickLimitPerTicks`:&emsp;			"if fakeRotationTicks is set to 0(dangerous), set maximum rotation changes in single tick"<br/>
 ### Handy litematica settings:
 
 `easyPlaceMode`:&emsp;				"When enabled, then simply trying to use an item/place a block on schematic blocks will place that block in that position."<br/>
