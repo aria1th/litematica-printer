@@ -2,6 +2,7 @@ package io.github.eatmyvenom.litematicin.utils;
 
 //see https://github.com/senseiwells/EssentialClient/blob/1.19.x/src/main/java/me/senseiwells/essentialclient/feature/BetterAccurateBlockPlacement.java
 
+import fi.dy.masa.litematica.util.InventoryUtils;
 import io.github.eatmyvenom.litematicin.LitematicaMixinMod;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.block.*;
@@ -363,16 +364,19 @@ public class FakeAccurateBlockPlacement{
 			appliedHitVec = Vec3d.ofCenter(pos); //follows player looking
 		}
 		BlockHitResult blockHitResult = new BlockHitResult(appliedHitVec, side, pos, true);
-		Printer.cacheEasyPlacePosition(pos, false);
 		pickFirst(blockState);
 		//System.out.print("Interacted via fake application\n");
-		if (blockState.getBlock().asItem() == currentHandling)
+		if (blockState.getBlock().asItem() == currentHandling) {
 			interactionManager.interactBlock(player, Hand.MAIN_HAND, blockHitResult);
+			Printer.cacheEasyPlacePosition(pos, false);
+		}
+
 		return true;
 	}
 	private static void pickFirst(BlockState blockState){
 		final MinecraftClient minecraftClient = MinecraftClient.getInstance();
 		currentHandling = blockState.getBlock().asItem();
+		//InventoryUtils.setPickedItemToHand(currentHandling.getDefaultStack(), minecraftClient);
 		fi.dy.masa.malilib.util.InventoryUtils.swapItemToMainHand(currentHandling.getDefaultStack(), minecraftClient);
 	}
 	// we just record pos + block and put in queue.
