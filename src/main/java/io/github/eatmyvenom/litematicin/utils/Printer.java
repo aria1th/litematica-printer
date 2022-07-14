@@ -26,8 +26,10 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.fluid.LavaFluid;
 import net.minecraft.fluid.WaterFluid;
-import net.minecraft.item.*;
-import net.minecraft.network.packet.c2s.play.UpdateSelectedSlotC2SPacket;
+import net.minecraft.item.BlockItem;
+import net.minecraft.item.ItemPlacementContext;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.state.property.Properties;
 import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
@@ -54,7 +56,6 @@ public class Printer {
 	public static int worldTopY = 256;
 	private static final LinkedHashMap<Long, String> causeMap = new LinkedHashMap<>();
 	private static final Long2LongOpenHashMap referenceSet= new Long2LongOpenHashMap();
-
 
 
 
@@ -90,15 +91,16 @@ public class Printer {
 		ItemStack stack = MaterialCache.getInstance().getRequiredBuildItemForState(preference, world, pos);
 		if (!stack.isEmpty()) {
 			PlayerInventory inv = mc.player.getInventory();
-			if (mc.player.getAbilities().creativeMode) {
-				return true;
-			} else {
+			if (!mc.player.getAbilities().creativeMode) {
 				int slot = inv.getSlotWithStack(stack);
-				boolean shouldPick = inv.selectedSlot != slot;
-				boolean canPick = (slot != -1) || (slot < 9 && EASY_PLACE_MODE_HOTBAR_ONLY.getBooleanValue());
-				if (!shouldPick) return true;
-				return canPick;
+				if (slot == -1) {
+					return false;
+				}
+				if (EASY_PLACE_MODE_HOTBAR_ONLY.getBooleanValue()) {
+					return slot < 9;
+				}
 			}
+			return true;
 		}
 		return true;
 	}
@@ -106,17 +108,16 @@ public class Printer {
 	public static boolean canPickItem(MinecraftClient mc, ItemStack stack){
 		if (!stack.isEmpty()) {
 			PlayerInventory inv = mc.player.getInventory();
-			if (mc.player.getAbilities().creativeMode) {
-				return true;
-			} else {
+			if (!mc.player.getAbilities().creativeMode) {
 				int slot = inv.getSlotWithStack(stack);
-				if (slot == -1){
+				if (slot == -1) {
 					return false;
 				}
-				if (EASY_PLACE_MODE_HOTBAR_ONLY.getBooleanValue()){
+				if (EASY_PLACE_MODE_HOTBAR_ONLY.getBooleanValue()) {
 					return slot < 9;
 				}
 			}
+			return true;
 		}
 		return false;
 	}
@@ -154,6 +155,9 @@ public class Printer {
 				fi.dy.masa.malilib.util.InventoryUtils.swapItemToMainHand(stack, mc);
 			} else {
 				int slot = inv.getSlotWithStack(stack);
+				if (EASY_PLACE_MODE_HOTBAR_ONLY.getBooleanValue() && (slot >= 9)){
+					return false;
+				}
 				boolean canPick = (slot != -1) || (slot < 9 && EASY_PLACE_MODE_HOTBAR_ONLY.getBooleanValue());
 				if (canPick) {
 					fi.dy.masa.malilib.util.InventoryUtils.swapItemToMainHand(stack, mc);
