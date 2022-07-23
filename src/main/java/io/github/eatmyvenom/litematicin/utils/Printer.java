@@ -58,7 +58,9 @@ public class Printer {
 	private static final Long2LongOpenHashMap referenceSet= new Long2LongOpenHashMap();
 
 
-
+	private static boolean test(BlockPos pos){
+		return pos.asLong()>5;
+	}
 
 	// TODO: This must be moved to another class and not be static.
 	private static boolean simulateFacingData(BlockState state, BlockPos blockPos, Vec3d hitVec) {
@@ -1276,6 +1278,9 @@ public class Printer {
 			}
 			else if (clientState != schematicState){
 				//but check wire...
+				if(isNoteBlockInstrumentError(mc, schematicWorld, pos)){
+					return Map.entry(true, pos);
+				}
 				return Map.entry(false, pos);
 			}
 		}
@@ -1469,7 +1474,7 @@ public class Printer {
 		BlockState stateB = mc.world.getBlockState(pos);
 		return stateA.isOf(Blocks.NOTE_BLOCK) && stateB.isOf(Blocks.NOTE_BLOCK) &&
 			stateA.get(NoteBlock.POWERED) == stateB.get(NoteBlock.POWERED) &&
-			world.getBlockState(pos.offset(Direction.DOWN)).getMaterial().isReplaceable() == mc.world.getBlockState(pos.offset(Direction.DOWN)).getMaterial().isReplaceable();
+			world.getBlockState(pos.down()).getMaterial().isReplaceable() == mc.world.getBlockState(pos.offset(Direction.DOWN)).getMaterial().isReplaceable();
 	}
 	private static boolean ObserverUpdateOrder(MinecraftClient mc, World world, BlockPos pos) {
 		//returns true if observer should not be placed
