@@ -31,7 +31,6 @@ import net.minecraft.item.ItemPlacementContext;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.state.property.Properties;
-import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
@@ -44,7 +43,7 @@ import net.minecraft.world.World;
 import java.util.*;
 
 import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.*;
-
+@SuppressWarnings("ConstantConditions")
 public class Printer {
 
 
@@ -57,10 +56,6 @@ public class Printer {
 	private static final LinkedHashMap<Long, String> causeMap = new LinkedHashMap<>();
 	private static final Long2LongOpenHashMap referenceSet= new Long2LongOpenHashMap();
 
-
-	private static boolean test(BlockPos pos){
-		return pos.asLong()>5;
-	}
 
 	// TODO: This must be moved to another class and not be static.
 	private static boolean simulateFacingData(BlockState state, BlockPos blockPos, Vec3d hitVec) {
@@ -87,7 +82,6 @@ public class Printer {
 		Direction testFacing = fi.dy.masa.malilib.util.BlockUtils.getFirstPropertyFacingValue(testState);
 		return testFacing == fi.dy.masa.malilib.util.BlockUtils.getFirstPropertyFacingValue(state);
 	}
-
 	public static boolean canPickBlock(MinecraftClient mc, BlockState preference, BlockPos pos){
 		World world = SchematicWorldHandler.getSchematicWorld();
 		ItemStack stack = MaterialCache.getInstance().getRequiredBuildItemForState(preference, world, pos);
@@ -106,7 +100,6 @@ public class Printer {
 		}
 		return true;
 	}
-
 	public static boolean canPickItem(MinecraftClient mc, ItemStack stack){
 		if (!stack.isEmpty()) {
 			PlayerInventory inv = mc.player.getInventory();
@@ -169,7 +162,6 @@ public class Printer {
 		}
 		return fi.dy.masa.malilib.util.InventoryUtils.areStacksEqual(stack, mc.player.getMainHandStack());
 	}
-
 	public static ActionResult doEasyPlaceNormally(MinecraftClient mc) { //force normal easyplace action, ignore condition checks
 		RayTraceWrapper traceWrapper = RayTraceUtils.getGenericTrace(mc.world, mc.player, 6);
 		if (traceWrapper == null){
@@ -197,13 +189,13 @@ public class Printer {
 			Direction sideOrig = trace.getSide();
 			Direction side = applyPlacementFacing(schematicState, sideOrig, clientState);
 			if (ACCURATE_BLOCK_PLACEMENT.getBooleanValue()){
-				hitPos = applyCarpetProtocolHitVec(blockPos,schematicState,hitPos);
+				hitPos = applyCarpetProtocolHitVec(blockPos,schematicState);
 			}
 			else {
 				hitPos = applyHitVec(blockPos,schematicState, side);
 			}
 			BlockHitResult hitResult = new BlockHitResult(hitPos, side, blockPos, false);
-			boolean canContinue = true;
+			boolean canContinue;
 			if (!FAKE_ROTATION_BETA.getBooleanValue() || ACCURATE_BLOCK_PLACEMENT.getBooleanValue()){ //Accurateblockplacement, or vanilla but no fake
 				canContinue = mc.interactionManager.interactBlock(mc.player, hand, hitResult).isAccepted(); //PLACE block
 				cacheEasyPlacePosition(blockPos, false);
@@ -232,8 +224,8 @@ public class Printer {
 	private static void recordCause(BlockPos pos, String reason){
 		recordCause(pos , reason , null);
 	}
-	private static String getReason(Long pos, LongOpenHashSet set){
-		return internalGetReason(pos, set, 0);
+	private static String getReason(Long pos){
+		return internalGetReason(pos, null, 0);
 	}
 	private static String internalGetReason(Long pos, LongOpenHashSet set, int count){
 		if (count > 10){
@@ -379,8 +371,6 @@ public class Printer {
 
 		int maxInteract = EASY_PLACE_MODE_MAX_BLOCKS.getIntegerValue();
 		int interact = 0;
-		boolean hasPicked = false;
-		Text pickedBlock = null;
 
 		int fromX = Math.max(posX - rangeX, minX);
 		int fromY = Math.max(posY - rangeY, minY);
@@ -408,7 +398,6 @@ public class Printer {
 						lastPlaced = new Date().getTime();
 						return ActionResult.SUCCESS;
 					}
-					boolean shouldReverse = false;
 
 					double dx = mc.player.getX() - x - 0.5;
 					double dy = mc.player.getY() - y - 0.5;
@@ -467,7 +456,7 @@ public class Printer {
 						continue;
 
 					// Abort if there is already a block in the target position
-					if (!ClearArea && (MaxFlip || printerCheckCancel(stateSchematic, stateClient, mc.player))) {
+					if (!ClearArea && (MaxFlip || printerCheckCancel(stateSchematic, stateClient))) {
 
 
 						/*
@@ -600,12 +589,16 @@ public class Printer {
 										String SchematicRailShape = stateSchematic.get(RailBlock.SHAPE).toString();
 										String ClientRailShape = stateClient.get(RailBlock.SHAPE).toString();
 										ShouldFix = !Objects.equals(SchematicRailShape, ClientRailShape);
-										ShapeBoolean = !Objects.equals(SchematicRailShape, ClientRailShape) && ((Objects.equals(SchematicRailShape, "south_west") || SchematicRailShape == "north_west" || SchematicRailShape == "south_east" || SchematicRailShape == "north_east") && (ClientRailShape == "south_west" || ClientRailShape == "north_west" || ClientRailShape == "south_east" || ClientRailShape == "north_east") || (SchematicRailShape == "east_west" || SchematicRailShape == "north_south") && (ClientRailShape == "east_west" || ClientRailShape == "north_south"));
+										ShapeBoolean = !Objects.equals(SchematicRailShape, ClientRailShape) && ((Objects.equals(SchematicRailShape, "south_west") || Objects.equals(SchematicRailShape, "north_west") ||
+											Objects.equals(SchematicRailShape, "south_east") || Objects.equals(SchematicRailShape, "north_east")) && (Objects.equals(ClientRailShape, "south_west") ||
+											Objects.equals(ClientRailShape, "north_west") || Objects.equals(ClientRailShape, "south_east") || Objects.equals(ClientRailShape, "north_east")) ||
+											(Objects.equals(SchematicRailShape, "east_west") || Objects.equals(SchematicRailShape, "north_south")) && (Objects.equals(ClientRailShape, "east_west") || Objects.equals(ClientRailShape, "north_south")));
 									} else {
 										String SchematicRailShape = stateSchematic.get(PoweredRailBlock.SHAPE).toString();
 										String ClientRailShape = stateClient.get(PoweredRailBlock.SHAPE).toString();
 										ShouldFix = !Objects.equals(SchematicRailShape, ClientRailShape);
-										ShapeBoolean = !Objects.equals(SchematicRailShape, ClientRailShape) && (Objects.equals(SchematicRailShape, "east_west") || SchematicRailShape == "north_south") && (ClientRailShape == "east_west" || ClientRailShape == "north_south");
+										ShapeBoolean = !Objects.equals(SchematicRailShape, ClientRailShape) && (Objects.equals(SchematicRailShape, "east_west") || Objects.equals(SchematicRailShape, "north_south")) &&
+											(Objects.equals(ClientRailShape, "east_west") || Objects.equals(ClientRailShape, "north_south"));
 									}
 								} else if (sBlock instanceof ObserverBlock || sBlock instanceof PistonBlock || sBlock instanceof RepeaterBlock || sBlock instanceof ComparatorBlock || sBlock instanceof FenceGateBlock || sBlock instanceof TrapdoorBlock) {
 									Direction facingSchematic = fi.dy.masa.malilib.util.BlockUtils.getFirstPropertyFacingValue(stateSchematic);
@@ -722,14 +715,13 @@ public class Printer {
 								recordCause(pos, pos.toShortString()+" Block will unexpectedly extend");
 								continue;
 							}
-							if (shouldSupressExtend(mc, world, pos) && hasWrongStateNearby(mc, world, pos)){
+							if (shouldSuppressExtend(mc, world, pos) && hasWrongStateNearby(mc, world, pos)){
 								recordCause(pos, pos.toShortString()+ " Block should respect push limit");
 								continue;
 							}
 						} else if (smartRedstone && sBlock instanceof ObserverBlock) {
 							if (ObserverUpdateOrder(mc, world, pos)) {
 								if (FLIPPIN_CACTUS.getBooleanValue() && canBypass(mc, world, pos)){
-									shouldReverse = true;
 									stateSchematic = stateSchematic.with(ObserverBlock.FACING, stateSchematic.get(ObserverBlock.FACING).getOpposite());
 								}
 								else {
@@ -742,14 +734,14 @@ public class Printer {
 						if (ExplicitObserver){
 							BlockPos observerPos = isObserverCantAvoidOutput(mc, world, pos);
 							if(observerPos != null){
-								MessageHolder.sendUniqueMessage(mc.player, getReason(pos.asLong(), null));
+								MessageHolder.sendUniqueMessage(mc.player, getReason(pos.asLong()));
 								recordCause(pos, observerPos.toShortString() + " has output toward "+ pos.toShortString() + " and waiting for "+ observerPos.toShortString(), observerPos);
 								continue;
 							}
 							if (sBlock instanceof ObserverBlock ){
 								Map.Entry<Boolean, BlockPos> value = isWatchingCorrectState(mc,world, pos,null, true);
 								if (!value.getKey()){
-									MessageHolder.sendUniqueMessage(mc.player, getReason(pos.asLong(), null));
+									MessageHolder.sendUniqueMessage(mc.player, getReason(pos.asLong()));
 									recordCause(pos, pos.toShortString()+ " can't be placed due to "+ value.getValue().toShortString(), value.getValue());
 									continue;
 								}
@@ -787,7 +779,7 @@ public class Printer {
 							if(facedata == null && !simulateFacingData(stateSchematic, pos, new Vec3d(0.5, 0.5, 0.5)) && !(stateSchematic.getBlock() instanceof  AbstractRailBlock)){
 								continue;
 							}
-							if (!(CanUseProtocol && IsBlockSupportedCarpet(stateSchematic.getBlock())) && !FAKE_ROTATION_BETA.getBooleanValue() && !canPlaceFace(facedata, stateSchematic, mc.player, primaryFacing, horizontalFacing))
+							if (!(CanUseProtocol && IsBlockSupportedCarpet(stateSchematic.getBlock())) && !FAKE_ROTATION_BETA.getBooleanValue() && !canPlaceFace(facedata, stateSchematic, primaryFacing, horizontalFacing))
 								continue;
 
 							if ((stateSchematic.getBlock() instanceof DoorBlock
@@ -819,18 +811,16 @@ public class Printer {
 							stateClient.getMaterial().isReplaceable() && !isReplaceableWaterFluidSource(stateClient))){
 							if (PRINTER_PLACE_ICE.getBooleanValue()) {
 								ItemStack iceStack = Items.ICE.getDefaultStack();
-								if(mc.player.getInventory().getSlotWithStack(iceStack) == -1){
-									continue;
-								} else {
+								if (mc.player.getInventory().getSlotWithStack(iceStack) != -1) {
 									InventoryUtils.setPickedItemToHand(iceStack, mc);
-									if (!mc.player.getStackInHand(Hand.MAIN_HAND).isItemEqual(iceStack)){
+									if (!mc.player.getStackInHand(Hand.MAIN_HAND).isItemEqual(iceStack)) {
 										continue;
 									}
 									mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, new BlockHitResult(new Vec3d(pos.getX(), pos.getY(), pos.getZ()), Direction.DOWN, pos, false));
 									cacheEasyPlacePosition(pos, false);
 									interact++;
-									continue;
 								} //ICE
+								continue;
 							}
 							continue;
 						}
@@ -938,7 +928,7 @@ public class Printer {
 									}
 									continue;
 								}
-								else if (canPlaceFace(FacingData.getFacingData(stateSchematic), stateSchematic, mc.player, primaryFacing, horizontalFacing)){ // no gui
+								else if (canPlaceFace(FacingData.getFacingData(stateSchematic), stateSchematic, primaryFacing, horizontalFacing)){ // no gui
 									Direction required = fi.dy.masa.malilib.util.BlockUtils.getFirstPropertyFacingValue(stateSchematic);
 									required = applyPlacementFacing(stateSchematic, required, stateClient);
 									Vec3d hitVec = applyHitVec(npos, stateSchematic, required);
@@ -971,11 +961,8 @@ public class Printer {
 											stateSchematic.get(GrindstoneBlock.FACING).getOpposite(), pos, false)); //place block
 										interact++;
 									}
-									continue;
 								}
-								else {
-									continue;
-								}
+								continue;
 							}
 							else { //Only end rod.
 								if (blockSchematic instanceof EndRodBlock){
@@ -996,7 +983,7 @@ public class Printer {
 						Vec3d hitPos = new Vec3d(npos.getX(), npos.getY() , npos.getZ());
 						// Carpet Accurate Placement protocol support, plus BlockSlab support
 						if (CanUseProtocol && IsBlockSupportedCarpet(stateSchematic.getBlock())) {
-							hitPos = applyCarpetProtocolHitVec(npos, stateSchematic, hitPos);
+							hitPos = applyCarpetProtocolHitVec(npos, stateSchematic);
 						} else {
 							hitPos = applyHitVec(npos, stateSchematic, side);
 						}
@@ -1140,7 +1127,7 @@ public class Printer {
 		}
 		return false;
 	}
-
+	@SuppressWarnings("BooleanMethodIsAlwaysInverted")
 	private static boolean isCorrectDustState(MinecraftClient mc, World world, BlockPos pos){
 		BlockState ClientState = mc.world.getBlockState(pos);
 		BlockState SchematicState = world.getBlockState(pos);
@@ -1163,7 +1150,7 @@ public class Printer {
 	/*
 		returns if piston should extend, due to power from somewhere
 	 */
-	private static boolean shouldSupressExtend(MinecraftClient mc, World world, BlockPos pos){
+	private static boolean shouldSuppressExtend(MinecraftClient mc, World world, BlockPos pos){
 		return shouldExtend(mc.world, pos, world.getBlockState(pos).get(PistonBlock.FACING)) && !world.getBlockState(pos).get(PistonBlock.EXTENDED);
 	}
 
@@ -1189,6 +1176,7 @@ public class Printer {
 	Case B : Observer is facing Noteblock from horizontal : observer - block below noteblock - noteblock - output
 
 	 * * */
+	@SuppressWarnings({"ConstantConditions"})
 	private static BlockPos isObserverCantAvoidOutput(MinecraftClient mc, World schematicWorld, BlockPos pos){
 		if (isQCableBlock(schematicWorld.getBlockState(pos))){
 			if (schematicWorld.getBlockState(pos.up(2)).isOf(Blocks.OBSERVER) && ObserverCantAvoid(mc, schematicWorld, Direction.UP, pos.up(2) )){
@@ -1246,6 +1234,7 @@ public class Printer {
 		Block block = blockState.getBlock();
 		return (!AVOID_CHECK_ONLY_PISTONS.getBooleanValue() && block instanceof DispenserBlock) || block instanceof PistonBlock ;
 	}
+	@SuppressWarnings({"ConstantConditions"})
 	private static Map.Entry<Boolean, BlockPos> isWatchingCorrectState(MinecraftClient mc, World schematicWorld, BlockPos pos, Set<Long> recursive, boolean allowFirst){
 		//observer, then recursive
 		if (recursive == null){
@@ -1286,13 +1275,14 @@ public class Printer {
 		}
 		return Map.entry(true, pos);
 	}
+
 	private static boolean ObserverCantAvoid(MinecraftClient mc, World world, Direction facingSchematic, BlockPos pos){
 		//returns true if observer should be placed regardless of state
-		BlockPos Posoffset = pos.offset(facingSchematic);
-		BlockState OffsetStateSchematic = world.getBlockState(Posoffset);
+		BlockPos posOffset = pos.offset(facingSchematic);
+		BlockState OffsetStateSchematic = world.getBlockState(posOffset);
 		Block offsetBlock = OffsetStateSchematic.getBlock();
 		if (OffsetStateSchematic.isOf(Blocks.NOTE_BLOCK)){
-			if (isNoteBlockInstrumentError(mc, world, Posoffset)){
+			if (isNoteBlockInstrumentError(mc, world, posOffset)){
 				//everything is correct but litematica error
 				return true;
 			}
@@ -1312,6 +1302,7 @@ public class Printer {
 				OffsetStateSchematic.get(WallMountedBlock.FACE) == WallMountLocation.WALL && OffsetStateSchematic.get(WallMountedBlock.FACING) == facingSchematic;
 		}
 	}
+
 	private static BlockPos ObserverCantAvoidPos(MinecraftClient mc, World world, Direction facingSchematic, BlockPos pos){
 		//returns true if observer should be placed regardless of state
 		BlockPos Posoffset = pos.offset(facingSchematic);
@@ -1345,6 +1336,7 @@ public class Printer {
 			return Posoffset;
 		}
 	}
+
 	private static boolean shouldAvoidPlaceCart(BlockPos pos, World schematicWorld){
 		//avoids TNT priming
 		for (Direction direction : Direction.values()){
@@ -1355,6 +1347,7 @@ public class Printer {
 		return false;
 	}
 	// returns should call continue in loop
+	@SuppressWarnings({"ConstantConditions"})
 	private static boolean placeCart(BlockState state, MinecraftClient client, BlockPos pos){
 		if (state.isOf(Blocks.DETECTOR_RAIL) && state.get(DetectorRailBlock.POWERED) != client.world.getBlockState(pos).get(DetectorRailBlock.POWERED) && canPickItem(client, Items.MINECART.getDefaultStack()) && client.player.getPos().distanceTo(Vec3d.of(pos)) < 4.5){
 			Vec3d clickPos = Vec3d.of(pos).add(0.5,0.125,0.5);
@@ -1370,6 +1363,7 @@ public class Printer {
 		}
 		return false;
 	}
+	@SuppressWarnings({"ConstantConditions"})
 	private static void placeGrindStone(BlockState state, MinecraftClient client, BlockPos pos){
 		if (FAKE_ROTATION_BETA.getBooleanValue()){
 			FakeAccurateBlockPlacement.request(state, pos);
@@ -1409,6 +1403,7 @@ public class Printer {
 			}
 		}
 	}
+	@SuppressWarnings({"ConstantConditions"})
 	private static boolean canAttachGrindstone(BlockState state, MinecraftClient client, BlockPos pos){
 		if (FAKE_ROTATION_BETA.getBooleanValue()){
 			return true;
@@ -1480,7 +1475,7 @@ public class Printer {
 		//returns true if observer should not be placed
 		boolean ExplicitObserver = PRINTER_OBSERVER_AVOID_ALL.getBooleanValue();
 		BlockState stateSchematic = world.getBlockState(pos);
-		BlockPos Posoffset = pos;
+		BlockPos posOffset;
 		BlockState OffsetStateSchematic;
 		BlockState OffsetStateClient;
 		if (stateSchematic.get(ObserverBlock.POWERED)) {
@@ -1490,9 +1485,9 @@ public class Printer {
 		assert facingSchematic != null;
 		boolean observerCantAvoid = ObserverCantAvoid(mc, world, facingSchematic, pos);
 		if (observerCantAvoid) {return false;}
-		Posoffset = pos.offset(facingSchematic);
-		OffsetStateSchematic = world.getBlockState(Posoffset);
-		OffsetStateClient = mc.world.getBlockState(Posoffset);
+		posOffset = pos.offset(facingSchematic);
+		OffsetStateSchematic = world.getBlockState(posOffset);
+		OffsetStateClient = mc.world.getBlockState(posOffset);
 		if (OffsetStateSchematic.isOf(Blocks.BARRIER)){
 			return false;
 		}
@@ -1519,7 +1514,7 @@ public class Printer {
 		//returns true if observer should not be placed
 		boolean ExplicitObserver = PRINTER_OBSERVER_AVOID_ALL.getBooleanValue();
 		BlockState stateSchematic = world.getBlockState(pos);
-		BlockPos Posoffset = pos;
+		BlockPos posOffset;
 		BlockState OffsetStateSchematic;
 		BlockState OffsetStateClient;
 		if (stateSchematic.get(ObserverBlock.POWERED)) {
@@ -1529,9 +1524,9 @@ public class Printer {
 		assert facingSchematic != null;
 		boolean observerCantAvoid = ObserverCantAvoid(mc, world, facingSchematic, pos);
 		if (observerCantAvoid) {return null;}
-		Posoffset = pos.offset(facingSchematic);
-		OffsetStateSchematic = world.getBlockState(Posoffset);
-		OffsetStateClient = mc.world.getBlockState(Posoffset);
+		posOffset = pos.offset(facingSchematic);
+		OffsetStateSchematic = world.getBlockState(posOffset);
+		OffsetStateClient = mc.world.getBlockState(posOffset);
 		if (OffsetStateSchematic.isOf(Blocks.BARRIER)){
 			return null;
 		}
@@ -1549,12 +1544,12 @@ public class Printer {
 				return null;
 			} //cave air wtf
 			if (!OffsetStateSchematic.toString().equals(OffsetStateClient.toString())){
-				return Posoffset;
+				return posOffset;
 			}
 		}
 
 		if (!OffsetStateClient.getBlock().equals(OffsetStateSchematic.getBlock())){
-			return Posoffset;
+			return posOffset;
 		}
 		return null;
 	}
@@ -1562,7 +1557,7 @@ public class Printer {
 	 * Checks if the block can be placed in the correct orientation if player is
 	 * facing a certain direction Dont place block if orientation will be wrong
 	 */
-	private static boolean canPlaceFace(FacingData facedata, BlockState stateSchematic, PlayerEntity player,
+	private static boolean canPlaceFace(FacingData facedata, BlockState stateSchematic,
 	                                    Direction primaryFacing, Direction horizontalFacing) {
 		if (stateSchematic.isOf(Blocks.GRINDSTONE)){
 			return true;
@@ -1618,8 +1613,7 @@ public class Printer {
 			checkState.getBlock() instanceof BubbleColumnBlock ||
 			checkState.getBlock() instanceof Waterloggable && checkState.contains(Properties.WATERLOGGED) && checkState.get(Properties.WATERLOGGED) && checkState.getMaterial().isReplaceable();
 	}
-	private static boolean printerCheckCancel(BlockState stateSchematic, BlockState stateClient,
-	                                          PlayerEntity player) {
+	private static boolean printerCheckCancel(BlockState stateSchematic, BlockState stateClient) {
 		Block blockSchematic = stateSchematic.getBlock();
 		if (blockSchematic instanceof SeaPickleBlock && stateSchematic.get(SeaPickleBlock.PICKLES) > 1) {
 			Block blockClient = stateClient.getBlock();
@@ -1673,13 +1667,10 @@ public class Printer {
 	 * @return Vec3d
 	 */
 	public static Vec3d applyHitVec(BlockPos pos, BlockState state, Direction side) {
-		double x = pos.getX();
-		double y = pos.getY();
-		double z = pos.getZ();
 
-		double dx = 0;
-		double dy = 0;
-		double dz = 0;
+		double dx;
+		double dy;
+		double dz;
 		Block block = state.getBlock();
 
 		/*
@@ -1938,16 +1929,15 @@ public class Printer {
 			item.hasClicked = true;
 		positionCache.add(item);
 	}
-	public static Vec3d applyCarpetProtocolHitVec(BlockPos pos, BlockState state, Vec3d hitVecIn)
+	public static Vec3d applyCarpetProtocolHitVec(BlockPos pos, BlockState state)
 	{
 		double code = 0;
 		double y = pos.getY();
 		double z = pos.getZ();
 		Block block = state.getBlock();
 		Direction facing = fi.dy.masa.malilib.util.BlockUtils.getFirstPropertyFacingValue(state);
-		Integer railEnumCode = getRailShapeOrder(state);
+		int railEnumCode = getRailShapeOrder(state);
 		final int propertyIncrement = 16;
-		double relX = hitVecIn.x - pos.getX();
 		if (facing == null && railEnumCode == 32 && !(block instanceof SlabBlock))
 		{
 			return new Vec3d (pos.getX(), y, z);

@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public class ItemPlacementContextMixin {
 	@Inject(method = "getPlayerLookDirection", at = @At("HEAD"), cancellable = true, require = 0)
 	private void onGetDirection(CallbackInfoReturnable<Direction> cir) {
-		if (FakeAccurateBlockPlacement.fakeDirection != null) {
+		if (FakeAccurateBlockPlacement.fakeDirection != null && FakeAccurateBlockPlacement.requestedTicks > -3) {
 			cir.setReturnValue(FakeAccurateBlockPlacement.fakeDirection);
 		}
 	}

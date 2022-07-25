@@ -15,6 +15,8 @@ import net.minecraft.client.network.ClientPlayerInteractionManager;
 import net.minecraft.item.Item;
 import net.minecraft.item.Items;
 import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
+import net.minecraft.server.network.ServerPlayNetworkHandler;
+import net.minecraft.server.network.ServerPlayerInteractionManager;
 import net.minecraft.state.property.Properties;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
@@ -60,6 +62,8 @@ public class FakeAccurateBlockPlacement{
 		ClientPlayerEntity playerEntity = minecraftClient.player;
 		tickElapsed = 0;
 		if (playerEntity == null || clientPlayNetworkHandler == null){
+			requestedTicks = -3;
+			fakeDirection = null;
 			return;
 		}
 		//previousFakeYaw = playerEntity.getYaw();
@@ -86,7 +90,7 @@ public class FakeAccurateBlockPlacement{
 		}
 		if (requestedTicks <= -3){
 			requestedTicks = -3;
-			fakeDirection = null;
+			fakeDirection = Direction.getEntityFacingOrder(playerEntity)[0];
 			previousFakePitch = playerEntity.getPitch();
 			previousFakeYaw = playerEntity.getYaw();
 		}
