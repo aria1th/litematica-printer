@@ -540,7 +540,7 @@ public class Printer {
 										if (level != Schematiclevel && !(level == 7 && Schematiclevel == 8)) {
 											Hand hand = Hand.MAIN_HAND;
 											if (mc.player.getInventory().getSlotWithStack(ComposterItem) != -1) {
-												InventoryUtils.setPickedItemToHand(ComposterItem, mc);
+												fi.dy.masa.malilib.util.InventoryUtils.swapItemToMainHand(ComposterItem, mc);
 											}
 											if (!mc.player.getStackInHand(Hand.MAIN_HAND).isItemEqual(ComposterItem)){
 												continue;
@@ -663,7 +663,7 @@ public class Printer {
 						if (ClearArea) {
 							Hand hand = Hand.MAIN_HAND;
 							if (ClearArea && mc.player.getInventory().getSlotWithStack(stack) != -1) {
-								InventoryUtils.setPickedItemToHand(stack, mc);
+								fi.dy.masa.malilib.util.InventoryUtils.swapItemToMainHand(stack, mc);
 								Vec3d hitPos = new Vec3d(0.5, 0.5, 0.5);
 								BlockHitResult hitResult = new BlockHitResult(hitPos, Direction.UP, pos, false);
 								mc.interactionManager.interactBlock(mc.player,  hand, hitResult); //FLUID REMOVAL
@@ -755,7 +755,7 @@ public class Printer {
 							if (mc.player.getInventory().getSlotWithStack(stack) == -1 || OffsetstateClient.isAir() || (!OffsetstateClient.getBlock().getName().equals(OffsetstateSchematic.getBlock().getName()))) {
 								continue;
 							}
-							InventoryUtils.setPickedItemToHand(stack, mc);
+							fi.dy.masa.malilib.util.InventoryUtils.swapItemToMainHand(stack, mc);
 							if (!mc.player.getStackInHand(Hand.MAIN_HAND).isItemEqual(stack)){
 								continue;
 							}
@@ -812,7 +812,7 @@ public class Printer {
 							if (PRINTER_PLACE_ICE.getBooleanValue()) {
 								ItemStack iceStack = Items.ICE.getDefaultStack();
 								if (mc.player.getInventory().getSlotWithStack(iceStack) != -1) {
-									InventoryUtils.setPickedItemToHand(iceStack, mc);
+									fi.dy.masa.malilib.util.InventoryUtils.swapItemToMainHand(iceStack, mc);
 									if (!mc.player.getStackInHand(Hand.MAIN_HAND).isItemEqual(iceStack)) {
 										continue;
 									}
