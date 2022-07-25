@@ -2,7 +2,6 @@ package io.github.eatmyvenom.litematicin.utils;
 
 //see https://github.com/senseiwells/EssentialClient/blob/1.19.x/src/main/java/me/senseiwells/essentialclient/feature/BetterAccurateBlockPlacement.java
 
-import fi.dy.masa.litematica.util.InventoryUtils;
 import io.github.eatmyvenom.litematicin.LitematicaMixinMod;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.block.*;
@@ -15,8 +14,6 @@ import net.minecraft.client.network.ClientPlayerInteractionManager;
 import net.minecraft.item.Item;
 import net.minecraft.item.Items;
 import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
-import net.minecraft.server.network.ServerPlayNetworkHandler;
-import net.minecraft.server.network.ServerPlayerInteractionManager;
 import net.minecraft.state.property.Properties;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
