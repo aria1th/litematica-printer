@@ -30,7 +30,7 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
     - run: ./gradlew build --stacktrace --no-daemon
-    - uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@v3.1.0
       with:
         name: Artifacts from ${{ github.sha }}
         path: build/libs
