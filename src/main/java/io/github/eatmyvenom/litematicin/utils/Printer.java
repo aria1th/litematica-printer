@@ -728,9 +728,12 @@ public class Printer {
 								continue;
 							}
 							if (willExtendInWorld(world, pos, stateSchematic.get(PistonBlock.FACING)) != stateSchematic.get(PistonBlock.EXTENDED) && directlyPowered(world, pos, stateSchematic.get(PistonBlock.FACING))){
-								recordCause(pos, pos.toShortString()+ " Block should respect push limit because its directly powered");
-								MessageHolder.sendUniqueMessage(mc.player, getReason(pos.asLong()));
-								continue;
+								if(PRINTER_SUPPRESS_PUSH_LIMIT.getBooleanValue()){
+									recordCause(pos, pos.toShortString()+ " Block should respect push limit because its directly powered");
+									MessageHolder.sendUniqueMessage(mc.player, getReason(pos.asLong()));
+									continue;
+								}
+								MessageHolder.sendUniqueMessage(mc.player, pos.toShortString() + " piston is placed ignoring push limit checks, check printerSuppressPushLimitPistons option.");
 							}
 						} else if (smartRedstone && sBlock instanceof ObserverBlock) {
 							if (ObserverUpdateOrder(mc, world, pos)) {
