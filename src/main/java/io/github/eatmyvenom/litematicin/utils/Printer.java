@@ -31,6 +31,7 @@ import net.minecraft.item.ItemPlacementContext;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.state.property.Properties;
+import net.minecraft.tag.BlockTags;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
@@ -59,7 +60,11 @@ public class Printer {
 
 	// TODO: This must be moved to another class and not be static.
 	private static boolean simulateFacingData(BlockState state, BlockPos blockPos, Vec3d hitVec) {
-		if(!state.getProperties().contains(Properties.FACING)){
+		if(!state.getProperties().contains(Properties.FACING) && !state.getProperties().contains(Properties.HORIZONTAL_FACING)){
+			return true;
+		}
+		//blocks that does not require facing
+		if(state.isOf(Blocks.HOPPER) || state.isIn(BlockTags.SHULKER_BOXES)){
 			return true;
 		}
 		// int 0 : none, 1 : clockwise, 2 : counterclockwise, 3 : reverse
@@ -807,7 +812,7 @@ public class Printer {
 						}
 						if (facing != null) {
 							FacingData facedata = FacingData.getFacingData(stateSchematic);
-							if(facedata == null && !simulateFacingData(stateSchematic, pos, new Vec3d(0.5, 0.5, 0.5)) && !(stateSchematic.getBlock() instanceof  AbstractRailBlock)){
+							if(facedata == null && !simulateFacingData(stateSchematic, pos, new Vec3d(0.5, 0.5, 0.5)) && !(stateSchematic.getBlock() instanceof AbstractRailBlock)){
 								MessageHolder.sendMessageUncheckedUnique(mc.player, stateSchematic.getBlock() + " does not have facing data, please add this!");
 								continue;
 							}
@@ -1346,7 +1351,7 @@ public class Printer {
 			return offsetBlock instanceof WallBlock || offsetBlock instanceof WallMountedBlock && OffsetStateSchematic.get(WallMountedBlock.FACE) == WallMountLocation.CEILING;
 		}
 		else {
-			return offsetBlock instanceof WallBlock || offsetBlock instanceof WallMountedBlock &&
+			return offsetBlock instanceof WallBlock || offsetBlock instanceof PaneBlock || offsetBlock instanceof FenceBlock || OffsetStateSchematic.isOf(Blocks.IRON_BARS) || offsetBlock instanceof WallMountedBlock &&
 				OffsetStateSchematic.get(WallMountedBlock.FACE) == WallMountLocation.WALL && OffsetStateSchematic.get(WallMountedBlock.FACING) == facingSchematic;
 		}
 	}
@@ -1896,7 +1901,11 @@ public class Printer {
 		}
 		else if (blockSchematic instanceof HopperBlock) {
 			return stateSchematic.get(HopperBlock.FACING).getOpposite();
-		} else if (blockSchematic instanceof TorchBlock) {
+		}
+		else if (stateSchematic.isIn(BlockTags.SHULKER_BOXES)){
+			return stateSchematic.get(ShulkerBoxBlock.FACING);
+		}
+		else if (blockSchematic instanceof TorchBlock) {
 			if (blockSchematic instanceof WallTorchBlock || blockSchematic instanceof WallRedstoneTorchBlock) {
 				return stateSchematic.get(WallTorchBlock.FACING);
 			} else {

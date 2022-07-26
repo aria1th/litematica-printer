@@ -17,6 +17,8 @@ import net.minecraft.item.Item;
 import net.minecraft.item.Items;
 import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
 import net.minecraft.state.property.Properties;
+import net.minecraft.tag.BlockTags;
+import net.minecraft.tag.TagKey;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
@@ -258,7 +260,7 @@ public class FakeAccurateBlockPlacement{
 		if (blockState.isOf(Blocks.GRINDSTONE)){
 			return requestGrindStone(blockState, blockPos);
 		}
-		if (blockState.isOf(Blocks.HOPPER)){
+		if (blockState.isOf(Blocks.HOPPER) || blockState.isIn(BlockTags.SHULKER_BOXES)){
 			pickFirst(blockState);
 			placeBlock(blockPos,blockState);
 			return true;

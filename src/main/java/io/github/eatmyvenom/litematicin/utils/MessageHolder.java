@@ -10,15 +10,16 @@ import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.DEBUG_MESSAGE;
 
 class MessageHolder{
 	private static final HashSet<String> uniqueStrings = new HashSet<>();
+	private static final HashSet<String> errorLogger = new HashSet<>();
 	public static void sendDebugMessage(ClientPlayerEntity player, String string){
 		if(DEBUG_EXTRA_MESSAGE.getBooleanValue()){
 			player.sendMessage(Text.of(string));
 		}
 	}
 	public static void sendMessageUncheckedUnique(ClientPlayerEntity player, String string){
-		if (!uniqueStrings.contains(string)) {
+		if (!errorLogger.contains(string)) {
 			player.sendMessage(Text.of(string));
-			uniqueStrings.add(string);
+			errorLogger.add(string);
 		}
 	}
 	public static void sendUniqueMessage(ClientPlayerEntity player, String string){
