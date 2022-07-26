@@ -124,8 +124,10 @@ public class Printer {
 	                                                BlockPos pos) {
 
 		World world = SchematicWorldHandler.getSchematicWorld();
-
 		ItemStack stack = MaterialCache.getInstance().getRequiredBuildItemForState(preference, world, pos);
+		if (!FakeAccurateBlockPlacement.canHandleOther(stack.getItem())){
+			return false;
+		}
 		if (fi.dy.masa.malilib.util.InventoryUtils.areStacksEqual(stack, mc.player.getMainHandStack())){
 			return true;
 		}
@@ -535,6 +537,9 @@ public class Printer {
 											}
 										}
 									} else if (sBlock instanceof ComposterBlock && FillInventory) {
+										if(!FakeAccurateBlockPlacement.canHandleOther(ComposterItem.getItem())){
+											continue;
+										}
 										int level = stateClient.get(ComposterBlock.LEVEL);
 										int Schematiclevel = stateSchematic.get(ComposterBlock.LEVEL);
 										if (level != Schematiclevel && !(level == 7 && Schematiclevel == 8)) {
@@ -769,15 +774,19 @@ public class Printer {
 							}
 						}
 						if (sBlock instanceof NetherPortalBlock && !sBlock.getName().equals(cBlock.getName())) {
+							ItemStack lightStack = Items.FIRE_CHARGE.getDefaultStack();
+							if(!FakeAccurateBlockPlacement.canHandleOther(lightStack.getItem())){
+								continue;
+							}
 							Hand hand = Hand.MAIN_HAND;
 							BlockPos Offsetpos = new BlockPos(x, y - 1, z);
 							BlockState OffsetstateSchematic = world.getBlockState(Offsetpos);
 							BlockState OffsetstateClient = mc.world.getBlockState(Offsetpos);
-							if (mc.player.getInventory().getSlotWithStack(stack) == -1 || OffsetstateClient.isAir() || (!OffsetstateClient.getBlock().getName().equals(OffsetstateSchematic.getBlock().getName()))) {
+							if (mc.player.getInventory().getSlotWithStack(lightStack) == -1 || OffsetstateClient.isAir() || (!OffsetstateClient.getBlock().getName().equals(OffsetstateSchematic.getBlock().getName()))) {
 								continue;
 							}
-							fi.dy.masa.malilib.util.InventoryUtils.swapItemToMainHand(stack, mc);
-							if (!mc.player.getStackInHand(Hand.MAIN_HAND).isItemEqual(stack)){
+							fi.dy.masa.malilib.util.InventoryUtils.swapItemToMainHand(lightStack, mc);
+							if (!mc.player.getStackInHand(Hand.MAIN_HAND).isItemEqual(lightStack)){
 								continue;
 							}
 							Vec3d hitPos = new Vec3d(0.5, 0.5, 0.5);
@@ -832,6 +841,9 @@ public class Printer {
 							stateClient.getMaterial().isReplaceable() && !isReplaceableWaterFluidSource(stateClient))){
 							if (PRINTER_PLACE_ICE.getBooleanValue()) {
 								ItemStack iceStack = Items.ICE.getDefaultStack();
+								if(!FakeAccurateBlockPlacement.canHandleOther(iceStack.getItem())){
+									continue;
+								}
 								if (mc.player.getInventory().getSlotWithStack(iceStack) != -1) {
 									fi.dy.masa.malilib.util.InventoryUtils.swapItemToMainHand(iceStack, mc);
 									if (!mc.player.getStackInHand(Hand.MAIN_HAND).isItemEqual(iceStack)) {
@@ -1387,6 +1399,9 @@ public class Printer {
 	private static boolean placeCart(BlockState state, MinecraftClient client, BlockPos pos){
 		if (state.isOf(Blocks.DETECTOR_RAIL) && state.get(DetectorRailBlock.POWERED) != client.world.getBlockState(pos).get(DetectorRailBlock.POWERED) && canPickItem(client, Items.MINECART.getDefaultStack()) && client.player.getPos().distanceTo(Vec3d.of(pos)) < 4.5){
 			Vec3d clickPos = Vec3d.of(pos).add(0.5,0.125,0.5);
+			if(!FakeAccurateBlockPlacement.canHandleOther(Items.MINECART)){
+				return false;
+			}
 			fi.dy.masa.malilib.util.InventoryUtils.swapItemToMainHand(Items.MINECART.getDefaultStack(), client);
 			if (client.player.getMainHandStack().isItemEqual(Items.MINECART.getDefaultStack())){
 				ActionResult actionResult = client.interactionManager.interactBlock(client.player, Hand.MAIN_HAND, new BlockHitResult(clickPos, Direction.UP, pos, false)); //place block
@@ -1425,17 +1440,19 @@ public class Printer {
 				clickPos = pos.offset(side.getOpposite());
 			}
 			hitVec = Vec3d.ofCenter(clickPos).add(Vec3d.of(side.getVector()).multiply(0.5));
-			doSchematicWorldPickBlock(client, state, pos);
-			cacheEasyPlacePosition(pos, false);
-			client.interactionManager.interactBlock(client.player, Hand.MAIN_HAND, new BlockHitResult(hitVec, side, clickPos, false)); //place block
+			if (doSchematicWorldPickBlock(client, state, pos)){
+				cacheEasyPlacePosition(pos, false);
+				client.interactionManager.interactBlock(client.player, Hand.MAIN_HAND, new BlockHitResult(hitVec, side, clickPos, false)); //place block
+			}
 		}
 		else {
 			if (isFacingCorrectly(state, client.player)){
 				hitVec = Vec3d.ofCenter(pos);
 				clickPos = pos;
-				doSchematicWorldPickBlock(client, state, pos);
-				cacheEasyPlacePosition(pos, false);
-				client.interactionManager.interactBlock(client.player, Hand.MAIN_HAND, new BlockHitResult(hitVec, side, clickPos, false)); //place block
+				if (doSchematicWorldPickBlock(client, state, pos)){
+					cacheEasyPlacePosition(pos, false);
+					client.interactionManager.interactBlock(client.player, Hand.MAIN_HAND, new BlockHitResult(hitVec, side, clickPos, false)); //place block
+				}
 			}
 		}
 	}

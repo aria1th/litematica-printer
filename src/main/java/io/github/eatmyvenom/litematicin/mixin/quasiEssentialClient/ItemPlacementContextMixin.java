@@ -13,7 +13,9 @@ public class ItemPlacementContextMixin {
 	@Inject(method = "getPlayerLookDirection", at = @At("HEAD"), cancellable = true, require = 0)
 	private void onGetDirection(CallbackInfoReturnable<Direction> cir) {
 		if (FakeAccurateBlockPlacement.fakeDirection != null && FakeAccurateBlockPlacement.requestedTicks > -3) {
-			cir.setReturnValue(FakeAccurateBlockPlacement.fakeDirection);
+			if (FakeAccurateBlockPlacement.fakeDirection.getAxis() != Direction.Axis.Y){
+				cir.setReturnValue(FakeAccurateBlockPlacement.fakeDirection);
+			}
 		}
 	}
 	@Inject(method = "getVerticalPlayerLookDirection", at = @At("HEAD"), cancellable = true, require = 0)
