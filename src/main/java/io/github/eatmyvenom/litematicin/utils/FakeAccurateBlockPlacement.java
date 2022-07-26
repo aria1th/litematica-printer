@@ -87,7 +87,7 @@ public class FakeAccurateBlockPlacement{
 		}
 		if (requestedTicks <= -3){
 			requestedTicks = -3;
-			fakeDirection = Direction.getEntityFacingOrder(playerEntity)[0];
+			fakeDirection = null;
 			previousFakePitch = playerEntity.getPitch();
 			previousFakeYaw = playerEntity.getYaw();
 		}
@@ -334,7 +334,7 @@ public class FakeAccurateBlockPlacement{
 			if (stateGrindStone != null)
 				return stateGrindStone.get(GrindstoneBlock.FACE) == state.get(GrindstoneBlock.FACE) && stateGrindStone.get(GrindstoneBlock.FACING) == state.get(GrindstoneBlock.FACING);
 		}
-		return betweenStartAndEnd && state.getBlock().asItem() == currentHandling || currentHandling == Items.AIR;
+		return betweenStartAndEnd && requestedTicks != -2 && state.getBlock().asItem() == currentHandling || currentHandling == Items.AIR;
 	}
 	private static boolean placeBlock(BlockPos pos, BlockState blockState){
 		final MinecraftClient minecraftClient = MinecraftClient.getInstance();
