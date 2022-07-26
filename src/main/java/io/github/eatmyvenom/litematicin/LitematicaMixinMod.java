@@ -28,6 +28,7 @@ public class LitematicaMixinMod implements ModInitializer {
 	public static final ConfigBoolean AVOID_CHECK_ONLY_PISTONS = new  ConfigBoolean("avoidCheckOnlyPistons",true,"QC order checks will ignore Dispenser QC state");
 	public static final ConfigBoolean PRINTER_WATERLOGGED_WATER_FIRST = new  ConfigBoolean("checkWaterFirstForWaterlogged",true,"Watterlogged blocks won't be placed before water in place");
 	public static final ConfigBoolean PRINTER_SMART_REDSTONE_AVOID = new  ConfigBoolean("printerSmartRedstoneAvoid",false,"Pistons / Observers will avoid and respect its order");
+	public static final ConfigBoolean PRINTER_SUPPRESS_PUSH_LIMIT = new  ConfigBoolean("printerSuppressPushLimitPistons",true,"Pistons that is suppressed with push limit won't be placed.");
 	public static final ConfigBoolean ADVANCED_ACCURATE_BLOCK_PLACEMENT = new  ConfigBoolean("CarpetExtraFixedVersion",false,"If carpet extra is updated, turn on to allow all facingblock rotation");
 	public static final ConfigBoolean BEDROCK_BREAKING = new ConfigBoolean("printerBedrockBreaking", false, "Clear Bedrock mismatch with Bedrock Breaker");
 	public static final ConfigBoolean BEDROCK_BREAKING_FORCE_TORCH = new ConfigBoolean("BedrockBreakingUseSlimeblock", false, "BecrockBreaker uses slime block to force torch location");
@@ -57,6 +58,7 @@ public class LitematicaMixinMod implements ModInitializer {
 			ADVANCED_ACCURATE_BLOCK_PLACEMENT,
 			PRINTER_SMART_REDSTONE_AVOID,
 			PRINTER_OBSERVER_AVOID_ALL,
+			PRINTER_SUPPRESS_PUSH_LIMIT,
 			AVOID_CHECK_ONLY_PISTONS,
 			BEDROCK_BREAKING,
 			BEDROCK_BREAKING_FORCE_TORCH,
