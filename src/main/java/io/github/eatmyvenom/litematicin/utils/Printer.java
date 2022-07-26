@@ -683,12 +683,15 @@ public class Printer {
 						} else if (willFall(stateSchematic, mc.world, pos))
 						{
 							recordCause(pos, pos.toShortString()+" Block is Falling block", pos.down() );
+							MessageHolder.sendUniqueMessage(mc.player, getReason(pos.asLong()));
 							continue;
 						} else if (!PRINTER_PLACE_ICE.getBooleanValue() && stateSchematic.isOf(Blocks.WATER)){
 							recordCause(pos, pos.toShortString()+" block is water");
+							MessageHolder.sendUniqueMessage(mc.player, getReason(pos.asLong()));
 							continue;
 						} else if (!PRINTER_PLACE_ICE.getBooleanValue() && stateSchematic.isOf(Blocks.LAVA)){
 							recordCause(pos, pos.toShortString()+" block is lava");
+							MessageHolder.sendUniqueMessage(mc.player, getReason(pos.asLong()));
 							continue;
 						}
 						else if (sBlock instanceof SandBlock || sBlock instanceof DragonEggBlock || sBlock instanceof ConcretePowderBlock || sBlock instanceof GravelBlock || sBlock instanceof AnvilBlock) {
@@ -697,6 +700,7 @@ public class Printer {
 							BlockState OffsetstateClient = mc.world.getBlockState(Offsetpos);
 							if (OffsetstateClient.isAir() || (breakBlocks && !OffsetstateClient.getBlock().getName().equals(OffsetstateSchematic.getBlock().getName()))) {
 								recordCause(pos, pos.toShortString()+" Block is Falling block", pos.down() );
+								MessageHolder.sendUniqueMessage(mc.player, getReason(pos.asLong()));
 								continue;
 							}
 						}
@@ -704,19 +708,28 @@ public class Printer {
 						if (smartRedstone && sBlock instanceof RedstoneBlock) {
 							if (isQCable(mc, world, pos)) {
 								recordCause(pos, pos.toShortString()+ " Block will QC, waiting other block");
+								MessageHolder.sendUniqueMessage(mc.player, getReason(pos.asLong()));
 								continue;
 							}
 						} else if (smartRedstone && sBlock instanceof PistonBlock) {
 							if (!ShouldExtendQC(mc, world, pos) || hasNearbyRedirectDust(mc, world, pos)) {
-								recordCause(pos, pos.toShortString()+" Block has Redirectable dust nearby");
+								recordCause(pos, pos.toShortString()+" Block is QC or has Redirectable dust nearby");
+								MessageHolder.sendUniqueMessage(mc.player, getReason(pos.asLong()));
 								continue;
 							}
 							if (cantAvoidExtend(mc.world, pos, world) ){
 								recordCause(pos, pos.toShortString()+" Block will unexpectedly extend");
+								MessageHolder.sendUniqueMessage(mc.player, getReason(pos.asLong()));
 								continue;
 							}
-							if (shouldSuppressExtend(mc, world, pos) && hasWrongStateNearby(mc, world, pos)){
-								recordCause(pos, pos.toShortString()+ " Block should respect push limit");
+							if (shouldSuppressExtend(world, pos) && hasWrongStateNearby(mc, world, pos)){
+								recordCause(pos, pos.toShortString()+ "Piston is BUD but has wrong state nearby");
+								MessageHolder.sendUniqueMessage(mc.player, getReason(pos.asLong()));
+								continue;
+							}
+							if (willExtendInWorld(world, pos, stateSchematic.get(PistonBlock.FACING)) && directlyPowered(world, pos, stateSchematic.get(PistonBlock.FACING))){
+								recordCause(pos, pos.toShortString()+ " Block should respect push limit because its directly powered");
+								MessageHolder.sendUniqueMessage(mc.player, getReason(pos.asLong()));
 								continue;
 							}
 						} else if (smartRedstone && sBlock instanceof ObserverBlock) {
@@ -727,6 +740,7 @@ public class Printer {
 								else {
 									BlockPos causedPos = ObserverUpdateOrderPos(mc, world, pos);
 									recordCause(pos, pos.toShortString() +" is waiting for block ", causedPos);
+									MessageHolder.sendUniqueMessage(mc.player, getReason(pos.asLong()));
 									continue;
 								}
 							}
@@ -734,15 +748,15 @@ public class Printer {
 						if (ExplicitObserver){
 							BlockPos observerPos = isObserverCantAvoidOutput(mc, world, pos);
 							if(observerPos != null){
-								MessageHolder.sendUniqueMessage(mc.player, getReason(pos.asLong()));
 								recordCause(pos, observerPos.toShortString() + " has output toward "+ pos.toShortString() + " and waiting for "+ observerPos.toShortString(), observerPos);
+								MessageHolder.sendUniqueMessage(mc.player, getReason(pos.asLong()));
 								continue;
 							}
 							if (sBlock instanceof ObserverBlock ){
 								Map.Entry<Boolean, BlockPos> value = isWatchingCorrectState(mc,world, pos,null, true);
 								if (!value.getKey()){
-									MessageHolder.sendUniqueMessage(mc.player, getReason(pos.asLong()));
 									recordCause(pos, pos.toShortString()+ " can't be placed due to "+ value.getValue().toShortString(), value.getValue());
+									MessageHolder.sendUniqueMessage(mc.player, getReason(pos.asLong()));
 									continue;
 								}
 							}
@@ -826,13 +840,13 @@ public class Printer {
 						}
 						if (!canPickBlock(mc, stateSchematic, pos)){
 							//mc.player.sendMessage(Text.of("Can't pick block"),true);
-							MessageHolder.sendUniqueMessage(mc.player, "Can't pick item "+ stateSchematic.getBlock().asItem().getTranslationKey() +" at "+ pos.toShortString());
 							recordCause(pos, "Can't pick item "+ stateSchematic.getBlock().asItem().getTranslationKey() +" at "+ pos.toShortString());
+							MessageHolder.sendUniqueMessage(mc.player, "Can't pick item "+ stateSchematic.getBlock().asItem().getTranslationKey() +" at "+ pos.toShortString());
 							continue;
 						}
 						if (!blockSchematic.canPlaceAt(stateSchematic, mc.world, pos)){
-							MessageHolder.sendUniqueMessage(mc.player, "Block "+ stateSchematic.getBlock().getTranslationKey()+ " can't be placed at "+ pos.toShortString());
 							recordCause(pos, "Block "+stateSchematic.getBlock().toString()+"can't be placed at "+ pos.toShortString());
+							MessageHolder.sendUniqueMessage(mc.player, "Block "+ stateSchematic.getBlock().getTranslationKey()+ " can't be placed at "+ pos.toShortString());
 							continue;
 						}
 						if (blockSchematic instanceof GrindstoneBlock){
@@ -879,6 +893,7 @@ public class Printer {
 										continue;
 									}
 									recordCause(pos, "Block at "+ pos.toShortString() + " can't be placed due to block at "+ npos.toShortString() +" has GUI");
+									MessageHolder.sendUniqueMessage(mc.player, getReason(pos.asLong()));
 									continue;
 								}
 							}
@@ -905,6 +920,7 @@ public class Printer {
 								{
 									//Has GUI so clickPos can't be clicked.
 									recordCause(pos, "Block at "+ pos.toShortString() + " can't be placed due to block at "+ npos.toShortString() +" has GUI");
+									MessageHolder.sendUniqueMessage(mc.player, getReason(pos.asLong()));
 									continue;
 								}
 								else if (blockSchematic instanceof TorchBlock){
@@ -1123,7 +1139,7 @@ public class Printer {
 	}
 	private static boolean cantAvoidExtend(World world, BlockPos pos, World schematicWorld){
 		if (!schematicWorld.getBlockState(pos).get(PistonBlock.EXTENDED)){
-			return shouldExtend(world, pos, schematicWorld.getBlockState(pos).get(PistonBlock.FACING));
+			return willExtendInWorld(world, pos, schematicWorld.getBlockState(pos).get(PistonBlock.FACING));
 		}
 		return false;
 	}
@@ -1145,16 +1161,29 @@ public class Printer {
 	}
 	private static boolean ShouldExtendQC(MinecraftClient mc, World world, BlockPos pos) {
 
-		return shouldExtend(mc.world, pos, world.getBlockState(pos).get(PistonBlock.FACING)) == world.getBlockState(pos).get(PistonBlock.EXTENDED);
+		return willExtendInWorld(mc.world, pos, world.getBlockState(pos).get(PistonBlock.FACING)) == world.getBlockState(pos).get(PistonBlock.EXTENDED);
 	}
 	/*
-		returns if piston should extend, due to power from somewhere
+		returns if piston is powered + but its not extended in schematic, can be BUD or direct power
 	 */
-	private static boolean shouldSuppressExtend(MinecraftClient mc, World world, BlockPos pos){
-		return shouldExtend(mc.world, pos, world.getBlockState(pos).get(PistonBlock.FACING)) && !world.getBlockState(pos).get(PistonBlock.EXTENDED);
+	private static boolean shouldSuppressExtend(World world, BlockPos pos){
+		return willExtendInWorld(world, pos, world.getBlockState(pos).get(PistonBlock.FACING)) && !world.getBlockState(pos).get(PistonBlock.EXTENDED);
 	}
-
-	private static boolean shouldExtend(World world, BlockPos pos, Direction pistonFace) {
+	/*
+		returns if piston is DIRECTLY powered by redstone block, can't be solved via QC references.
+	 */
+	private static boolean directlyPowered(World schematicWorld, BlockPos pos, Direction pistonFace) {
+		for (Direction lv : Direction.values()){
+			if (lv == pistonFace){
+				continue;
+			}
+			if (schematicWorld.getBlockState(pos.offset(lv)).isOf(Blocks.REDSTONE_BLOCK)){
+				return true;
+			}
+		}
+		return false;
+	}
+	private static boolean willExtendInWorld(World world, BlockPos pos, Direction pistonFace) {
 		for (Direction lv : Direction.values()) {
 			if (lv == pistonFace || !world.isEmittingRedstonePower(pos.offset(lv), lv)) continue;
 			return true;
@@ -1745,10 +1774,13 @@ public class Printer {
 			block instanceof DoorBlock || block instanceof RedstoneWireBlock || block instanceof RedstoneOreBlock || block instanceof RedstoneLampBlock || block instanceof NoteBlock || block instanceof FenceGateBlock ||
 			block instanceof ScaffoldingBlock;
 	}
-	private static boolean hasWrongStateNearby(MinecraftClient mc, World world, BlockPos pos){
+	/*
+		returns if its block that can update neighbors
+	 */
+	private static boolean hasWrongStateNearby(MinecraftClient mc, World schematicWorld, BlockPos pos){
 		for (Direction direction : Direction.values()){
 			BlockPos checkPos = pos.offset(direction);
-			if (hasPowerRelatedState(world.getBlockState(checkPos).getBlock()) && world.getBlockState(checkPos) != mc.world.getBlockState(checkPos)){
+			if (hasPowerRelatedState(schematicWorld.getBlockState(checkPos).getBlock()) && schematicWorld.getBlockState(checkPos) != mc.world.getBlockState(checkPos)){
 				return true;
 			}
 		}
