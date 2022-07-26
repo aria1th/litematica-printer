@@ -15,6 +15,12 @@ class MessageHolder{
 			player.sendMessage(Text.of(string));
 		}
 	}
+	public static void sendMessageUncheckedUnique(ClientPlayerEntity player, String string){
+		if (!uniqueStrings.contains(string)) {
+			player.sendMessage(Text.of(string));
+			uniqueStrings.add(string);
+		}
+	}
 	public static void sendUniqueMessage(ClientPlayerEntity player, String string){
 		if (!DEBUG_MESSAGE.getBooleanValue()){
 			uniqueStrings.clear();

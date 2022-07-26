@@ -11,6 +11,8 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.network.ClientPlayerInteractionManager;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.mob.ZombieEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.Items;
 import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
@@ -27,6 +29,8 @@ import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.concurrent.ArrayBlockingQueue;
 
+import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.EASY_PLACE_MODE_MAX_BLOCKS;
+
 public class FakeAccurateBlockPlacement{
 
 	// We implement FIFO Queue structure with responsible ticks.
@@ -40,6 +44,7 @@ public class FakeAccurateBlockPlacement{
 	private static float previousFakeYaw = 0;
 	private static float previousFakePitch = 0;
 	private static int tickElapsed = 0;
+	private static int blockPlacedInTick = 0;
 	public static Item currentHandling = Items.AIR;
 	private static boolean betweenStartAndEnd = false;
 	private static final Queue<PosWithBlock> waitingQueue = new ArrayBlockingQueue<>(1) {
@@ -65,6 +70,7 @@ public class FakeAccurateBlockPlacement{
 	}
 	public static void starttick(MinecraftClient minecraftClient){
 		betweenStartAndEnd = false;
+		blockPlacedInTick = 0;
 	}
 	public static void endtick(MinecraftClient minecraftClient){
 		betweenStartAndEnd = true;
@@ -215,6 +221,28 @@ public class FakeAccurateBlockPlacement{
 		}
 		return false;
 	}
+	public static Direction getPlayerFacing(){
+		if (fakeYaw == -87){
+			return Direction.EAST;
+		}
+		else if (fakeYaw == 87){
+			return Direction.WEST;
+		}
+		else if (fakeYaw == 177){
+			return Direction.NORTH;
+		}
+		else if (fakeYaw == 3){
+			return Direction.SOUTH;
+		}
+		return null;
+	}
+	public static Direction[] getEntityFacingOrder(){
+		Entity entity = new ZombieEntity(MinecraftClient.getInstance().world);
+		entity.setYaw(fakeYaw);
+		entity.setPitch(fakePitch);
+		entity.remove(Entity.RemovalReason.DISCARDED);
+		return Direction.getEntityFacingOrder(entity);
+	}
 	/***
 	 *
 	 * @param blockState : Block object(terracotta, etc...)
@@ -363,9 +391,12 @@ public class FakeAccurateBlockPlacement{
 			if (stateGrindStone != null)
 				return stateGrindStone.get(GrindstoneBlock.FACE) == state.get(GrindstoneBlock.FACE) && stateGrindStone.get(GrindstoneBlock.FACING) == state.get(GrindstoneBlock.FACING);
 		}
-		return betweenStartAndEnd && state.getBlock().asItem() == currentHandling || currentHandling == Items.AIR;
+		return betweenStartAndEnd && canHandleOther(state.getBlock().asItem());
 	}
 	private static boolean placeBlock(BlockPos pos, BlockState blockState){
+		if(blockPlacedInTick > EASY_PLACE_MODE_MAX_BLOCKS.getIntegerValue()){
+			return false;
+		}
 		final MinecraftClient minecraftClient = MinecraftClient.getInstance();
 		final ClientPlayerEntity player = minecraftClient.player;
 		final ClientPlayerInteractionManager interactionManager = minecraftClient.interactionManager;
@@ -400,6 +431,7 @@ public class FakeAccurateBlockPlacement{
 			MessageHolder.sendDebugMessage(player, "Placing "+blockState.getBlock().getName()+" at "+ pos.toShortString() + " facing : " + fi.dy.masa.malilib.util.BlockUtils.getFirstPropertyFacingValue(blockState));
 			MessageHolder.sendDebugMessage(player, "Player facing is set to : " + fakeDirection + " Yaw : " + fakeYaw + " Pitch : "+ fakePitch + " ticks : "+ requestedTicks + " for pos "+ pos.toShortString());
 			interactionManager.interactBlock(player, Hand.MAIN_HAND, blockHitResult);
+			blockPlacedInTick++;
 			Printer.cacheEasyPlacePosition(pos, false);
 		}
 		return true;

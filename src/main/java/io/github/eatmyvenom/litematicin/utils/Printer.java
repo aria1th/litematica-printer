@@ -453,7 +453,9 @@ public class Printer {
 							}
 						}
 					}
-					if (BEDROCK_BREAKING.getBooleanValue()) {continue;} // don't process other actions
+					if (BEDROCK_BREAKING.getBooleanValue()) {
+						continue;
+					} // don't process other actions
 					if (!(stateSchematic.getBlock() instanceof NetherPortalBlock) && stateSchematic.isAir() && !ClearArea)
 						continue;
 
@@ -796,8 +798,7 @@ public class Printer {
 							lastPlaced = new Date().getTime();
 							interact++;
 						}
-						Direction facing = fi.dy.masa.malilib.util.BlockUtils
-							.getFirstPropertyFacingValue(stateSchematic);
+						Direction facing = fi.dy.masa.malilib.util.BlockUtils.getFirstPropertyFacingValue(stateSchematic);
 						if (facing != null) {
 							facing = facing.getOpposite();
 						}
@@ -807,6 +808,7 @@ public class Printer {
 						if (facing != null) {
 							FacingData facedata = FacingData.getFacingData(stateSchematic);
 							if(facedata == null && !simulateFacingData(stateSchematic, pos, new Vec3d(0.5, 0.5, 0.5)) && !(stateSchematic.getBlock() instanceof  AbstractRailBlock)){
+								MessageHolder.sendMessageUncheckedUnique(mc.player, stateSchematic.getBlock() + " does not have facing data, please add this!");
 								continue;
 							}
 							if (!(CanUseProtocol && IsBlockSupportedCarpet(stateSchematic.getBlock())) && !FAKE_ROTATION_BETA.getBooleanValue() && !canPlaceFace(facedata, stateSchematic, primaryFacing, horizontalFacing))
@@ -815,9 +817,7 @@ public class Printer {
 							if ((stateSchematic.getBlock() instanceof DoorBlock
 								&& stateSchematic.get(DoorBlock.HALF) == DoubleBlockHalf.UPPER)
 								|| (stateSchematic.getBlock() instanceof BedBlock
-								&& stateSchematic.get(BedBlock.PART) == BedPart.HEAD)
-
-							) {
+								&& stateSchematic.get(BedBlock.PART) == BedPart.HEAD)) {
 								continue;
 							}
 						}
@@ -908,7 +908,7 @@ public class Printer {
 								if (hasGui(world.getBlockState(npos).getBlock())){
 									if (FAKE_ROTATION_BETA.getBooleanValue()){
 										FakeAccurateBlockPlacement.request(stateSchematic, pos);
-										interact++;
+										//interact++;
 										continue;
 									}
 									recordCause(pos, "Block at "+ pos.toShortString() + " can't be placed due to block at "+ npos.toShortString() +" has GUI");
@@ -1054,7 +1054,7 @@ public class Printer {
 						}
 						else {
 							FakeAccurateBlockPlacement.request(stateSchematic, pos);
-							interact++;
+							//interact++;
 							//System.out.print("Requested\n");
 						}
 						if (stateSchematic.getBlock() instanceof SlabBlock
