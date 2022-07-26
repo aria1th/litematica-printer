@@ -727,7 +727,7 @@ public class Printer {
 								MessageHolder.sendUniqueMessage(mc.player, getReason(pos.asLong()));
 								continue;
 							}
-							if (willExtendInWorld(world, pos, stateSchematic.get(PistonBlock.FACING)) && directlyPowered(world, pos, stateSchematic.get(PistonBlock.FACING))){
+							if (willExtendInWorld(world, pos, stateSchematic.get(PistonBlock.FACING)) != stateSchematic.get(PistonBlock.EXTENDED) && directlyPowered(world, pos, stateSchematic.get(PistonBlock.FACING))){
 								recordCause(pos, pos.toShortString()+ " Block should respect push limit because its directly powered");
 								MessageHolder.sendUniqueMessage(mc.player, getReason(pos.asLong()));
 								continue;
