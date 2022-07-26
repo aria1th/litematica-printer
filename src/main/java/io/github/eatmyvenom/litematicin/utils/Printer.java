@@ -704,6 +704,10 @@ public class Printer {
 								continue;
 							}
 						}
+						//Can't place this.
+						if (sBlock instanceof PistonHeadBlock || stateSchematic.isOf(Blocks.MOVING_PISTON)){
+							continue;
+						}
 						// BUD, for positions near piston with BUD, place block first.
 						if (smartRedstone && sBlock instanceof RedstoneBlock) {
 							if (isQCable(mc, world, pos)) {
