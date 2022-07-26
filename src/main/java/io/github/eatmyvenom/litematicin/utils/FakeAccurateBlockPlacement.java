@@ -274,7 +274,7 @@ public class FakeAccurateBlockPlacement{
 		else if (order == 3){
 			direction1 = facing.rotateYCounterclockwise();
 		}
-		if (order != 2 && (direction1 == null || fakeDirection == direction1) && canPlaceWallMounted(blockState)){
+		if (order != 2 && (direction1 == null || (fakeDirection == direction1 && requestedTicks > -2)) && canPlaceWallMounted(blockState)){
 			pickFirst(blockState);
 			placeBlock(blockPos,blockState);
 			return true;
