@@ -14,9 +14,7 @@ public class ItemUsageContextMixin {
 	private void onGetFacing(CallbackInfoReturnable<Direction> cir) {
 		Direction direction = FakeAccurateBlockPlacement.fakeDirection;
 		if (direction != null && FakeAccurateBlockPlacement.requestedTicks > -3) {
-			switch (direction) {
-				case WEST, EAST, NORTH, SOUTH -> cir.setReturnValue(direction);
-			}
+			cir.setReturnValue(direction);
 		}
 	}
 }
