@@ -15,13 +15,13 @@ public class ItemUsageContextMixin {
 	@Inject(method = "getPlayerFacing", at = @At("HEAD"), cancellable = true, require = 0)
 	private void onGetFacing(CallbackInfoReturnable<Direction> cir) {
 		Direction direction = getPlayerFacing();
-		if (direction != null && FakeAccurateBlockPlacement.requestedTicks > -3 && FakeAccurateBlockPlacement.fakeDirection.getAxis() != Direction.Axis.Y) {
+		if (direction != null && FakeAccurateBlockPlacement.fakeDirection != null && FakeAccurateBlockPlacement.requestedTicks > -3 && FakeAccurateBlockPlacement.fakeDirection.getAxis() != Direction.Axis.Y) {
 			cir.setReturnValue(direction);
 		}
 	}
 	@Inject(method = "getPlayerYaw", at = @At("HEAD"), cancellable = true, require = 0)
 	private void onGetYaw(CallbackInfoReturnable<Float> cir){
-		if (FakeAccurateBlockPlacement.requestedTicks > -3){
+		if (FakeAccurateBlockPlacement.requestedTicks > -3 && FakeAccurateBlockPlacement.fakeDirection != null){
 			cir.setReturnValue(FakeAccurateBlockPlacement.fakeYaw);
 		}
 	}

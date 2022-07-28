@@ -12,6 +12,7 @@ public class LitematicaMixinMod implements ModInitializer {
 	public static ImmutableList.Builder<IConfigBase> originalList = new ImmutableList.Builder<IConfigBase>().addAll(Configs.Generic.OPTIONS);
 	public static final ConfigBoolean DEBUG_MESSAGE = new ConfigBoolean("ShowDebugMessages", false, "Show Debugs and Reasons for block place failure");
 	public static final ConfigBoolean DEBUG_EXTRA_MESSAGE = new ConfigBoolean("ShowDebugExtraMessages", false, "Show Debugs for block placement and fake rotations");
+	public static final ConfigInteger SLEEP_AFTER_CONSUME = new ConfigInteger("printerSleepStackEmptied", 200, 0, 8000, "Sleeps after stack is emptied (ms)");
 	public static final ConfigInteger EASY_PLACE_MODE_RANGE_X      	= new ConfigInteger("easyPlaceModeRangeX", 3, 0, 1024, "X Range for EasyPlace");
 	public static final ConfigInteger EASY_PLACE_MODE_RANGE_Y      	= new ConfigInteger("easyPlaceModeRangeY", 3, 0, 1024, "Y Range for EasyPlace");
 	public static final ConfigInteger EASY_PLACE_MODE_RANGE_Z      	= new ConfigInteger("easyPlaceModeRangeZ", 3, 0, 1024, "Z Range for EasyPlace");
@@ -41,6 +42,7 @@ public class LitematicaMixinMod implements ModInitializer {
 	public static final ImmutableList<IConfigBase> betterList = originalList.addAll(ImmutableList.of(
 			DEBUG_MESSAGE,
 			DEBUG_EXTRA_MESSAGE,
+			SLEEP_AFTER_CONSUME,
 			EASY_PLACE_MODE_RANGE_X,
 			EASY_PLACE_MODE_RANGE_Y,
 			EASY_PLACE_MODE_RANGE_Z,

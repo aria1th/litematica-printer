@@ -23,7 +23,7 @@ dependencies {
 	mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
 	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabricapi_version}"
-	modImplementation files("external/essential-client-1.19-1.2.3.jar")
+	modCompileOnly files("external/essential-client-1.19-1.2.3.jar")
 	//modImplementation "fi.dy.masa.malilib:malilib-fabric-${project.minecraft_version_out}:${project.malilib_version}"
 	//this is unofficial 1.19 version for malilib
 	//modImplementation "curse.maven:malilib-303119:${project.minecraft_version}"

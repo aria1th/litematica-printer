@@ -18,26 +18,25 @@ import net.minecraft.item.Items;
 import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
 import net.minecraft.state.property.Properties;
 import net.minecraft.tag.BlockTags;
-import net.minecraft.tag.TagKey;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 
-import java.util.ArrayDeque;
+import java.util.Date;
 import java.util.HashSet;
-import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.concurrent.ArrayBlockingQueue;
 
-import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.EASY_PLACE_MODE_MAX_BLOCKS;
+import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.*;
 
 public class FakeAccurateBlockPlacement{
 
 	// We implement FIFO Queue structure with responsible ticks.
 	// By config, we define 'wait tick' between block placements
 	public static Direction fakeDirection = null;
+	public static boolean shouldReturnValue = false;
 	public static int requestedTicks = -3;
 	public static float fakeYaw = 0;
 	public static float fakePitch = 0;
@@ -94,13 +93,6 @@ public class FakeAccurateBlockPlacement{
 			}
 			//we send this at last tick
 		}
-		if (requestedTicks == 0){
-			PosWithBlock obj = waitingQueue.poll();
-			if (obj != null) {
-				minecraftClient.execute(()->placeBlock(obj.pos, obj.blockState));
-				//System.out.print(obj);
-			}
-		}
 		if (requestedTicks <= -1){
 			currentHandling = Items.AIR;
 			stateGrindStone = null;
@@ -116,6 +108,16 @@ public class FakeAccurateBlockPlacement{
 		shouldDecrease = true;
 	}
 
+	public static void emptyWaitingQueue(){
+		if (requestedTicks != 0){
+			return;
+		}
+		PosWithBlock obj = waitingQueue.poll();
+		if (obj != null) {
+			if (canPlace(obj.blockState)) {pickFirst(obj.blockState);placeBlock(obj.pos, obj.blockState);}
+		}
+		waitingQueue.clear();
+	}
 	public static void sendLookPacket(ClientPlayNetworkHandler networkHandler, ClientPlayerEntity playerEntity){
 		networkHandler.sendPacket(
 			new PlayerMoveC2SPacket.LookAndOnGround(
@@ -389,6 +391,9 @@ public class FakeAccurateBlockPlacement{
 		return false;
 	}
 	public static boolean canPlace(BlockState state){
+		if(!FAKE_ROTATION_BETA.getBooleanValue()){
+			return true;
+		}
 		if (state.isOf(Blocks.GRINDSTONE)){
 			if (stateGrindStone != null)
 				return stateGrindStone.get(GrindstoneBlock.FACE) == state.get(GrindstoneBlock.FACE) && stateGrindStone.get(GrindstoneBlock.FACING) == state.get(GrindstoneBlock.FACING);
@@ -429,20 +434,26 @@ public class FakeAccurateBlockPlacement{
 		BlockHitResult blockHitResult = new BlockHitResult(appliedHitVec, side, pos, true);
 		//pickFirst(blockState);
 		//System.out.print("Interacted via fake application\n");
-		if (blockState.getBlock().asItem() == currentHandling) {
-			MessageHolder.sendDebugMessage(player, "Placing "+blockState.getBlock().getName()+" at "+ pos.toShortString() + " facing : " + fi.dy.masa.malilib.util.BlockUtils.getFirstPropertyFacingValue(blockState));
+		if (Printer.doSchematicWorldPickBlock(minecraftClient, blockState) && blockState.getBlock().asItem() == currentHandling) {
+			MessageHolder.sendDebugMessage(player, "Placing "+blockState.getBlock().getTranslationKey()+" at "+ pos.toShortString() + " facing : " + fi.dy.masa.malilib.util.BlockUtils.getFirstPropertyFacingValue(blockState));
 			MessageHolder.sendDebugMessage(player, "Player facing is set to : " + fakeDirection + " Yaw : " + fakeYaw + " Pitch : "+ fakePitch + " ticks : "+ requestedTicks + " for pos "+ pos.toShortString());
 			interactionManager.interactBlock(player, Hand.MAIN_HAND, blockHitResult);
 			blockPlacedInTick++;
+			if (player.getMainHandStack().isEmpty()) {
+				shouldReturnValue = true;
+				Printer.lastPlaced = new Date().getTime() + SLEEP_AFTER_CONSUME.getIntegerValue();
+			}
 			Printer.cacheEasyPlacePosition(pos, false);
+			return true;
 		}
-		return true;
+		return false;
 	}
 	private static void pickFirst(BlockState blockState){
 		final MinecraftClient minecraftClient = MinecraftClient.getInstance();
 		currentHandling = blockState.getBlock().asItem();
-		//InventoryUtils.setPickedItemToHand(currentHandling.getDefaultStack(), minecraftClient);
-		fi.dy.masa.malilib.util.InventoryUtils.swapItemToMainHand(currentHandling.getDefaultStack(), minecraftClient);
+		shouldDecrease = false;
+		requestedTicks = 0;
+		Printer.doSchematicWorldPickBlock(minecraftClient, blockState);
 	}
 	// we just record pos + block and put in queue.
 	private record PosWithBlock(BlockPos pos,BlockState blockState){
