@@ -40,14 +40,12 @@ public class FakeAccurateBlockPlacement{
 	public static int requestedTicks = -3;
 	public static float fakeYaw = 0;
 	public static float fakePitch = 0;
-	private static boolean shouldDecrease = true;
 	private static BlockState stateGrindStone = null;
 	private static float previousFakeYaw = 0;
 	private static float previousFakePitch = 0;
 	private static int tickElapsed = 0;
 	private static int blockPlacedInTick = 0;
 	public static Item currentHandling = Items.AIR;
-	private static boolean betweenStartAndEnd = false;
 	private static final Queue<PosWithBlock> waitingQueue = new ArrayBlockingQueue<>(1) {
 	};
 	private static final HashSet<Block> warningSet = new HashSet<>();
@@ -63,6 +61,9 @@ public class FakeAccurateBlockPlacement{
 	public static boolean canHandleOther(){
 		return currentHandling == null || currentHandling == Items.AIR;
 	}
+	/*
+		returns if item can be handled
+	 */
 	public static boolean canHandleOther(Item item){
 		if(canHandleOther()){
 			return true;
@@ -70,11 +71,9 @@ public class FakeAccurateBlockPlacement{
 		return currentHandling == item;
 	}
 	public static void starttick(MinecraftClient minecraftClient){
-		betweenStartAndEnd = false;
 		blockPlacedInTick = 0;
 	}
 	public static void endtick(MinecraftClient minecraftClient){
-		betweenStartAndEnd = true;
 		ClientPlayNetworkHandler clientPlayNetworkHandler = minecraftClient.getNetworkHandler();
 		ClientPlayerEntity playerEntity = minecraftClient.player;
 		tickElapsed = 0;
@@ -83,8 +82,6 @@ public class FakeAccurateBlockPlacement{
 			fakeDirection = null;
 			return;
 		}
-		//previousFakeYaw = playerEntity.getYaw();
-		//previousFakePitch = playerEntity.getPitch();
 		if (requestedTicks >= -1){
 			if (fakeYaw != previousFakeYaw || fakePitch != previousFakePitch){
 				sendLookPacket(clientPlayNetworkHandler, playerEntity);
@@ -103,9 +100,7 @@ public class FakeAccurateBlockPlacement{
 			previousFakePitch = playerEntity.getPitch();
 			previousFakeYaw = playerEntity.getYaw();
 		}
-		if(shouldDecrease)
-			requestedTicks = requestedTicks -1;
-		shouldDecrease = true;
+		requestedTicks = requestedTicks -1;
 	}
 
 	public static void emptyWaitingQueue(){
@@ -256,7 +251,7 @@ public class FakeAccurateBlockPlacement{
 	 */
 	public static boolean request(BlockState blockState, BlockPos blockPos){
 		// instant
-		if (!betweenStartAndEnd || !canPlace(blockState)){
+		if (!canPlace(blockState)){
 			return false;
 		}
 		if (blockState.isOf(Blocks.GRINDSTONE)){
@@ -325,7 +320,6 @@ public class FakeAccurateBlockPlacement{
 			direction1 = facing.rotateYCounterclockwise();
 		}
 		if (order != 2 && (direction1 == null || (requestedTicks == 0 && fakeDirection == direction1 && fy == fakeYaw && fp == fakePitch)) && canPlaceWallMounted(blockState)){
-			shouldDecrease = false;
 			pickFirst(blockState);
 			placeBlock(blockPos,blockState);
 			return true;
@@ -372,17 +366,16 @@ public class FakeAccurateBlockPlacement{
 		}
 		else {
 			//delay
-			if (isHandling() && (lookRefdir != fakeDirection || fp != fakePitch || fy != fakeYaw|| !canPlaceWallMounted(blockState))){
+			if (isHandling() && (lookRefdir != fakeDirection || fp != fakePitch || fy != fakeYaw || !canPlaceWallMounted(blockState))){
 				return false;
 			}
 			if(requestedTicks == 0 && fakeDirection == lookRefdir && fp == fakePitch && fy == fakeYaw){
 				pickFirst(blockState);
 				placeBlock(blockPos, blockState);
-				shouldDecrease = false;
 				return true;
 			}
-			request(fy, fp, lookRefdir, LitematicaMixinMod.FAKE_ROTATION_TICKS.getIntegerValue(), false);
 			if(waitingQueue.isEmpty()){
+				request(fy, fp, lookRefdir, LitematicaMixinMod.FAKE_ROTATION_TICKS.getIntegerValue(), false);
 				pickFirst(blockState);
 				waitingQueue.offer(new PosWithBlock(blockPos, blockState));
 				return true;
@@ -394,11 +387,14 @@ public class FakeAccurateBlockPlacement{
 		if(!FAKE_ROTATION_BETA.getBooleanValue()){
 			return true;
 		}
-		if (state.isOf(Blocks.GRINDSTONE)){
-			if (stateGrindStone != null)
-				return stateGrindStone.get(GrindstoneBlock.FACE) == state.get(GrindstoneBlock.FACE) && stateGrindStone.get(GrindstoneBlock.FACING) == state.get(GrindstoneBlock.FACING);
+		if (canHandleOther(state.getBlock().asItem())){
+			if (state.isOf(Blocks.GRINDSTONE)){
+				if (stateGrindStone != null)
+					return stateGrindStone.get(GrindstoneBlock.FACE) == state.get(GrindstoneBlock.FACE) && stateGrindStone.get(GrindstoneBlock.FACING) == state.get(GrindstoneBlock.FACING);
+			}
+			return true;
 		}
-		return betweenStartAndEnd && canHandleOther(state.getBlock().asItem());
+		return false;
 	}
 	private static boolean placeBlock(BlockPos pos, BlockState blockState){
 		if(blockPlacedInTick > EASY_PLACE_MODE_MAX_BLOCKS.getIntegerValue()){
@@ -411,7 +407,6 @@ public class FakeAccurateBlockPlacement{
 			return true;
 		}
 		Direction sideOrig = Direction.NORTH;
-		Vec3d hitPos = new Vec3d(pos.getX(), pos.getY(), pos.getZ());
 		Direction side = Printer.applyPlacementFacing(blockState, sideOrig, minecraftClient.world.getBlockState(pos));
 		Vec3d appliedHitVec = Printer.applyHitVec(pos, blockState, side);
 		//Trapdoor actually occasionally refers to player and UP DOWN wtf
@@ -432,8 +427,6 @@ public class FakeAccurateBlockPlacement{
 			appliedHitVec = Vec3d.ofCenter(pos); //follows player looking
 		}
 		BlockHitResult blockHitResult = new BlockHitResult(appliedHitVec, side, pos, true);
-		//pickFirst(blockState);
-		//System.out.print("Interacted via fake application\n");
 		if (Printer.doSchematicWorldPickBlock(minecraftClient, blockState) && blockState.getBlock().asItem() == currentHandling) {
 			MessageHolder.sendDebugMessage(player, "Placing "+blockState.getBlock().getTranslationKey()+" at "+ pos.toShortString() + " facing : " + fi.dy.masa.malilib.util.BlockUtils.getFirstPropertyFacingValue(blockState));
 			MessageHolder.sendDebugMessage(player, "Player facing is set to : " + fakeDirection + " Yaw : " + fakeYaw + " Pitch : "+ fakePitch + " ticks : "+ requestedTicks + " for pos "+ pos.toShortString());
@@ -451,7 +444,6 @@ public class FakeAccurateBlockPlacement{
 	private static void pickFirst(BlockState blockState){
 		final MinecraftClient minecraftClient = MinecraftClient.getInstance();
 		currentHandling = blockState.getBlock().asItem();
-		shouldDecrease = false;
 		requestedTicks = 0;
 		Printer.doSchematicWorldPickBlock(minecraftClient, blockState);
 	}

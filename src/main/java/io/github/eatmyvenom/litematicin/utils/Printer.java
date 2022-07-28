@@ -229,7 +229,6 @@ public class Printer {
 	}
 	@Environment(EnvType.CLIENT)
 	public static ActionResult doPrinterAction(MinecraftClient mc) {
-		FakeAccurateBlockPlacement.emptyWaitingQueue();
 		if (!DEBUG_MESSAGE.getBooleanValue()){
 			causeMap.clear(); //reduce ram usage
 		}
@@ -261,7 +260,7 @@ public class Printer {
 		boolean ClearSnow = CLEAR_AREA_MODE_SNOWPREVENT.getBooleanValue() && ClearArea;
 		boolean CanUseProtocol = ACCURATE_BLOCK_PLACEMENT.getBooleanValue();
 		boolean FillInventory = PRINTER_PUMPKIN_PIE_FOR_COMPOSTER.getBooleanValue();
-		ItemStack ComposterItem = Items.PUMPKIN_PIE.getDefaultStack();
+		ItemStack composableItem = Items.PUMPKIN_PIE.getDefaultStack();
 		SubChunkPos cpos = new SubChunkPos(tracePos);
 		List<PlacementPart> list = DataManager.getSchematicPlacementManager().getAllPlacementsTouchingSubChunk(cpos);
 
@@ -383,6 +382,7 @@ public class Printer {
 						lastPlaced = new Date().getTime();
 						return ActionResult.SUCCESS;
 					}
+					FakeAccurateBlockPlacement.emptyWaitingQueue();
 					if (FakeAccurateBlockPlacement.shouldReturnValue){
 						FakeAccurateBlockPlacement.shouldReturnValue = false;
 						return ActionResult.SUCCESS;
@@ -517,14 +517,14 @@ public class Printer {
 											}
 										}
 									} else if (sBlock instanceof ComposterBlock && FillInventory) {
-										if(!FakeAccurateBlockPlacement.canHandleOther(ComposterItem.getItem())){
+										if(!FakeAccurateBlockPlacement.canHandleOther(composableItem.getItem())){
 											continue;
 										}
 										int level = stateClient.get(ComposterBlock.LEVEL);
 										int Schematiclevel = stateSchematic.get(ComposterBlock.LEVEL);
 										if (level != Schematiclevel && !(level == 7 && Schematiclevel == 8)) {
 											Hand hand = Hand.MAIN_HAND;
-											if (io.github.eatmyvenom.litematicin.utils.InventoryUtils.swapToItem(mc, ComposterItem)){
+											if (io.github.eatmyvenom.litematicin.utils.InventoryUtils.swapToItem(mc, composableItem)){
 												Vec3d hitPos = new Vec3d(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5);
 												BlockHitResult hitResult = new BlockHitResult(hitPos, side, pos, false);
 												mc.interactionManager.interactBlock(mc.player, hand, hitResult); //COMPOSTER
@@ -645,8 +645,7 @@ public class Printer {
 								BlockHitResult hitResult = new BlockHitResult(hitPos, Direction.UP, pos, false);
 								mc.interactionManager.interactBlock(mc.player,  hand, hitResult); //FLUID REMOVAL
 								cacheEasyPlacePosition(pos, false);
-								if(SLEEP_AFTER_CONSUME.getIntegerValue() > 0 && mc.player.getMainHandStack().isEmpty()){
-									lastPlaced = new Date().getTime() + SLEEP_AFTER_CONSUME.getIntegerValue();
+								if (sleepWhenRequired(mc)){
 									return ActionResult.SUCCESS;
 								}
 								if (isReplaceableFluidSource(stateClient) || cBlock instanceof SnowBlock) {
@@ -763,19 +762,18 @@ public class Printer {
 								continue;
 							}
 							Hand hand = Hand.MAIN_HAND;
-							BlockPos Offsetpos = new BlockPos(x, y - 1, z);
-							BlockState OffsetstateSchematic = world.getBlockState(Offsetpos);
-							BlockState OffsetstateClient = mc.world.getBlockState(Offsetpos);
-							if (mc.player.getInventory().getSlotWithStack(lightStack) == -1 || OffsetstateClient.isAir() || (!OffsetstateClient.getBlock().getName().equals(OffsetstateSchematic.getBlock().getName()))) {
+							BlockPos offsetPos = new BlockPos(x, y - 1, z);
+							BlockState offsetStateSchematic = world.getBlockState(offsetPos);
+							BlockState offsetStateClient = mc.world.getBlockState(offsetPos);
+							if (mc.player.getInventory().getSlotWithStack(lightStack) == -1 || offsetStateClient.isAir() || (!offsetStateClient.getBlock().getName().equals(offsetStateSchematic.getBlock().getName()))) {
 								continue;
 							}
-							if (io.github.eatmyvenom.litematicin.utils.InventoryUtils.swapToItem(mc, ComposterItem)){
+							if (io.github.eatmyvenom.litematicin.utils.InventoryUtils.swapToItem(mc, composableItem)){
 								Vec3d hitPos = new Vec3d(0.5, 0.5, 0.5);
 								BlockHitResult hitResult = new BlockHitResult(hitPos, Direction.DOWN, new BlockPos(x, y + 1, z), false);
 								mc.interactionManager.interactBlock(mc.player, hand, hitResult); //LIGHT
 								cacheEasyPlacePosition(pos, false);
-								if(SLEEP_AFTER_CONSUME.getIntegerValue() > 0 && mc.player.getMainHandStack().isEmpty()){
-									lastPlaced = new Date().getTime() + SLEEP_AFTER_CONSUME.getIntegerValue();
+								if (sleepWhenRequired(mc)){
 									return ActionResult.SUCCESS;
 								}
 								lastPlaced = new Date().getTime();
@@ -832,8 +830,7 @@ public class Printer {
 							if (io.github.eatmyvenom.litematicin.utils.InventoryUtils.swapToItem(mc, iceStack)) {
 								mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, new BlockHitResult(new Vec3d(pos.getX(), pos.getY(), pos.getZ()), Direction.DOWN, pos, false));
 								cacheEasyPlacePosition(pos, false);
-								if(SLEEP_AFTER_CONSUME.getIntegerValue() > 0 && mc.player.getMainHandStack().isEmpty()){
-									lastPlaced = new Date().getTime() + SLEEP_AFTER_CONSUME.getIntegerValue();
+								if (sleepWhenRequired(mc)){
 									return ActionResult.SUCCESS;
 								}
 								interact++;
@@ -894,7 +891,6 @@ public class Printer {
 								if (hasGui(world.getBlockState(npos).getBlock())){
 									if (FAKE_ROTATION_BETA.getBooleanValue()){
 										FakeAccurateBlockPlacement.request(stateSchematic, pos);
-										//interact++;
 										continue;
 									}
 									recordCause(pos, "Torch at "+ pos.toShortString() + " can't be placed due to "+ world.getBlockState(npos).getBlock().getTranslationKey()+ "at "+ npos.toShortString() +" has GUI");
@@ -942,8 +938,7 @@ public class Printer {
 											cacheEasyPlacePosition(pos, false);
 											interact++;
 											mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, new BlockHitResult(hitVec, required, npos, false)); //place block
-											if(SLEEP_AFTER_CONSUME.getIntegerValue() > 0 && mc.player.getMainHandStack().isEmpty()){
-												lastPlaced = new Date().getTime() + SLEEP_AFTER_CONSUME.getIntegerValue();
+											if (sleepWhenRequired(mc)){
 												return ActionResult.SUCCESS;
 											}
 										}
@@ -954,8 +949,7 @@ public class Printer {
 										cacheEasyPlacePosition(pos, false);
 										interact++;
 										mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, new BlockHitResult(hitVec, Direction.UP, npos, false)); //place block
-										if(SLEEP_AFTER_CONSUME.getIntegerValue() > 0 && mc.player.getMainHandStack().isEmpty()){
-											lastPlaced = new Date().getTime() + SLEEP_AFTER_CONSUME.getIntegerValue();
+										if (sleepWhenRequired(mc)){
 											return ActionResult.SUCCESS;
 										}
 									}
@@ -969,8 +963,7 @@ public class Printer {
 										cacheEasyPlacePosition(pos, false);
 										interact++;
 										mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, new BlockHitResult(hitVec, required, npos, false)); //place block
-										if(SLEEP_AFTER_CONSUME.getIntegerValue() > 0 && mc.player.getMainHandStack().isEmpty()){
-											lastPlaced = new Date().getTime() + SLEEP_AFTER_CONSUME.getIntegerValue();
+										if (sleepWhenRequired(mc)){
 											return ActionResult.SUCCESS;
 										}
 									}
@@ -984,8 +977,7 @@ public class Printer {
 										cacheEasyPlacePosition(pos, false);
 										mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, new BlockHitResult(Vec3d.of(pos),
 											stateSchematic.get(TrapdoorBlock.FACING).getOpposite(), pos, false)); //place block
-										if(SLEEP_AFTER_CONSUME.getIntegerValue() > 0 && mc.player.getMainHandStack().isEmpty()){
-											lastPlaced = new Date().getTime() + SLEEP_AFTER_CONSUME.getIntegerValue();
+										if (sleepWhenRequired(mc)){
 											return ActionResult.SUCCESS;
 										}
 										interact++;
@@ -1000,8 +992,7 @@ public class Printer {
 										cacheEasyPlacePosition(pos, false);
 										mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, new BlockHitResult(Vec3d.of(pos),
 											stateSchematic.get(GrindstoneBlock.FACING).getOpposite(), pos, false)); //place block
-										if(SLEEP_AFTER_CONSUME.getIntegerValue() > 0 && mc.player.getMainHandStack().isEmpty()){
-											lastPlaced = new Date().getTime() + SLEEP_AFTER_CONSUME.getIntegerValue();
+										if (sleepWhenRequired(mc)){
 											return ActionResult.SUCCESS;
 										}
 										interact++;
@@ -1016,8 +1007,7 @@ public class Printer {
 										mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, new BlockHitResult(Vec3d.of(pos),
 											stateSchematic.get(EndRodBlock.FACING).getOpposite(), pos, false)); //place block
 										interact++;
-										if(SLEEP_AFTER_CONSUME.getIntegerValue() > 0 && mc.player.getMainHandStack().isEmpty()){
-											lastPlaced = new Date().getTime() + SLEEP_AFTER_CONSUME.getIntegerValue();
+										if (sleepWhenRequired(mc)){
 											return ActionResult.SUCCESS;
 										}
 									}
@@ -1053,8 +1043,7 @@ public class Printer {
 									cacheEasyPlacePosition(pos, false);
 									interact++;
 									mc.interactionManager.interactBlock(mc.player, hand, hitResult); //SNOW LAYERS
-									if(SLEEP_AFTER_CONSUME.getIntegerValue() > 0 && mc.player.getMainHandStack().isEmpty()){
-										lastPlaced = new Date().getTime() + SLEEP_AFTER_CONSUME.getIntegerValue();
+									if (sleepWhenRequired(mc)){
 										return ActionResult.SUCCESS;
 									}
 								}
@@ -1066,8 +1055,7 @@ public class Printer {
 							if (doSchematicWorldPickBlock(mc, stateSchematic, pos)){
 								mc.interactionManager.interactBlock(mc.player, hand, hitResult); //PLACE BLOCK
 								cacheEasyPlacePosition(pos, false);
-								if(SLEEP_AFTER_CONSUME.getIntegerValue() > 0 && mc.player.getMainHandStack().isEmpty()){
-									lastPlaced = new Date().getTime() + SLEEP_AFTER_CONSUME.getIntegerValue();
+								if (sleepWhenRequired(mc)){
 									return ActionResult.SUCCESS;
 								}
 								interact++;
@@ -1076,12 +1064,9 @@ public class Printer {
 						}
 						else {
 							if(!(sBlock instanceof FluidBlock)){
-								FakeAccurateBlockPlacement.request(stateSchematic, pos);
-								cacheEasyPlacePosition(pos, false);
-								interact++;
+								if (FakeAccurateBlockPlacement.request(stateSchematic, pos))
+									interact++;
 							}
-							//interact++;
-							//System.out.print("Requested\n");
 						}
 						if (stateSchematic.getBlock() instanceof SlabBlock
 							&& stateSchematic.get(SlabBlock.TYPE) == SlabType.DOUBLE) {
@@ -1094,8 +1079,7 @@ public class Printer {
 								if (doSchematicWorldPickBlock(mc, stateSchematic, pos)){
 									mc.interactionManager.interactBlock(mc.player, hand, hitResult); //double slab
 									cacheEasyPlacePosition(pos, false);
-									if(SLEEP_AFTER_CONSUME.getIntegerValue() > 0 && mc.player.getMainHandStack().isEmpty()){
-										lastPlaced = new Date().getTime() + SLEEP_AFTER_CONSUME.getIntegerValue();
+									if (sleepWhenRequired(mc)){
 										return ActionResult.SUCCESS;
 									}
 									interact++;
@@ -1113,8 +1097,7 @@ public class Printer {
 								if (doSchematicWorldPickBlock(mc, stateSchematic, pos)){
 									mc.interactionManager.interactBlock(mc.player, hand, hitResult); //double slab
 									cacheEasyPlacePosition(pos, false);
-									if(SLEEP_AFTER_CONSUME.getIntegerValue() > 0 && mc.player.getMainHandStack().isEmpty()){
-										lastPlaced = new Date().getTime() + SLEEP_AFTER_CONSUME.getIntegerValue();
+									if (sleepWhenRequired(mc)){
 										return ActionResult.SUCCESS;
 									}
 									interact++;
@@ -1309,6 +1292,13 @@ public class Printer {
 
 		}
 		return null;
+	}
+	private static boolean sleepWhenRequired(MinecraftClient mc){
+		if(SLEEP_AFTER_CONSUME.getIntegerValue() > 0 && mc.player.getMainHandStack().isEmpty()){
+			lastPlaced = new Date().getTime() + SLEEP_AFTER_CONSUME.getIntegerValue();
+			return true;
+		}
+		return false;
 	}
 	private static boolean isQCableBlock(World world, BlockPos pos){
 		Block block = world.getBlockState(pos).getBlock();
