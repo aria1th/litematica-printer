@@ -529,7 +529,7 @@ public class Printer {
 												BlockHitResult hitResult = new BlockHitResult(hitPos, side, pos, false);
 												mc.interactionManager.interactBlock(mc.player, hand, hitResult); //COMPOSTER
 												cacheEasyPlacePosition(pos, false);
-												lastPlaced = new Date().getTime();
+												lastPlaced = new Date().getTime()+ 200;
 												return ActionResult.SUCCESS;
 											}
 										} else {
@@ -649,7 +649,7 @@ public class Printer {
 									return ActionResult.SUCCESS;
 								}
 								if (isReplaceableFluidSource(stateClient) || cBlock instanceof SnowBlock) {
-									lastPlaced = new Date().getTime();
+									lastPlaced = new Date().getTime() + 200;
 								}
 							}
 						continue;
@@ -768,7 +768,7 @@ public class Printer {
 							if (mc.player.getInventory().getSlotWithStack(lightStack) == -1 || offsetStateClient.isAir() || (!offsetStateClient.getBlock().getName().equals(offsetStateSchematic.getBlock().getName()))) {
 								continue;
 							}
-							if (io.github.eatmyvenom.litematicin.utils.InventoryUtils.swapToItem(mc, composableItem)){
+							if (io.github.eatmyvenom.litematicin.utils.InventoryUtils.swapToItem(mc, lightStack)){
 								Vec3d hitPos = new Vec3d(0.5, 0.5, 0.5);
 								BlockHitResult hitResult = new BlockHitResult(hitPos, Direction.DOWN, new BlockPos(x, y + 1, z), false);
 								mc.interactionManager.interactBlock(mc.player, hand, hitResult); //LIGHT
@@ -776,7 +776,7 @@ public class Printer {
 								if (sleepWhenRequired(mc)){
 									return ActionResult.SUCCESS;
 								}
-								lastPlaced = new Date().getTime();
+								lastPlaced = new Date().getTime()+ 200;
 								interact++;
 							}
 						}
@@ -931,7 +931,7 @@ public class Printer {
 								else if (blockSchematic instanceof TorchBlock){
 									//no gui, just place
 									if (blockSchematic instanceof WallTorchBlock|| blockSchematic instanceof  WallRedstoneTorchBlock){
-										//MessageHolder.sendUniqueMessage(mc.player, npos.toShortString() + stateSchematic.get(WallTorchBlock.FACING).toString());
+										MessageHolder.sendDebugMessage(mc.player, "placing wall torch at "+ npos.toShortString() + stateSchematic.get(WallTorchBlock.FACING).toString());
 										Vec3d hitVec = Vec3d.ofCenter(npos).add(Vec3d.of(stateSchematic.get(WallTorchBlock.FACING).getVector()).multiply(0.5));
 										Direction required = stateSchematic.get(WallTorchBlock.FACING);
 										if (doSchematicWorldPickBlock(mc, stateSchematic, pos)){
