@@ -8,7 +8,7 @@ import java.util.HashSet;
 import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.DEBUG_EXTRA_MESSAGE;
 import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.DEBUG_MESSAGE;
 
-class MessageHolder{
+public class MessageHolder{
 	private static final HashSet<String> uniqueStrings = new HashSet<>();
 	private static final HashSet<String> errorLogger = new HashSet<>();
 	public static void sendDebugMessage(ClientPlayerEntity player, String string){

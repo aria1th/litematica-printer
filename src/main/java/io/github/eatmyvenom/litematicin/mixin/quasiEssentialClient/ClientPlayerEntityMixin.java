@@ -17,10 +17,23 @@ import io.github.eatmyvenom.litematicin.utils.FakeAccurateBlockPlacement;
 
 //see https://github.com/senseiwells/EssentialClient/blob/1.19.x/src/main/java/me/senseiwells/essentialclient/mixins/betterAccurateBlockPlacement/ClientPlayerEntityMixin.java for reference!!
 
-@Mixin(value = ClientPlayerEntity.class, priority = 1010)
+@Mixin(value = ClientPlayerEntity.class, priority = 900)
 public abstract class ClientPlayerEntityMixin extends PlayerEntity {
 	public ClientPlayerEntityMixin(World world, BlockPos pos, float yaw, GameProfile gameProfile, @Nullable PlayerPublicKey publicKey) {
 		super(world, pos, yaw, gameProfile, publicKey);
+	}
+	@Redirect(method = "sendMovementPackets", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/ClientPlayNetworkHandler;sendPacket(Lnet/minecraft/network/Packet;)V", ordinal = 2), require = 0)
+	private void onSendPacketVehicle(ClientPlayNetworkHandler clientPlayNetworkHandler, Packet<?> packet) {
+		if (FakeAccurateBlockPlacement.requestedTicks <= -3 || FakeAccurateBlockPlacement.fakeDirection == null) {
+			clientPlayNetworkHandler.sendPacket(packet);
+			return;
+		}
+		clientPlayNetworkHandler.sendPacket(new PlayerMoveC2SPacket.Full(
+			this.getX(), -999.0D, this.getZ(),
+			FakeAccurateBlockPlacement.fakeYaw,
+			FakeAccurateBlockPlacement.fakePitch,
+			this.isOnGround()
+		));
 	}
 
 	@Redirect(method = "sendMovementPackets", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/ClientPlayNetworkHandler;sendPacket(Lnet/minecraft/network/Packet;)V", ordinal = 3), require = 0)
@@ -51,4 +64,5 @@ public abstract class ClientPlayerEntityMixin extends PlayerEntity {
 			)
 		);
 	}
+
 }

@@ -26,10 +26,7 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.fluid.LavaFluid;
 import net.minecraft.fluid.WaterFluid;
-import net.minecraft.item.BlockItem;
-import net.minecraft.item.ItemPlacementContext;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
+import net.minecraft.item.*;
 import net.minecraft.state.property.Properties;
 import net.minecraft.tag.BlockTags;
 import net.minecraft.util.ActionResult;
@@ -44,6 +41,7 @@ import net.minecraft.world.World;
 import java.util.*;
 
 import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.*;
+
 @SuppressWarnings("ConstantConditions")
 public class Printer {
 
@@ -439,8 +437,6 @@ public class Printer {
 
 					// Abort if there is already a block in the target position
 					if (!ClearArea && (MaxFlip || printerCheckCancel(stateSchematic, stateClient))) {
-
-
 						/*
 						 * Sometimes, blocks have other states like the delay on a repeater. So, this
 						 * code clicks the block until the state is the same I don't know if Schematica
@@ -931,7 +927,7 @@ public class Printer {
 								else if (blockSchematic instanceof TorchBlock){
 									//no gui, just place
 									if (blockSchematic instanceof WallTorchBlock|| blockSchematic instanceof  WallRedstoneTorchBlock){
-										MessageHolder.sendDebugMessage(mc.player, "placing wall torch at "+ npos.toShortString() + stateSchematic.get(WallTorchBlock.FACING).toString());
+										MessageHolder.sendDebugMessage(mc.player, "placing wall torch clicking "+ npos.toShortString() +" torch facing : " +stateSchematic.get(WallTorchBlock.FACING).toString());
 										Vec3d hitVec = Vec3d.ofCenter(npos).add(Vec3d.of(stateSchematic.get(WallTorchBlock.FACING).getVector()).multiply(0.5));
 										Direction required = stateSchematic.get(WallTorchBlock.FACING);
 										if (doSchematicWorldPickBlock(mc, stateSchematic, pos)){
@@ -946,6 +942,10 @@ public class Printer {
 									}
 									Vec3d hitVec = Vec3d.ofCenter(npos).add(Vec3d.of(Direction.UP.getVector()).multiply(0.5));
 									if (doSchematicWorldPickBlock(mc, stateSchematic, pos)){
+										MessageHolder.sendDebugMessage(mc.player, "Placing torch clicking "+ npos.toShortString());
+										MessageHolder.sendDebugMessage(mc.player, "\t Wanted torch pos : "+ pos.toShortString());
+										MessageHolder.sendDebugMessage(mc.player, "\t HitVec applied : "+ hitVec);
+										MessageHolder.sendDebugMessage(mc.player, "\t Side applied : "+ Direction.UP);
 										cacheEasyPlacePosition(pos, false);
 										interact++;
 										mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, new BlockHitResult(hitVec, Direction.UP, npos, false)); //place block

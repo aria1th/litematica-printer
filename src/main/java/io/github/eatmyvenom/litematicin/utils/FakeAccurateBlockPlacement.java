@@ -11,8 +11,6 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.network.ClientPlayerInteractionManager;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.mob.ZombieEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.Items;
 import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
@@ -22,6 +20,7 @@ import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 
 import java.util.Date;
@@ -57,6 +56,9 @@ public class FakeAccurateBlockPlacement{
 	static {
 		ClientTickEvents.END_CLIENT_TICK.register(FakeAccurateBlockPlacement::endtick);
 		ClientTickEvents.START_CLIENT_TICK.register(FakeAccurateBlockPlacement::starttick);
+	}
+	public static boolean getShouldModify(){
+		return true;
 	}
 	public static boolean canHandleOther(){
 		return currentHandling == null || currentHandling == Items.AIR;
@@ -235,12 +237,36 @@ public class FakeAccurateBlockPlacement{
 		}
 		return null;
 	}
-	public static Direction[] getEntityFacingOrder(){
-		Entity entity = new ZombieEntity(MinecraftClient.getInstance().world);
-		entity.setYaw(fakeYaw);
-		entity.setPitch(fakePitch);
-		entity.remove(Entity.RemovalReason.DISCARDED);
-		return Direction.getEntityFacingOrder(entity);
+	public static Direction[] getFacingOrder() {
+		float theta = fakePitch * 0.017453292F;
+		float omega = -fakeYaw * 0.017453292F;
+		float unitHorizontal = MathHelper.cos(theta);
+		float yVector = -MathHelper.sin(theta);
+		float xVector = unitHorizontal * MathHelper.sin(omega);
+		float zVector = unitHorizontal * MathHelper.cos(omega);
+		float yScalar = Math.abs(yVector);
+		float xScalar = Math.abs(xVector);
+		float zScalar = Math.abs(zVector);
+		Direction directionX = xVector > 0.0F ? Direction.EAST : Direction.WEST;
+		Direction directionY = yVector > 0.0F ? Direction.UP : Direction.DOWN;
+		Direction directionZ = zVector > 0.0F ? Direction.SOUTH : Direction.NORTH;
+		if (xScalar > zScalar) {
+			if (yScalar > xScalar) {
+				return listClosest(directionY, directionX, directionZ);
+			}
+			else {
+				return zScalar > yScalar ? listClosest(directionX, directionZ, directionY) : listClosest(directionX, directionY, directionZ);
+			}
+		}
+		else if (yScalar > zScalar) {
+			return listClosest(directionY, directionZ, directionX);
+		}
+		else {
+			return xScalar > yScalar ? listClosest(directionZ, directionX, directionY) : listClosest(directionZ, directionY, directionX);
+		}
+	}
+	private static Direction[] listClosest(Direction first, Direction second, Direction third) {
+		return new Direction[]{first, second, third, third.getOpposite(), second.getOpposite(), first.getOpposite()};
 	}
 	/***
 	 *
@@ -299,7 +325,7 @@ public class FakeAccurateBlockPlacement{
 		boolean reversed = facingData != null && facingData.isReversed;
 		int order = facingData == null ? 0 : facingData.type;
 		Direction direction1 = facing;
-		float fy = 0, fp = 0;
+		float fy = 0, fp = 12;
 		if (order == 0 || order == 1){
 			direction1 = reversed ? facing.getOpposite() : facing;
 		}
@@ -313,7 +339,7 @@ public class FakeAccurateBlockPlacement{
 				fp = 90;
 			}
 			else {
-				fp = 0;
+				fp = 12;
 			}
 		}
 		else if (order == 3){
@@ -345,7 +371,7 @@ public class FakeAccurateBlockPlacement{
 		}
 		else {
 			fy = 0;
-			fp = 0;
+			fp = 12;
 		}
 		if (LitematicaMixinMod.FAKE_ROTATION_TICKS.getIntegerValue() == 0){
 			//instant place

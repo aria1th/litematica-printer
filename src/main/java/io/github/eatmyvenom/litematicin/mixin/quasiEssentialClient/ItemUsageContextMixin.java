@@ -10,7 +10,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import static io.github.eatmyvenom.litematicin.utils.FakeAccurateBlockPlacement.getPlayerFacing;
 
-@Mixin(value = ItemUsageContext.class, priority = 1010)
+@Mixin(value = ItemUsageContext.class, priority = 900)
 public class ItemUsageContextMixin {
 	@Inject(method = "getPlayerFacing", at = @At("HEAD"), cancellable = true, require = 0)
 	private void onGetFacing(CallbackInfoReturnable<Direction> cir) {
