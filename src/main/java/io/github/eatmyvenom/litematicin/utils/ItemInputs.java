@@ -43,12 +43,18 @@ class ItemInputs {
 	 @param required : List of stacks, might be empty to return false
 	 @return boolean : should process or not
 	 ***/
-	public static boolean matchStacks(List<ItemStack> required, ClientPlayerEntity player, boolean allowNamed) {
+	public static boolean matchStacks(List<ItemStack> required, List<Slot> current, ClientPlayerEntity player, boolean allowNamed) {
 		if (required.isEmpty()) {
 			return false;
 		}
+		List<ItemStack> copy = new ArrayList<>();
+		for (int i = 0; i < required.size(); i++) {
+			ItemStack copiedStack = required.get(i).copy();
+			copiedStack.decrement(current.get(i).getStack().getCount());
+			copy.add(copiedStack);
+		}
 		int[] countArray = player.getInventory().main.stream().mapToInt(ItemStack::getCount).toArray();
-		for (ItemStack itemStack : required) {
+		for (ItemStack itemStack : copy) {
 			if (itemStack.isEmpty()) {
 				continue;
 			}
@@ -140,17 +146,21 @@ class ItemInputs {
 		}
 		if (handledPos.contains(where.asLong())) {
 			MessageHolder.sendUniqueMessageActionBar(client.player, "Position is already handled");
+			clickedPos = null;
+			client.player.closeHandledScreen();
 			return;
 		}
 		List<ItemStack> requiredStacks = getRaycastRequiredItemStacks(client);
 		if (requiredStacks.isEmpty()) {
 			MessageHolder.sendUniqueDebugMessage("required stacks were empty for " + where.toShortString());
+			client.player.closeHandledScreen();
 			return;
 		}
 		MessageHolder.sendUniqueDebugMessage("Handled pos " + where.toShortString());
-		if (matchStacks(requiredStacks, client.player, allowNamed)) {
+		List<Slot> nonPlayerSlot = getNonPlayerSlots(client, client.player.currentScreenHandler);
+		if (matchStacks(requiredStacks, nonPlayerSlot, client.player, allowNamed)) {
 			//MessageHolder.sendUniqueDebugMessage("Required pos " + where.toShortString());
-			List<Slot> nonPlayerSlot = getNonPlayerSlots(client, client.player.currentScreenHandler);
+
 			//MessageHolder.sendUniqueDebugMessage(nonPlayerSlot.toString());
 			if (requiredStacks.size() != nonPlayerSlot.size()) {
 				MessageHolder.sendMessageUncheckedUnique(client.player, "Sizes differ as " + requiredStacks.size() + " but non-player slot size : " + nonPlayerSlot.size());
@@ -223,7 +233,7 @@ class ItemInputs {
 
 	private static void clearUnmatchTargetSlot(MinecraftClient client, int targetSlot, ItemStack wantedItem, boolean allowNamed) {
 		ItemStack slotStack = client.player.currentScreenHandler.getSlot(targetSlot).getStack();
-		if (InventoryUtils.areItemsExact(slotStack, wantedItem, allowNamed)) {
+		if (InventoryUtils.areItemsExact(slotStack, wantedItem, allowNamed) && slotStack.getCount() <= wantedItem.getCount()) {
 			return;
 		}
 		//else we need to clear
@@ -288,10 +298,12 @@ class ItemInputs {
 	}
 
 	private static BlockPos rayCast(MinecraftClient minecraftClient) {
-		MessageHolder.sendUniqueMessageActionBar(minecraftClient.player, "Current raycast is set to " + clickedPos);
+
 		if (clickedPos == null) {
+			MessageHolder.sendUniqueMessageActionBar(minecraftClient.player, "Current raycast is set to null");
 			return null;
 		}
+		MessageHolder.sendUniqueMessageActionBar(minecraftClient.player, "Current raycast is set to " + clickedPos.toShortString());
 		BlockPos castedPos = clickedPos;
 		Block block = minecraftClient.world.getBlockState(castedPos).getBlock();
 		if (block instanceof BlockWithEntity) {
