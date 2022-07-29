@@ -11,6 +11,7 @@ import net.fabricmc.api.ModInitializer;
 public class LitematicaMixinMod implements ModInitializer {
 	public static ImmutableList.Builder<IConfigBase> originalList = new ImmutableList.Builder<IConfigBase>().addAll(Configs.Generic.OPTIONS);
 	public static final ConfigBoolean INVENTORY_OPERATIONS = new ConfigBoolean("printerAllowInventoryOperations", false, "Printer will try to fill filters when screen is open and stop other actions");
+	public static final ConfigBoolean INVENTORY_OPERATIONS_CLOSE_SCREEN = new ConfigBoolean("inventoryCloseScreenAfterDone", false, "Screen will be closed after operations");
 	public static final ConfigInteger INVENTORY_OPERATIONS_WAIT = new ConfigInteger("printerInventoryScreenWait", 200, 0, 8000, "Time(ms) to wait screen to be opened and synced");
 	public static final ConfigInteger INVENTORY_OPERATIONS_RETRY = new ConfigInteger("inventoryOperationRetry", 3, 1, 32, "Times to retry inventory operations");
 	public static final ConfigBoolean INVENTORY_OPERATIONS_FILTER_ALLOW_NAMED = new ConfigBoolean("inventoryOperationAllowAllNamed", false, "Filter items can be replaced with named items with same stack size");
@@ -47,7 +48,6 @@ public class LitematicaMixinMod implements ModInitializer {
 	public static final ImmutableList<IConfigBase> betterList = originalList.addAll(ImmutableList.of(
 		DEBUG_MESSAGE,
 		DEBUG_EXTRA_MESSAGE,
-		INVENTORY_OPERATIONS_RETRY,
 		DISABLE_SINGLEPLAYER_HANDLE,
 		SLEEP_AFTER_CONSUME,
 		EASY_PLACE_MODE_RANGE_X,
@@ -60,6 +60,8 @@ public class LitematicaMixinMod implements ModInitializer {
 		FLIPPIN_CACTUS,
 		INVENTORY_OPERATIONS,
 		INVENTORY_OPERATIONS_WAIT,
+		INVENTORY_OPERATIONS_RETRY,
+		INVENTORY_OPERATIONS_CLOSE_SCREEN,
 		INVENTORY_OPERATIONS_FILTER_ALLOW_NAMED,
 		CLEAR_AREA_MODE,
 		PRINTER_PLACE_ICE,

@@ -31,6 +31,16 @@ public class InventoryUtils {
 		return ItemStack.areItemsEqual(a, b) && ItemStack.areNbtEqual(a, b);
 	}
 
+	public static boolean areItemsExactCount(ItemStack a, ItemStack b, boolean allowNamed) {
+		if (a.getCount() != b.getCount()) {
+			return false;
+		}
+		if (allowNamed) {
+			return areItemsExactAllowNamed(a, b);
+		}
+		return ItemStack.areItemsEqual(a, b) && ItemStack.areNbtEqual(a, b);
+	}
+
 	public static boolean areItemsExactAllowNamed(ItemStack a, ItemStack b) {
 		if (a.getItem() instanceof ToolItem || b.getItem() instanceof ToolItem) { //safety
 			return false;

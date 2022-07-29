@@ -13,17 +13,18 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
-import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
 
 import java.util.*;
 
 @SuppressWarnings({"ConstantConditions", "unused"})
+public
 class ItemInputs {
 
 	private static long handling = new Date().getTime();
 	private static final HashSet<Long> handledPos = new HashSet<>();
 	private static Map.Entry<Long, Long> entry;
+	public static BlockPos clickedPos = null;
 
 	public static void clear() {
 		handledPos.clear();
@@ -128,14 +129,17 @@ class ItemInputs {
 		if (canHandle()) {
 			handle();
 		} else {
+			MessageHolder.sendUniqueMessageActionBar(client.player, "Cooldown....");
 			return;
 		}
 		boolean allowNamed = LitematicaMixinMod.INVENTORY_OPERATIONS_FILTER_ALLOW_NAMED.getBooleanValue();
 		BlockPos where = rayCast(client);
 		if (where == null) {
+			MessageHolder.sendUniqueMessageActionBar(client.player, "Failed to raycast");
 			return;
 		}
 		if (handledPos.contains(where.asLong())) {
+			MessageHolder.sendUniqueMessageActionBar(client.player, "Position is already handled");
 			return;
 		}
 		List<ItemStack> requiredStacks = getRaycastRequiredItemStacks(client);
@@ -163,22 +167,29 @@ class ItemInputs {
 			boolean allCorrect = true;
 			for (int j = 0; j < LitematicaMixinMod.INVENTORY_OPERATIONS_RETRY.getIntegerValue(); j++) {
 				for (int i = 0; i < requiredStacks.size(); i++) {
-					if (InventoryUtils.areItemsExact(nonPlayerSlot.get(i).getStack(), requiredStacks.get(i), allowNamed)) {
+					if (InventoryUtils.areItemsExactCount(nonPlayerSlot.get(i).getStack(), requiredStacks.get(i), allowNamed)) {
 						continue;
 					}
 					sendItem(client, nonPlayerSlot.get(i), requiredStacks.get(i), allowNamed);
-					if (!InventoryUtils.areItemsExact(nonPlayerSlot.get(i).getStack(), requiredStacks.get(i), allowNamed)) {
+					if (!InventoryUtils.areItemsExactCount(nonPlayerSlot.get(i).getStack(), requiredStacks.get(i), allowNamed)) {
 						allCorrect = false;
 					}
 				}
 			}
 			if (allCorrect) {
 				handledPos.add(where.asLong());
+				MessageHolder.sendUniqueDebugMessage("Successfully done operation at " + where.toShortString());
+				if (LitematicaMixinMod.INVENTORY_OPERATIONS_CLOSE_SCREEN.getBooleanValue()) {
+					client.player.closeHandledScreen();
+				}
 			} else {
-				MessageHolder.sendUniqueDebugMessage("Partially failed to send all items, will retry");
+				MessageHolder.sendUniqueDebugMessage("Partially failed to send all items at " + where.toShortString() + ", will retry");
 			}
 		} else {
 			MessageHolder.sendUniqueDebugMessage("Does not have enough item for " + where.toShortString() + "!");
+			if (LitematicaMixinMod.INVENTORY_OPERATIONS_CLOSE_SCREEN.getBooleanValue()) {
+				client.player.closeHandledScreen();
+			}
 		}
 	}
 
@@ -198,7 +209,7 @@ class ItemInputs {
 		} //actually we can do this
 		HandledScreen<? extends ScreenHandler> gui = (HandledScreen<?>) GuiUtils.getCurrentScreen();
 		leftClickSlot(gui, holding);
-		for (int i = 0; i < stack.getCount(); i++) {
+		for (int i = 0; i < stack.getCount() - gui.getScreenHandler().getSlot(targetSlot).getStack().getCount(); i++) {
 			rightClickSlot(gui, targetSlot);
 		}
 		leftClickSlot(gui, holding);
@@ -277,11 +288,11 @@ class ItemInputs {
 	}
 
 	private static BlockPos rayCast(MinecraftClient minecraftClient) {
-		HitResult hitResult = minecraftClient.player.raycast(16, 1, false);
-		if (hitResult == null || hitResult.getType() != HitResult.Type.BLOCK) {
+		MessageHolder.sendUniqueMessageActionBar(minecraftClient.player, "Current raycast is set to " + clickedPos);
+		if (clickedPos == null) {
 			return null;
 		}
-		BlockPos castedPos = new BlockPos(hitResult.getPos());
+		BlockPos castedPos = clickedPos;
 		Block block = minecraftClient.world.getBlockState(castedPos).getBlock();
 		if (block instanceof BlockWithEntity) {
 			if (block instanceof HopperBlock || block instanceof ChestBlock || block instanceof DispenserBlock) {
