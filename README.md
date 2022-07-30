@@ -43,52 +43,98 @@ Of course, I can't help other's mod, so check if its correct printer.
 ## Settings
 
 ### Printer settings:
-`ShowDebugMessage`:&emsp; "Show Debug messages for block order calculations and errors."<br/>
-`easyPlaceModeRange (x,y,z)`:&emsp;	"X,Y,Z Range for Printer, Set to 000 if you want normal easyplace."<br/>
-`easyPlaceModeMaxBlocks`:&emsp;		"Max block interactions per cycle"<br/>
-`easyPlaceModeBreakBlocks`:&emsp;	"Printer will break blocks when its mismatch / extra"<br/>
-`easyPlaceModeDelay`:&emsp;			"Delay between printing blocks.Do not set to 0 if you are playing on a server."<br/>
-`easyPlaceModeHotbarOnly`:&emsp;	"Only place blocks from your hotbar. This bypasses some anti-cheats."<br/>
-`printerFlippinCactus`:&emsp;			"Allows Rotating incorrect blocks when carpet option is enabled and holding cactus on your mainhand"<br/>
-`printerClearFluids`:&emsp;			"Remove nearby fluids, within easyplace range, to prevent errors. uses slime block to remove lava, sponges for water. WILL STOP OTHER ACTIONS"<br/>
-`printerUseIceForWater`:&emsp;			"Printer places ice at waterlogged blocks positions"<br/>
-`printerPlaceMinecart`:&emsp;			"Printer can place minecart at powered detector rail that won't trigger TNT directly"<br/>
-`ClearFluidUseCobblestone`:&emsp;			"Use cobblestones instead of slime block to remove lava <br/> REQUIRES : easyPlaceModeClearFluids TRUE"<br/>
-`ClearSnowLayer`:&emsp;			"It will place string where snow layer exists, ignores placement boxes, Only use if you need to. DEFAULT : FALSE"<br/>
-`AccurateBlockPlacement`:&emsp;			"If carpet mod AccurateBlockPlacement is enabled (from extra or quickcarpet), you can turn on this.
-`printerUsePumpkinPieForComposter`:&emsp;			"If composter Level filling is needed, printer will use pumpkin pie to adjust its level"<br/>
-`CarpetExtraFixedVersion`:&emsp;			"Carpet extra currently not supports some blocks, if its updated or server is using Quickcarpet, test this."<br/>
-`printerSmartRedstoneAvoid`:&emsp;			"Pistons/Redstones /QC will be calculated and printer will place it in correct orders"<br/>
-`printerObserverAvoidAll`:&emsp;			" Observer will avoid being placed when its watching state(not block) is not correct"<br/>
-`avoidCheckOnlyPistons`:&emsp;			" QC Check will only be done at Pistons"<br/>
-`printerBedrockBreaking`:&emsp;			"Removes bedrock when it needs to, will stop other actions, it needs BreakBlocks TRUE and haste 2, eff 5 pickaxe, works more well with accurateblockplacement.<br/> REQUIRES : easyPlaceModeBreakBlocks TRUE"<br/>
-`BedrockBreakingUseSlimeBlocks`:&emsp;			"Places slime block to easily remove it"<br/>
-`printerFakeRotation`:&emsp;			"printer tries to fake client rotation for block placements.It can place almost all block correctly, except ceil/floor buttons."<br/>
-`fakeRotationTicks`:&emsp;			"Fake rotation ticks between directions, suggest >= 2"<br/>
-`fakeRotationTickLimitPerTicks`:&emsp;			"if fakeRotationTicks is set to 0(dangerous), set maximum rotation changes in single tick"<br/>
-### Handy litematica settings:
+Now Settings have names with printer.
 
-`easyPlaceMode`:&emsp;				"When enabled, then simply trying to use an item/place a block on schematic blocks will place that block in that position."<br/>
-`easyPlaceModeHoldEnabled`:&emsp;	"When enabled, then simply holding down the use key and looking at different schematic blocks will place them"<br/>
-`easyPlaceClickAdjacent`:&emsp;		"If enabled, then the Easy Place mode will try to click on existing adjacent blocks. This may help on Spigot or similar servers, which don't allow clicking on air blocks."<br/>
-`pickBlockAuto`:&emsp;				"Automatically pick block before every placed block"<br/>
-`pickBlockEnabled`:&emsp;			"Enables the schematic world pick block hotkeys. There is also a hotkey for toggling this option to toggle those hotkeys... o.o", "Pick Block Hotkeys"<br/>
-`pickBlockIgnoreNBT`:&emsp;			"Ignores the NBT data on the expected vs. found items for pick block. Allows the pick block to work for example with renamed items."<br/>
-`pickBlockableSlots`:&emsp;			"The hotbar slots that are allowed to be used for the schematic pick block. Can use comma separated individual slots and dash separated slot ranges (no spaces anywhere). Example: 2,4-6,9"<br/>
-`placementInfrontOfPlayer`:&emsp;	"When enabled, created placements or moved placements are positioned so that they are fully infront of the player, instead of the placement's origin point being at the player's location"<br/>
-`renderMaterialListInGuis`:&emsp;	"Whether or not the material list should be rendered inside GUIs"<br/>
-`signTextPaste`:&emsp;				"Automatically set the text in the sign GUIs from the schematic"<br/>
-<br/>
-`easyPlaceActivation`:&emsp;		"When the easyPlaceMode is enabled, this key must be held to enable placing the blocks when using the vanilla Use key"<br/>
-`easyPlaceToggle`:&emsp;			"Allows quickly toggling on/off the Easy Place mode"<br/>
+**Options that block other action being performed**:
 
+`printerAllowInventoryOperations`  - Printer will match and input required stacks for hopper / dropper / chest / etc, mostly for filter setups.
+
+  >`inventoryCloseScreenAfterDone`  - Printer will close screen when filling is complete / or can't fill screen.
+  
+  >`printerInventoryScreenWait`  - Printer will wait for this time(ms) after screen is open, to sync with server.
+  
+  >`printerInventoryOperationRetry` - Printer will retry clicking to fill slots for this amount : recommended - 3-20
+  
+  >`printerInventoryOperationAllowAllNamed` - Printer will allow other named items with same stack size, being used as filter items.
+  
+`printerBreakBlocks` - Printer will break ALL Extra or Wrong blocks within schematic. Can perform while placement, but not recommended.
+
+> `printerBedrockBreaking` - Printer will break bedrock with HASTE 2, EFFICIENCY 5 , requires redstone torch, pistons.
+ 
+> >`printerBedrockBreakingUseSlimeblock` - Printer will allow slime block placement, to find valid locations to break bedrock.
+ 
+`printerFlippincactus` - Printer will flip blocks with cactus if enabled.
+
+`printerClearFluids` - Printer will do Clearing actions , at default, Lava / Water (Cobblestone / Sponge).
+
+  >`printerClearFluidsUseCobblestone` - Printer will use cobblestone for water, instead of sponge.
+  
+  >`printerClearSnowLayer` - Printer will use String to clear Snow layers.
+  
+  
+**Main Features**:
+
+`printerAccurateBlockPlacement` - Printer will use AccurateBlockPlacement Protocol, which is handled via carpet extra.
+
+`printerFakeRotation` - Printer will use Fake Rotations to place blocks in wanted direction.
+
+>`printerFakeRotationTicks` : Printer will wait for ticks(50ms per tick) after sending rotation packets.
+
+>`printerFakeRotationLimitPerTicks` : If Printer waiting tick is set to 0, Printer will limit fake rotation per tick with this number.
+
+>`disableSingleplayerPlacementHandling` : Printer will not modify placement direction based on fake rotation itself. recommended : false
+
+**Debug**:
+
+`ShowDebugMessages` - Printer will show debug messages, for reasons why block placement is failed /skipped /etc.
+
+>`ShowDebugExtraMessages` - Printer will notify you about current block placements and fake rotations.
+
+
+**Limiting**:
+
+`easyPlaceModePrinterRangeX / Y / Z` - Printer will only place block expanded from starting raytrace pos.
+
+`easyPlaceModePrinterMaxBlocks` - Max blocks / interactions that printer can perform per tick (or, easyplace actions)
+
+`easyPlaceModeDelay` - Delay between printer actions - Recommended > 0.05 (50ms) to sync block states.
+
+`easyPlaceModeHotbarOnly` - Printer will only use hotbar slots, which can be modified with fewer packets.
+
+`printerSleepStackEmptied` - Printer will sleep when used stack is emptied, to sync / prevent some anticheats.
+
+
+**Redstone**:
+
+`printerUsePumpkinpieForComposter` - Printer will use Pumpkin Pie to match composter levels.
+
+`printerSmartRedstoneAvoid` - Printer will follow Observer / ETC Order when placing blocks. It will try to avoid observer updates.
+
+`printerObserverAvoidAll` - Printer will avoid Observer being placed when its facing wrong stated-blocks, but will place Wall / etc for some cases.
+
+`printerAvoidCheckOnlyPistons` - Printer will ignore Dispenser QC States.
+
+`printerSuppressPushLimitPistons` - Printer will NOT place Pistons directly powered, but not extended : which means push limit is required.
+
+`printerUseIceForWater` - Printer will place Ice where water source should be at.
+
+`printerCheckWaterFirstForWaterlogged` - Printer will NOT place Waterlogged blocks, and wait until water is there.
+
+`printerPlaceMinecart` - Printer will place Minecart for powered detector rails, It won't place it when TNT will be triggered.
+
+
+**Deprecated**
+
+`CarpetExtraFixedVersion` - Use Fake rotations instead, until general protocol is implemented.
+
+ 
 ## Support
-If you have any issues with this mod **DO NOT** contact and bother masa with it. Please message me in discord, I am usually around Scicraft, Mechanists, and Hekate. 
+If you have any issues with this mod **DO NOT** contact and bother masa with it. Please message me in discord, I am usually in Scicraft, TMA, Masa's discord, etc...
 
 ## Credits
 Masa is the writer of the actual litematica mod and allowed all of this to be possible.
 Andrews is the one who made the litematica printer implimentation, EatMyVenom converted it to mixin.
-AngelBottomless, completed AccurateBlockPlacement and Orders / Fake rotations.
+AngelBottomless, completed AccurateBlockPlacement and Redstone Orders / Fake rotations.
 
 ## License
 
@@ -96,5 +142,4 @@ This template is available under the CC0 license. Feel free to learn from it and
 
 ## TODO List (most possible to least possible)
 
-Sorter item filling - not likely
-
+Done!
