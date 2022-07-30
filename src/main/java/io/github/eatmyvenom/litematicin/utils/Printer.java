@@ -343,7 +343,7 @@ public class Printer {
 		}
 		LayerRange range = DataManager.getRenderLayerRange(); //add range following
 		int MaxReach = Math.max(Math.max(rangeX, rangeY), rangeZ);
-		boolean breakBlocks = EASY_PLACE_MODE_BREAK_BLOCKS.getBooleanValue();
+		boolean breakBlocks = PRINTER_BREAK_BLOCKS.getBooleanValue();
 		boolean Flippincactus = FLIPPIN_CACTUS.getBooleanValue();
 		boolean ExplicitObserver = PRINTER_OBSERVER_AVOID_ALL.getBooleanValue();
 		ItemStack Mainhandstack = mc.player.getMainHandStack();
@@ -367,7 +367,7 @@ public class Printer {
 		 * MC works)
 		 */
 
-		int maxInteract = EASY_PLACE_MODE_MAX_BLOCKS.getIntegerValue();
+		int maxInteract = PRINTER_MAX_BLOCKS.getIntegerValue();
 		int interact = 0;
 
 		int fromX = Math.max(posX - rangeX, minX);
@@ -576,7 +576,7 @@ public class Printer {
 									}
 
 									if (clickTimes > 0) {
-										cacheEasyPlacePosition(pos, true);
+										cacheEasyPlacePosition(pos, true, 600);
 									}
 
 								} //can place vanilla
@@ -1321,6 +1321,7 @@ public class Printer {
 	private static boolean sleepWhenRequired(MinecraftClient mc) {
 		if (SLEEP_AFTER_CONSUME.getIntegerValue() > 0 && mc.player.getMainHandStack().isEmpty()) {
 			lastPlaced = new Date().getTime() + SLEEP_AFTER_CONSUME.getIntegerValue();
+			MessageHolder.sendUniqueMessageActionBar(mc.player, "Sleeping because stack is emptied!");
 			return true;
 		}
 		return false;
@@ -1336,6 +1337,15 @@ public class Printer {
 		return (!AVOID_CHECK_ONLY_PISTONS.getBooleanValue() && block instanceof DispenserBlock) || block instanceof PistonBlock;
 	}
 
+	/***
+	 *
+	 * @param mc : client
+	 * @param schematicWorld : schematic world
+	 * @param pos : BlockPos
+	 * @param recursive : Sets of position checked
+	 * @param allowFirst : direct search of wallmount / walls / etc at first
+	 * @return Entry : correct / position caused
+	 */
 	@SuppressWarnings({"ConstantConditions"})
 	private static Map.Entry<Boolean, BlockPos> isWatchingCorrectState(MinecraftClient mc, World schematicWorld, BlockPos pos, Set<Long> recursive, boolean allowFirst) {
 		//observer, then recursive

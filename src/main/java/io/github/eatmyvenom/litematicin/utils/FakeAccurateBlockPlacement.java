@@ -30,7 +30,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 
 import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.*;
 
-public class FakeAccurateBlockPlacement{
+public class FakeAccurateBlockPlacement {
 
 	// We implement FIFO Queue structure with responsible ticks.
 	// By config, we define 'wait tick' between block placements
@@ -48,74 +48,87 @@ public class FakeAccurateBlockPlacement{
 	private static final Queue<PosWithBlock> waitingQueue = new ArrayBlockingQueue<>(1) {
 	};
 	private static final HashSet<Block> warningSet = new HashSet<>();
+
 	// Cancel when handling
-	public static boolean isHandling(){
+	public static boolean isHandling() {
 		return requestedTicks >= 0;
 	}
+
 	// should be called every client tick.
 	static {
 		ClientTickEvents.END_CLIENT_TICK.register(FakeAccurateBlockPlacement::endtick);
 		ClientTickEvents.START_CLIENT_TICK.register(FakeAccurateBlockPlacement::starttick);
 	}
-	public static boolean getShouldModify(){
+
+	public static boolean getShouldModify() {
 		return true;
 	}
-	public static boolean canHandleOther(){
+
+	public static boolean canHandleOther() {
 		return currentHandling == null || currentHandling == Items.AIR;
 	}
+
 	/*
 		returns if item can be handled
 	 */
-	public static boolean canHandleOther(Item item){
-		if(canHandleOther()){
+	public static boolean canHandleOther(Item item) {
+		if (canHandleOther()) {
 			return true;
 		}
 		return currentHandling == item;
 	}
-	public static void starttick(MinecraftClient minecraftClient){
+
+	public static void starttick(MinecraftClient minecraftClient) {
 		blockPlacedInTick = 0;
 	}
-	public static void endtick(MinecraftClient minecraftClient){
+
+	//I can implement anti-anti cheat, because anti cheats are just checking rotations being too accurate / fast, just interpolating is enough...
+	//But I won't. Just follow server rules :shrug:
+	public static void endtick(MinecraftClient minecraftClient) {
 		ClientPlayNetworkHandler clientPlayNetworkHandler = minecraftClient.getNetworkHandler();
 		ClientPlayerEntity playerEntity = minecraftClient.player;
 		tickElapsed = 0;
-		if (playerEntity == null || clientPlayNetworkHandler == null){
+		if (playerEntity == null || clientPlayNetworkHandler == null) {
 			requestedTicks = -3;
 			fakeDirection = null;
 			return;
 		}
-		if (requestedTicks >= -1){
-			if (fakeYaw != previousFakeYaw || fakePitch != previousFakePitch){
+		if (requestedTicks >= -1) {
+			if (fakeYaw != previousFakeYaw || fakePitch != previousFakePitch) {
 				sendLookPacket(clientPlayNetworkHandler, playerEntity);
 				previousFakePitch = fakePitch;
 				previousFakeYaw = fakeYaw;
 			}
 			//we send this at last tick
 		}
-		if (requestedTicks <= -1){
+		if (requestedTicks <= -1) {
 			currentHandling = Items.AIR;
 			stateGrindStone = null;
 		}
-		if (requestedTicks <= -3){
+		if (requestedTicks <= -3) {
 			requestedTicks = -3;
 			fakeDirection = null;
 			previousFakePitch = playerEntity.getPitch();
 			previousFakeYaw = playerEntity.getYaw();
 		}
-		requestedTicks = requestedTicks -1;
+		requestedTicks = requestedTicks - 1;
 	}
 
-	public static void emptyWaitingQueue(){
-		if (requestedTicks != 0){
+	public static void emptyWaitingQueue() {
+		if (requestedTicks != 0) {
 			return;
 		}
 		PosWithBlock obj = waitingQueue.poll();
 		if (obj != null) {
-			if (canPlace(obj.blockState)) {pickFirst(obj.blockState);placeBlock(obj.pos, obj.blockState);}
+			if (canPlace(obj.blockState)) {
+				pickFirst(obj.blockState);
+				placeBlock(obj.pos, obj.blockState);
+			}
 		}
 		waitingQueue.clear();
 	}
-	public static void sendLookPacket(ClientPlayNetworkHandler networkHandler, ClientPlayerEntity playerEntity){
+
+	public static void sendLookPacket(ClientPlayNetworkHandler networkHandler, ClientPlayerEntity playerEntity) {
 		networkHandler.sendPacket(
 			new PlayerMoveC2SPacket.LookAndOnGround(
 				fakeYaw,
@@ -126,11 +139,12 @@ public class FakeAccurateBlockPlacement{
 		//System.out.print(fakeYaw);
 		//System.out.print(fakePitch);
 	}
+
 	/*
 	Pure request function by yaw pitch direction
 	 */
-	public static boolean request(float yaw, float pitch, Direction direction, int duration, boolean force){
-		if (isHandling()){
+	public static boolean request(float yaw, float pitch, Direction direction, int duration, boolean force) {
+		if (isHandling()) {
 			if (!force) {
 				return false;
 			}
@@ -146,66 +160,60 @@ public class FakeAccurateBlockPlacement{
 		if (networkHandler != null && playerEntity != null) {
 			sendLookPacket(networkHandler, playerEntity);
 			return true;
-		}
-		else {
+		} else {
 			return false;
 		}
 	}
 
-	private static boolean canPlaceWallMounted(BlockState blockState){
-		if (blockState.getBlock() instanceof TorchBlock){
-			if (blockState.getBlock() instanceof WallTorchBlock || blockState.getBlock() instanceof WallRedstoneTorchBlock){
+	private static boolean canPlaceWallMounted(BlockState blockState) {
+		if (blockState.getBlock() instanceof TorchBlock) {
+			if (blockState.getBlock() instanceof WallTorchBlock || blockState.getBlock() instanceof WallRedstoneTorchBlock) {
 				return fakeDirection == blockState.get(WallTorchBlock.FACING).getOpposite();
 			}
 			return fakeDirection == Direction.DOWN;
 		}
-		if (blockState.getBlock() instanceof WallMountedBlock){
+		if (blockState.getBlock() instanceof WallMountedBlock) {
 			//so we have 2 properties, looking at down / up as first direction, horizontals as second direction.
 			WallMountLocation location = blockState.get(WallMountedBlock.FACE);
-			if (location == WallMountLocation.WALL){
+			if (location == WallMountLocation.WALL) {
 				return true;
 			}
 			Direction facingSecond = blockState.get(WallMountedBlock.FACING);
 			return fakeDirection == facingSecond;
-		}
-		else {
+		} else {
 			return true;
 		}
 	}
-	private static boolean requestGrindStone(BlockState state, BlockPos blockPos){
+
+	private static boolean requestGrindStone(BlockState state, BlockPos blockPos) {
 		Direction facing = state.get(WallMountedBlock.FACING);
 		WallMountLocation location = state.get(WallMountedBlock.FACE);
 		float fy = 0;
 		float fp = 0;
 		Direction lookRefdir;
-		if (location == WallMountLocation.CEILING){
+		if (location == WallMountLocation.CEILING) {
 			//primary should be UP
 			//secondary should be same as facing
 			fp = -90;
 			lookRefdir = facing;
-		}
-		else if (location == WallMountLocation.FLOOR){
+		} else if (location == WallMountLocation.FLOOR) {
 			fp = 90;
 			lookRefdir = facing;
-		}
-		else {
+		} else {
 			fp = 0;
 			lookRefdir = facing.getOpposite();
 		}
-		if (lookRefdir  == Direction.EAST) {
+		if (lookRefdir == Direction.EAST) {
 			fy = -87;
-		}
-		else if (lookRefdir  == Direction.WEST) {
+		} else if (lookRefdir == Direction.WEST) {
 			fy = 87;
-		}
-		else if (lookRefdir  == Direction.NORTH) {
+		} else if (lookRefdir == Direction.NORTH) {
 			fy = 177;
-		}
-		else if (lookRefdir  == Direction.SOUTH) {
+		} else if (lookRefdir == Direction.SOUTH) {
 			fy = 3;
 		}
-		if (isHandling()){
-			if (requestedTicks == 0 && stateGrindStone != null && canPlace(state)){
+		if (isHandling()) {
+			if (requestedTicks == 0 && stateGrindStone != null && canPlace(state)) {
 				//instant place
 				pickFirst(state);
 				placeBlock(blockPos, state);
@@ -215,28 +223,27 @@ public class FakeAccurateBlockPlacement{
 		}
 		stateGrindStone = state;
 		pickFirst(state);
-		if(waitingQueue.isEmpty()){
+		if (waitingQueue.isEmpty()) {
 			waitingQueue.offer(new PosWithBlock(blockPos, state));
-			request(fy, fp, lookRefdir,LitematicaMixinMod.FAKE_ROTATION_TICKS.getIntegerValue(), false );
+			request(fy, fp, lookRefdir, LitematicaMixinMod.FAKE_ROTATION_TICKS.getIntegerValue(), false);
 			return true;
 		}
 		return false;
 	}
-	public static Direction getPlayerFacing(){
-		if (fakeYaw == -87){
+
+	public static Direction getPlayerFacing() {
+		if (fakeYaw == -87) {
 			return Direction.EAST;
-		}
-		else if (fakeYaw == 87){
+		} else if (fakeYaw == 87) {
 			return Direction.WEST;
-		}
-		else if (fakeYaw == 177){
+		} else if (fakeYaw == 177) {
 			return Direction.NORTH;
-		}
-		else if (fakeYaw == 3){
+		} else if (fakeYaw == 3) {
 			return Direction.SOUTH;
 		}
 		return null;
 	}
+
 	public static Direction[] getFacingOrder() {
 		float theta = fakePitch * 0.017453292F;
 		float omega = -fakeYaw * 0.017453292F;
@@ -253,21 +260,20 @@ public class FakeAccurateBlockPlacement{
 		if (xScalar > zScalar) {
 			if (yScalar > xScalar) {
 				return listClosest(directionY, directionX, directionZ);
-			}
-			else {
+			} else {
 				return zScalar > yScalar ? listClosest(directionX, directionZ, directionY) : listClosest(directionX, directionY, directionZ);
 			}
-		}
-		else if (yScalar > zScalar) {
+		} else if (yScalar > zScalar) {
 			return listClosest(directionY, directionZ, directionX);
-		}
-		else {
+		} else {
 			return xScalar > yScalar ? listClosest(directionZ, directionX, directionY) : listClosest(directionZ, directionY, directionX);
 		}
 	}
+
 	private static Direction[] listClosest(Direction first, Direction second, Direction third) {
 		return new Direction[]{first, second, third, third.getOpposite(), second.getOpposite(), first.getOpposite()};
 	}
+
 	/***
 	 *
 	 * @param blockState : Block object(terracotta, etc...)
@@ -275,27 +281,27 @@ public class FakeAccurateBlockPlacement{
 	 * @return boolean : if its registered and just can place it.
 	 * example : boolean canContinue = FakeAccurateBlockPlacement.request(SchematicState, BlockPos)
 	 */
-	public static boolean request(BlockState blockState, BlockPos blockPos){
+	public static boolean request(BlockState blockState, BlockPos blockPos) {
 		// instant
-		if (!canPlace(blockState)){
+		if (!canPlace(blockState)) {
 			return false;
 		}
-		if (blockState.isOf(Blocks.GRINDSTONE)){
+		if (blockState.isOf(Blocks.GRINDSTONE)) {
 			return requestGrindStone(blockState, blockPos);
 		}
-		if (blockState.isOf(Blocks.HOPPER) || blockState.isIn(BlockTags.SHULKER_BOXES)){
+		if (blockState.isOf(Blocks.HOPPER) || blockState.isIn(BlockTags.SHULKER_BOXES)) {
 			pickFirst(blockState);
-			placeBlock(blockPos,blockState);
+			placeBlock(blockPos, blockState);
 			return true;
 		}
-		if (!blockState.contains(Properties.FACING) && !blockState.contains(Properties.HORIZONTAL_FACING) && !(blockState.getBlock() instanceof AbstractRailBlock) && !(blockState.getBlock() instanceof TorchBlock)){
+		if (!blockState.contains(Properties.FACING) && !blockState.contains(Properties.HORIZONTAL_FACING) && !(blockState.getBlock() instanceof AbstractRailBlock) && !(blockState.getBlock() instanceof TorchBlock)) {
 			pickFirst(blockState);
-			placeBlock(blockPos,blockState);
+			placeBlock(blockPos, blockState);
 			return true; //without facing properties
 		}
 		FacingData facingData = FacingData.getFacingData(blockState);
-		if (facingData == null && !(blockState.getBlock() instanceof AbstractRailBlock) && !(blockState.getBlock() instanceof TorchBlock)){
-			if (!warningSet.contains(blockState.getBlock())){
+		if (facingData == null && !(blockState.getBlock() instanceof AbstractRailBlock) && !(blockState.getBlock() instanceof TorchBlock)) {
+			if (!warningSet.contains(blockState.getBlock())) {
 				warningSet.add(blockState.getBlock());
 				System.out.printf("WARN : Block %s is not found\n", blockState.getBlock().toString());
 			}
@@ -304,18 +310,16 @@ public class FakeAccurateBlockPlacement{
 			return true;
 		}
 		Direction facing = fi.dy.masa.malilib.util.BlockUtils.getFirstPropertyFacingValue(blockState); //facing of block itself
-		if (facing == null && blockState.getBlock() instanceof AbstractRailBlock){
+		if (facing == null && blockState.getBlock() instanceof AbstractRailBlock) {
 			facing = Printer.convertRailShapetoFace(blockState);
-		}
-		else if (blockState.getBlock() instanceof TorchBlock){
-			if (blockState.getBlock() instanceof WallTorchBlock || blockState.getBlock() instanceof WallRedstoneTorchBlock){
+		} else if (blockState.getBlock() instanceof TorchBlock) {
+			if (blockState.getBlock() instanceof WallTorchBlock || blockState.getBlock() instanceof WallRedstoneTorchBlock) {
 				facing = blockState.get(WallTorchBlock.FACING).getOpposite();
-			}
-			else {
+			} else {
 				facing = Direction.DOWN;
 			}
 		}
-		if (facing == null){
+		if (facing == null) {
 			//System.out.println(blockState);
 			pickFirst(blockState);
 			placeBlock(blockPos, blockState);
@@ -326,81 +330,69 @@ public class FakeAccurateBlockPlacement{
 		int order = facingData == null ? 0 : facingData.type;
 		Direction direction1 = facing;
 		float fy = 0, fp = 12;
-		if (order == 0 || order == 1){
+		if (order == 0 || order == 1) {
 			direction1 = reversed ? facing.getOpposite() : facing;
-		}
-		else if (order == 2){
+		} else if (order == 2) {
 			facing = blockState.get(WallMountedBlock.FACING);
 			direction1 = blockState.contains(WallMountedBlock.FACE) && blockState.get(WallMountedBlock.FACE) == WallMountLocation.WALL ? facing.getOpposite() : facing;
-			if (blockState.get(WallMountedBlock.FACE) == WallMountLocation.CEILING){
+			if (blockState.get(WallMountedBlock.FACE) == WallMountLocation.CEILING) {
 				fp = -90;
-			}
-			else if (blockState.get(WallMountedBlock.FACE) == WallMountLocation.FLOOR){
+			} else if (blockState.get(WallMountedBlock.FACE) == WallMountLocation.FLOOR) {
 				fp = 90;
-			}
-			else {
+			} else {
 				fp = 12;
 			}
-		}
-		else if (order == 3){
+		} else if (order == 3) {
 			direction1 = facing.rotateYCounterclockwise();
 		}
-		if (order != 2 && (direction1 == null || (requestedTicks == 0 && fakeDirection == direction1 && fy == fakeYaw && fp == fakePitch)) && canPlaceWallMounted(blockState)){
+		if (order != 2 && (direction1 == null || (requestedTicks == 0 && fakeDirection == direction1 && fy == fakeYaw && fp == fakePitch)) && canPlaceWallMounted(blockState)) {
 			pickFirst(blockState);
-			placeBlock(blockPos,blockState);
+			placeBlock(blockPos, blockState);
 			return true;
 		}
 		Direction lookRefdir = direction1;
-		if (lookRefdir  == Direction.UP) {
+		if (lookRefdir == Direction.UP) {
 			fp = -90;
-		}
-		else if (lookRefdir  == Direction.DOWN) {
+		} else if (lookRefdir == Direction.DOWN) {
 			fp = 90;
-		}
-		else if (lookRefdir  == Direction.EAST) {
+		} else if (lookRefdir == Direction.EAST) {
 			fy = -87;
-		}
-		else if (lookRefdir  == Direction.WEST) {
+		} else if (lookRefdir == Direction.WEST) {
 			fy = 87;
-		}
-		else if (lookRefdir  == Direction.NORTH) {
+		} else if (lookRefdir == Direction.NORTH) {
 			fy = 177;
-		}
-		else if (lookRefdir  == Direction.SOUTH) {
+		} else if (lookRefdir == Direction.SOUTH) {
 			fy = 3;
-		}
-		else {
+		} else {
 			fy = 0;
 			fp = 12;
 		}
-		if (LitematicaMixinMod.FAKE_ROTATION_TICKS.getIntegerValue() == 0){
+		if (LitematicaMixinMod.FAKE_ROTATION_TICKS.getIntegerValue() == 0) {
 			//instant place
 			if (lookRefdir != fakeDirection) {
-				if (tickElapsed > LitematicaMixinMod.FAKE_ROTATION_LIMIT.getIntegerValue()){
+				if (tickElapsed > LitematicaMixinMod.FAKE_ROTATION_LIMIT.getIntegerValue()) {
 					return false;
 				}
 				tickElapsed += 1;
 				request(fy, fp, lookRefdir, LitematicaMixinMod.FAKE_ROTATION_TICKS.getIntegerValue(), true);
 				pickFirst(blockState);
 				placeBlock(blockPos, blockState);
-			}
-			else {
+			} else {
 				pickFirst(blockState);
 				placeBlock(blockPos, blockState);
 			}
 			return true;
-		}
-		else {
+		} else {
 			//delay
-			if (isHandling() && (lookRefdir != fakeDirection || fp != fakePitch || fy != fakeYaw || !canPlaceWallMounted(blockState))){
+			if (isHandling() && (lookRefdir != fakeDirection || fp != fakePitch || fy != fakeYaw || !canPlaceWallMounted(blockState))) {
 				return false;
 			}
-			if(requestedTicks == 0 && fakeDirection == lookRefdir && fp == fakePitch && fy == fakeYaw){
+			if (requestedTicks == 0 && fakeDirection == lookRefdir && fp == fakePitch && fy == fakeYaw) {
 				pickFirst(blockState);
 				placeBlock(blockPos, blockState);
 				return true;
 			}
-			if(waitingQueue.isEmpty()){
+			if (waitingQueue.isEmpty()) {
 				request(fy, fp, lookRefdir, LitematicaMixinMod.FAKE_ROTATION_TICKS.getIntegerValue(), false);
 				pickFirst(blockState);
 				waitingQueue.offer(new PosWithBlock(blockPos, blockState));
@@ -409,53 +401,53 @@ public class FakeAccurateBlockPlacement{
 		}
 		return false;
 	}
-	public static boolean canPlace(BlockState state){
-		if(!FAKE_ROTATION_BETA.getBooleanValue()){
+
+	public static boolean canPlace(BlockState state) {
+		if (!FAKE_ROTATION_BETA.getBooleanValue()) {
 			return true;
 		}
-		if (canHandleOther(state.getBlock().asItem())){
-			if (state.isOf(Blocks.GRINDSTONE)){
-				if (stateGrindStone != null)
+		if (canHandleOther(state.getBlock().asItem())) {
+			if (state.isOf(Blocks.GRINDSTONE)) {
+				if (stateGrindStone != null) {
 					return stateGrindStone.get(GrindstoneBlock.FACE) == state.get(GrindstoneBlock.FACE) && stateGrindStone.get(GrindstoneBlock.FACING) == state.get(GrindstoneBlock.FACING);
+				}
 			}
 			return true;
 		}
 		return false;
 	}
-	private static boolean placeBlock(BlockPos pos, BlockState blockState){
-		if(blockPlacedInTick > EASY_PLACE_MODE_MAX_BLOCKS.getIntegerValue()){
+
+	private static boolean placeBlock(BlockPos pos, BlockState blockState) {
+		if (blockPlacedInTick > PRINTER_MAX_BLOCKS.getIntegerValue()) {
 			return false;
 		}
 		final MinecraftClient minecraftClient = MinecraftClient.getInstance();
 		final ClientPlayerEntity player = minecraftClient.player;
 		final ClientPlayerInteractionManager interactionManager = minecraftClient.interactionManager;
-		if (!minecraftClient.world.getBlockState(pos).getMaterial().isReplaceable()){
+		if (!minecraftClient.world.getBlockState(pos).getMaterial().isReplaceable()) {
 			return true;
 		}
 		Direction sideOrig = Direction.NORTH;
 		Direction side = Printer.applyPlacementFacing(blockState, sideOrig, minecraftClient.world.getBlockState(pos));
 		Vec3d appliedHitVec = Printer.applyHitVec(pos, blockState, side);
 		//Trapdoor actually occasionally refers to player and UP DOWN wtf
-		if (blockState.getBlock() instanceof TrapdoorBlock){
+		if (blockState.getBlock() instanceof TrapdoorBlock) {
 			side = blockState.get(TrapdoorBlock.HALF) == BlockHalf.BOTTOM ? Direction.UP : Direction.DOWN;
 			appliedHitVec = Vec3d.of(pos);
-		}
-		else if (blockState.getBlock() instanceof GrindstoneBlock){
+		} else if (blockState.getBlock() instanceof GrindstoneBlock) {
 			appliedHitVec = Vec3d.ofCenter(pos);
-			if (blockState.get(GrindstoneBlock.FACE) == WallMountLocation.CEILING ){
+			if (blockState.get(GrindstoneBlock.FACE) == WallMountLocation.CEILING) {
 				side = Direction.DOWN;
-			}
-			else if (blockState.get(GrindstoneBlock.FACE) == WallMountLocation.FLOOR){
+			} else if (blockState.get(GrindstoneBlock.FACE) == WallMountLocation.FLOOR) {
 				side = Direction.UP;
 			}
-		}
-		else if (blockState.getBlock() instanceof TorchBlock){
+		} else if (blockState.getBlock() instanceof TorchBlock) {
 			appliedHitVec = Vec3d.ofCenter(pos); //follows player looking
 		}
 		BlockHitResult blockHitResult = new BlockHitResult(appliedHitVec, side, pos, true);
 		if (Printer.doSchematicWorldPickBlock(minecraftClient, blockState) && blockState.getBlock().asItem() == currentHandling) {
-			MessageHolder.sendDebugMessage(player, "Placing "+blockState.getBlock().getTranslationKey()+" at "+ pos.toShortString() + " facing : " + fi.dy.masa.malilib.util.BlockUtils.getFirstPropertyFacingValue(blockState));
-			MessageHolder.sendDebugMessage(player, "Player facing is set to : " + fakeDirection + " Yaw : " + fakeYaw + " Pitch : "+ fakePitch + " ticks : "+ requestedTicks + " for pos "+ pos.toShortString());
+			MessageHolder.sendDebugMessage(player, "Placing " + blockState.getBlock().getTranslationKey() + " at " + pos.toShortString() + " facing : " + fi.dy.masa.malilib.util.BlockUtils.getFirstPropertyFacingValue(blockState));
+			MessageHolder.sendDebugMessage(player, "Player facing is set to : " + fakeDirection + " Yaw : " + fakeYaw + " Pitch : " + fakePitch + " ticks : " + requestedTicks + " for pos " + pos.toShortString());
 			interactionManager.interactBlock(player, Hand.MAIN_HAND, blockHitResult);
 			blockPlacedInTick++;
 			if (player.getMainHandStack().isEmpty()) {
@@ -467,14 +459,16 @@ public class FakeAccurateBlockPlacement{
 		}
 		return false;
 	}
-	private static void pickFirst(BlockState blockState){
+
+	private static void pickFirst(BlockState blockState) {
 		final MinecraftClient minecraftClient = MinecraftClient.getInstance();
 		currentHandling = blockState.getBlock().asItem();
 		requestedTicks = 0;
 		Printer.doSchematicWorldPickBlock(minecraftClient, blockState);
 	}
+
 	// we just record pos + block and put in queue.
-	private record PosWithBlock(BlockPos pos,BlockState blockState){
+	private record PosWithBlock(BlockPos pos, BlockState blockState) {
 	}
 
 }
