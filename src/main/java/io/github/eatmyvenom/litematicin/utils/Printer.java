@@ -576,7 +576,7 @@ public class Printer {
 									}
 
 									if (clickTimes > 0) {
-										cacheEasyPlacePosition(pos, true, 600);
+										cacheEasyPlacePosition(pos, true, 3600);
 									}
 
 								} //can place vanilla
@@ -2039,13 +2039,11 @@ public class Printer {
 				positionCache.remove(i);
 				--i;
 			} else if (val.getPos().equals(pos)) {
-
 				// Item placement and "using"/"clicking" (changing delay for repeaters) are
 				// diffferent
 				if (!useClicked || val.hasClicked) {
 					cached = true;
 				}
-
 				// Keep checking and removing old entries if there are a fair amount
 				if (positionCache.size() < 16) {
 					break;

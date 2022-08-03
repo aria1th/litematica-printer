@@ -1,9 +1,12 @@
 package io.github.eatmyvenom.litematicin.mixin.Litematica;
 
 import io.github.eatmyvenom.litematicin.utils.BedrockBreaker;
+import io.github.eatmyvenom.litematicin.utils.FakeAccurateBlockPlacement;
 import io.github.eatmyvenom.litematicin.utils.ItemInputs;
 import io.github.eatmyvenom.litematicin.utils.Printer;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.network.ClientPlayNetworkHandler;
+import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.HitResult;
@@ -16,13 +19,21 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 
 @Mixin(MinecraftClient.class)
-public class MinecraftClientMixin {
+public abstract class MinecraftClientMixin {
 	@Shadow
 	public HitResult crosshairTarget;
 
 	@Shadow
 	@Nullable
 	public ClientWorld world;
+
+	@Shadow
+	@Nullable
+	public abstract ClientPlayNetworkHandler getNetworkHandler();
+
+	@Shadow
+	@Nullable
+	public ClientPlayerEntity player;
 
 	// On join a new world/server
 	@Inject(at = @At("HEAD"), method = "joinWorld")
@@ -34,6 +45,7 @@ public class MinecraftClientMixin {
 	@Inject(at = @At("HEAD"), method = "tick")
 	public void onPrinterTickCount(CallbackInfo info) {
 		BedrockBreaker.tick();
+		FakeAccurateBlockPlacement.tick(this.getNetworkHandler(), this.player);
 	}
 
 	@Inject(at = @At("HEAD"), method = "doItemUse")

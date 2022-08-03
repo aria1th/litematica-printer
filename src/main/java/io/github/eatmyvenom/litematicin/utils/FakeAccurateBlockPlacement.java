@@ -3,7 +3,6 @@ package io.github.eatmyvenom.litematicin.utils;
 //see https://github.com/senseiwells/EssentialClient/blob/1.19.x/src/main/java/me/senseiwells/essentialclient/feature/BetterAccurateBlockPlacement.java
 
 import io.github.eatmyvenom.litematicin.LitematicaMixinMod;
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.block.*;
 import net.minecraft.block.enums.BlockHalf;
 import net.minecraft.block.enums.WallMountLocation;
@@ -54,16 +53,6 @@ public class FakeAccurateBlockPlacement {
 		return requestedTicks >= 0;
 	}
 
-	// should be called every client tick.
-	static {
-		ClientTickEvents.END_CLIENT_TICK.register(FakeAccurateBlockPlacement::endtick);
-		ClientTickEvents.START_CLIENT_TICK.register(FakeAccurateBlockPlacement::starttick);
-	}
-
-	public static boolean getShouldModify() {
-		return true;
-	}
-
 	public static boolean canHandleOther() {
 		return currentHandling == null || currentHandling == Items.AIR;
 	}
@@ -78,15 +67,10 @@ public class FakeAccurateBlockPlacement {
 		return currentHandling == item;
 	}
 
-	public static void starttick(MinecraftClient minecraftClient) {
-		blockPlacedInTick = 0;
-	}
 
 	//I can implement anti-anti cheat, because anti cheats are just checking rotations being too accurate / fast, just interpolating is enough...
 	//But I won't. Just follow server rules :shrug:
-	public static void endtick(MinecraftClient minecraftClient) {
-		ClientPlayNetworkHandler clientPlayNetworkHandler = minecraftClient.getNetworkHandler();
-		ClientPlayerEntity playerEntity = minecraftClient.player;
+	public static void tick(ClientPlayNetworkHandler clientPlayNetworkHandler, ClientPlayerEntity playerEntity) {
 		tickElapsed = 0;
 		if (playerEntity == null || clientPlayNetworkHandler == null) {
 			requestedTicks = -3;
@@ -112,6 +96,7 @@ public class FakeAccurateBlockPlacement {
 			previousFakeYaw = playerEntity.getYaw();
 		}
 		requestedTicks = requestedTicks - 1;
+		blockPlacedInTick = 0;
 	}
 
 	public static void emptyWaitingQueue() {
@@ -445,7 +430,7 @@ public class FakeAccurateBlockPlacement {
 			appliedHitVec = Vec3d.ofCenter(pos); //follows player looking
 		}
 		BlockHitResult blockHitResult = new BlockHitResult(appliedHitVec, side, pos, true);
-		if (Printer.doSchematicWorldPickBlock(minecraftClient, blockState) && blockState.getBlock().asItem() == currentHandling) {
+		if (blockState.getBlock().asItem() == currentHandling && Printer.doSchematicWorldPickBlock(minecraftClient, blockState)) {
 			MessageHolder.sendDebugMessage(player, "Placing " + blockState.getBlock().getTranslationKey() + " at " + pos.toShortString() + " facing : " + fi.dy.masa.malilib.util.BlockUtils.getFirstPropertyFacingValue(blockState));
 			MessageHolder.sendDebugMessage(player, "Player facing is set to : " + fakeDirection + " Yaw : " + fakeYaw + " Pitch : " + fakePitch + " ticks : " + requestedTicks + " for pos " + pos.toShortString());
 			interactionManager.interactBlock(player, Hand.MAIN_HAND, blockHitResult);
