@@ -27,12 +27,11 @@ in singleplayer, ping is 0 so whatever.
 
 (WON'T FIX) paper, spigot or other types can have their own anti cheat to prevent 'not-looking' placement, which means you can't do anything with this. There's some option to nerf printing action at https://github.com/jensvh/litematica-printer/releases/tag/v1.0.4, but still we can't assure if it would work or not. Use this if you are sure about it.
 
-Masagadget now breaks printer due to old accurateBlockPlacement protocol fix, so you need to remove it when you want to use this printer.
-This printer redirects whole method.
-
 # Issue tracker
 Mainly 1.19 is supported. You can use Multiconnect to connect previous versions, which works properly.
-Feel free to clean up my code or improve things, or use at some other mods, like separating functionalities. I'm not doing it because I don't know how to.
+
+**If you see ANY error related to wrong block placement / fake rotation failure (in vanilla or vanilla-like servers), please report it. If available, attach Litematic file together for further investigation.**
+
 
 ## Before sending DM, check if its my printer....
 
