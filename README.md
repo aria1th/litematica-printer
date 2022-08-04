@@ -102,6 +102,8 @@ Now Settings have names with printer.
 
 `printerSleepStackEmptied` - Printer will sleep when used stack is emptied, to sync / prevent some anticheats.
 
+`easyPlaceModePrinterMaxItemChanges` - Printer will limit changing items actions, per cycle. **recommended value : 2**
+
 
 **Redstone**:
 
