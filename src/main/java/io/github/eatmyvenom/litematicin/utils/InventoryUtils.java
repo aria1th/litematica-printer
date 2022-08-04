@@ -112,6 +112,11 @@ public class InventoryUtils {
 			int selectedSlot = player.getInventory().selectedSlot;
 			client.interactionManager.clickSlot(player.playerScreenHandler.syncId, slot, selectedSlot, SlotActionType.SWAP, player);
 		}
+		try {
+			assert player.getMainHandStack().isItemEqual(stack);
+		} catch (Exception e) {
+			MessageHolder.sendMessageUncheckedUnique(player, stack.toString() + " does not match with " + player.getMainHandStack().toString() + "!");
+		}
 		return true;
 	}
 

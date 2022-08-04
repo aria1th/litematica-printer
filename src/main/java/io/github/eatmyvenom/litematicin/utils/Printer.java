@@ -26,10 +26,7 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.fluid.LavaFluid;
 import net.minecraft.fluid.WaterFluid;
-import net.minecraft.item.BlockItem;
-import net.minecraft.item.ItemPlacementContext;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
+import net.minecraft.item.*;
 import net.minecraft.state.property.Properties;
 import net.minecraft.tag.BlockTags;
 import net.minecraft.util.ActionResult;
@@ -57,6 +54,7 @@ public class Printer {
 	public static int worldTopY = 256;
 	private static final LinkedHashMap<Long, String> causeMap = new LinkedHashMap<>();
 	private static final Long2LongOpenHashMap referenceSet = new Long2LongOpenHashMap();
+	private static final HashSet<Item> itemSet = new HashSet<>();
 
 
 	// TODO: This must be moved to another class and not be static.
@@ -134,6 +132,7 @@ public class Printer {
 			return false;
 		}
 		if (!stack.isEmpty()) {
+			itemSet.add(stack.getItem());
 			return io.github.eatmyvenom.litematicin.utils.InventoryUtils.swapToItem(mc, stack);
 		}
 		return false;
@@ -237,6 +236,7 @@ public class Printer {
 
 	@Environment(EnvType.CLIENT)
 	public static ActionResult doPrinterAction(MinecraftClient mc) {
+		itemSet.clear();
 		if (!DEBUG_MESSAGE.getBooleanValue()) {
 			causeMap.clear(); //reduce ram usage
 		}
@@ -392,7 +392,7 @@ public class Printer {
 		for (int y = fromY; y <= toY; y++) {
 			for (int x = fromX; x <= toX; x++) {
 				for (int z = fromZ; z <= toZ; z++) {
-					if (interact >= maxInteract) {
+					if (interact >= maxInteract || itemSet.size() >= PRINTER_MAX_ITEM_CHANGES.getIntegerValue()) {
 						lastPlaced = new Date().getTime();
 						return ActionResult.SUCCESS;
 					}

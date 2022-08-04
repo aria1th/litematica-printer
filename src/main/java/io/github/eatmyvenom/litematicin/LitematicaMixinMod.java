@@ -23,6 +23,7 @@ public class LitematicaMixinMod implements ModInitializer {
 	public static final ConfigInteger EASY_PLACE_MODE_RANGE_Y = new ConfigInteger("easyPlaceModePrinterRangeY", 3, 0, 1024, "Y Range for EasyPlace");
 	public static final ConfigInteger EASY_PLACE_MODE_RANGE_Z = new ConfigInteger("easyPlaceModePrinterRangeZ", 3, 0, 1024, "Z Range for EasyPlace");
 	public static final ConfigInteger PRINTER_MAX_BLOCKS = new ConfigInteger("easyPlaceModePrinterMaxBlocks", 3, 1, 1000000, "Max block interactions per cycle");
+	public static final ConfigInteger PRINTER_MAX_ITEM_CHANGES = new ConfigInteger("easyPlaceModePrinterMaxItemChanges", 3, 1, 1000000, "Max item categories per cycle");
 	public static final ConfigBoolean PRINTER_BREAK_BLOCKS = new ConfigBoolean("printerBreakBlocks", false, "Automatically breaks blocks.");
 	public static final ConfigDouble EASY_PLACE_MODE_DELAY = new ConfigDouble("easyPlaceModeDelay", 0.2, 0.0, 1.0, "Delay between printing blocks.\n Recommended to set value over 0.05(50ms).");
 	public static final ConfigBoolean EASY_PLACE_MODE_HOTBAR_ONLY = new ConfigBoolean("easyPlaceModeHotbarOnly", false, "Only place blocks from your hotbar.");
@@ -54,6 +55,7 @@ public class LitematicaMixinMod implements ModInitializer {
 		EASY_PLACE_MODE_RANGE_Y,
 		EASY_PLACE_MODE_RANGE_Z,
 		PRINTER_MAX_BLOCKS,
+		PRINTER_MAX_ITEM_CHANGES,
 		PRINTER_BREAK_BLOCKS,
 		EASY_PLACE_MODE_DELAY,
 		EASY_PLACE_MODE_HOTBAR_ONLY,
