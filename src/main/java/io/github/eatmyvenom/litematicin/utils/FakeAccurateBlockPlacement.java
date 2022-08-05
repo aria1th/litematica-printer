@@ -43,6 +43,7 @@ public class FakeAccurateBlockPlacement {
 	private static float previousFakePitch = 0;
 	private static int tickElapsed = 0;
 	private static int blockPlacedInTick = 0;
+	private static BlockState handlingState = null;
 	public static Item currentHandling = Items.AIR;
 	private static final Queue<PosWithBlock> waitingQueue = new ArrayBlockingQueue<>(1) {
 	};
@@ -74,6 +75,7 @@ public class FakeAccurateBlockPlacement {
 		tickElapsed = 0;
 		if (playerEntity == null || clientPlayNetworkHandler == null) {
 			requestedTicks = -3;
+			handlingState = null;
 			fakeDirection = null;
 			return;
 		}
@@ -88,6 +90,7 @@ public class FakeAccurateBlockPlacement {
 		if (requestedTicks <= -1) {
 			currentHandling = Items.AIR;
 			stateGrindStone = null;
+			handlingState = null;
 		}
 		if (requestedTicks <= -3) {
 			requestedTicks = -3;
@@ -99,18 +102,20 @@ public class FakeAccurateBlockPlacement {
 		blockPlacedInTick = 0;
 	}
 
-	public static void emptyWaitingQueue() {
+	public static boolean emptyWaitingQueue() {
 		if (requestedTicks != 0) {
-			return;
+			return false;
 		}
 		PosWithBlock obj = waitingQueue.poll();
 		if (obj != null) {
 			if (canPlace(obj.blockState)) {
 				pickFirst(obj.blockState);
 				placeBlock(obj.pos, obj.blockState);
+				return true;
 			}
 		}
 		waitingQueue.clear();
+		return false;
 	}
 
 	public static void sendLookPacket(ClientPlayNetworkHandler networkHandler, ClientPlayerEntity playerEntity) {
@@ -207,10 +212,11 @@ public class FakeAccurateBlockPlacement {
 			return false;
 		}
 		stateGrindStone = state;
-		pickFirst(state);
 		if (waitingQueue.isEmpty()) {
-			waitingQueue.offer(new PosWithBlock(blockPos, state));
-			request(fy, fp, lookRefdir, LitematicaMixinMod.FAKE_ROTATION_TICKS.getIntegerValue(), false);
+			pickFirst(state);
+			if (waitingQueue.offer(new PosWithBlock(blockPos, state))) {
+				request(fy, fp, lookRefdir, LitematicaMixinMod.FAKE_ROTATION_TICKS.getIntegerValue(), false);
+			}
 			return true;
 		}
 		return false;
@@ -387,6 +393,11 @@ public class FakeAccurateBlockPlacement {
 		return false;
 	}
 
+	/***
+	 *
+	 * @param state : blockState with Facing, calculates if direction is correct and item is correct for given state
+	 * @return : can place or not
+	 */
 	public static boolean canPlace(BlockState state) {
 		if (!FAKE_ROTATION_BETA.getBooleanValue()) {
 			return true;
@@ -396,6 +407,10 @@ public class FakeAccurateBlockPlacement {
 				if (stateGrindStone != null) {
 					return stateGrindStone.get(GrindstoneBlock.FACE) == state.get(GrindstoneBlock.FACE) && stateGrindStone.get(GrindstoneBlock.FACING) == state.get(GrindstoneBlock.FACING);
 				}
+			} else if (handlingState != null && (handlingState.getBlock() instanceof FacingBlock || handlingState.getBlock() instanceof HorizontalFacingBlock && !(handlingState.getBlock() instanceof WallMountedBlock))) {
+				Direction handling = fi.dy.masa.malilib.util.BlockUtils.getFirstPropertyFacingValue(handlingState);
+				Direction other = fi.dy.masa.malilib.util.BlockUtils.getFirstPropertyFacingValue(state);
+				return handling == other;
 			}
 			return true;
 		}
@@ -403,13 +418,16 @@ public class FakeAccurateBlockPlacement {
 	}
 
 	private static boolean placeBlock(BlockPos pos, BlockState blockState) {
+		MessageHolder.sendDebugMessage("Handling placeBlock for " + pos.toShortString() + " and state " + blockState.toString());
 		if (blockPlacedInTick > PRINTER_MAX_BLOCKS.getIntegerValue()) {
+			MessageHolder.sendDebugMessage("Handling placeBlock failed due to limiting max block" + pos.toShortString());
 			return false;
 		}
 		final MinecraftClient minecraftClient = MinecraftClient.getInstance();
 		final ClientPlayerEntity player = minecraftClient.player;
 		final ClientPlayerInteractionManager interactionManager = minecraftClient.interactionManager;
 		if (!minecraftClient.world.getBlockState(pos).getMaterial().isReplaceable()) {
+			MessageHolder.sendDebugMessage("Client block position was not replaceable at " + pos.toShortString());
 			return true;
 		}
 		Direction sideOrig = Direction.NORTH;
@@ -442,12 +460,14 @@ public class FakeAccurateBlockPlacement {
 			Printer.cacheEasyPlacePosition(pos, false);
 			return true;
 		}
+		MessageHolder.sendDebugMessage("Handling placeBlock failed due to pickBlock assertion failure" + pos.toShortString());
 		return false;
 	}
 
 	private static void pickFirst(BlockState blockState) {
 		final MinecraftClient minecraftClient = MinecraftClient.getInstance();
 		currentHandling = blockState.getBlock().asItem();
+		handlingState = blockState;
 		requestedTicks = 0;
 		Printer.doSchematicWorldPickBlock(minecraftClient, blockState);
 	}

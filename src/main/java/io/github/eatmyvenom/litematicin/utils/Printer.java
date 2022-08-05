@@ -204,6 +204,9 @@ public class Printer {
 			return;
 		}
 		if (reasonPos != null) {
+			if (pos.asLong() == reasonPos.asLong()) {
+				throw new AssertionError("Position should not equal to reason position!");
+			}
 			referenceSet.put(pos.asLong(), reasonPos.asLong());
 		}
 		causeMap.put(pos.asLong(), reason + '\n');
@@ -219,19 +222,19 @@ public class Printer {
 
 	private static String internalGetReason(Long pos, LongOpenHashSet set, int count) {
 		if (count > 10) {
-			return "RECURSIVE_COUNT_EXCEED";
+			return BlockPos.fromLong(pos).toShortString() + "RECURSIVE_COUNT_EXCEED";
 		}
 		if (set == null) {
 			set = new LongOpenHashSet();
 		}
 		if (set.contains((long) pos)) {
-			return "Recursive ";
+			return BlockPos.fromLong(pos).toShortString() + "Recursive ";
 		}
 		if (referenceSet.containsKey((long) pos)) {
 			set.add((long) pos);
-			return causeMap.getOrDefault(pos, "Not registered") + " " + BlockPos.fromLong(pos).toShortString() + " " + internalGetReason(referenceSet.get((long) pos), set, count + 1);
+			return causeMap.getOrDefault(pos, BlockPos.fromLong(pos).toShortString() + " : Not registered") + " " + internalGetReason(referenceSet.get((long) pos), set, count + 1);
 		}
-		return causeMap.getOrDefault(pos, "Not registered");
+		return causeMap.getOrDefault(pos, BlockPos.fromLong(pos).toShortString() + " : Not registered");
 	}
 
 	@Environment(EnvType.CLIENT)
@@ -396,7 +399,10 @@ public class Printer {
 						lastPlaced = new Date().getTime();
 						return ActionResult.SUCCESS;
 					}
-					FakeAccurateBlockPlacement.emptyWaitingQueue();
+					if (FakeAccurateBlockPlacement.emptyWaitingQueue()) {
+						interact++;
+					}
+					;
 					if (FakeAccurateBlockPlacement.shouldReturnValue) {
 						FakeAccurateBlockPlacement.shouldReturnValue = false;
 						return ActionResult.SUCCESS;
@@ -547,6 +553,7 @@ public class Printer {
 										if (level != Schematiclevel && !(level == 7 && Schematiclevel == 8)) {
 											Hand hand = Hand.MAIN_HAND;
 											if (io.github.eatmyvenom.litematicin.utils.InventoryUtils.swapToItem(mc, composableItem)) {
+												itemSet.add(composableItem.getItem());
 												Vec3d hitPos = new Vec3d(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5);
 												BlockHitResult hitResult = new BlockHitResult(hitPos, side, pos, false);
 												mc.interactionManager.interactBlock(mc.player, hand, hitResult); //COMPOSTER
@@ -750,7 +757,7 @@ public class Printer {
 									stateSchematic = stateSchematic.with(ObserverBlock.FACING, stateSchematic.get(ObserverBlock.FACING).getOpposite());
 								} else {
 									BlockPos causedPos = ObserverUpdateOrderPos(mc, world, pos);
-									if (causedPos == pos) {
+									if (causedPos.asLong() == pos.asLong()) {
 										MessageHolder.sendUniqueMessage(mc.player, "Observer at " + pos.toShortString() + " is causing self-blocking, check manually");
 									}
 									recordCause(pos, sBlock.getTranslationKey() + " at " + pos.toShortString() + " is waiting for ", causedPos);
@@ -788,6 +795,7 @@ public class Printer {
 								continue;
 							}
 							if (io.github.eatmyvenom.litematicin.utils.InventoryUtils.swapToItem(mc, lightStack)) {
+								itemSet.add(lightStack.getItem());
 								Vec3d hitPos = new Vec3d(0.5, 0.5, 0.5);
 								BlockHitResult hitResult = new BlockHitResult(hitPos, Direction.DOWN, new BlockPos(x, y + 1, z), false);
 								mc.interactionManager.interactBlock(mc.player, hand, hitResult); //LIGHT
@@ -841,14 +849,14 @@ public class Printer {
 						//Don't place waterlogged block's original block before fluid since its painful
 						// 1. if
 						if (!isReplaceableWaterFluidSource(stateClient) &&
-							(stateSchematic.contains(Properties.WATERLOGGED) && stateSchematic.get(Properties.WATERLOGGED) || (stateSchematic.isOf(Blocks.WATER) && stateSchematic.get(FluidBlock.LEVEL) == 0)) &&
-							PRINTER_PLACE_ICE.getBooleanValue()
-						) {
+							(stateSchematic.contains(Properties.WATERLOGGED) && stateSchematic.get(Properties.WATERLOGGED) || stateSchematic.isOf(Blocks.BUBBLE_COLUMN) || (stateSchematic.isOf(Blocks.WATER) && stateSchematic.get(FluidBlock.LEVEL) == 0)) &&
+							PRINTER_PLACE_ICE.getBooleanValue()) {
 							ItemStack iceStack = Items.ICE.getDefaultStack();
 							if (!FakeAccurateBlockPlacement.canHandleOther(iceStack.getItem())) {
 								continue;
 							}
 							if (io.github.eatmyvenom.litematicin.utils.InventoryUtils.swapToItem(mc, iceStack)) {
+								itemSet.add(iceStack.getItem());
 								mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, new BlockHitResult(new Vec3d(pos.getX(), pos.getY(), pos.getZ()), Direction.DOWN, pos, false));
 								cacheEasyPlacePosition(pos, false);
 								if (sleepWhenRequired(mc)) {
@@ -868,8 +876,8 @@ public class Printer {
 							continue;
 						}
 						if (!blockSchematic.canPlaceAt(stateSchematic, mc.world, pos)) {
-							recordCause(pos, stateSchematic.getBlock().toString() + "can't be placed at " + pos.toShortString());
-							MessageHolder.sendUniqueMessage(mc.player, "Block " + stateSchematic.getBlock().getTranslationKey() + " can't be placed at " + pos.toShortString());
+							recordCause(pos, stateSchematic.getBlock().toString() + "(" + pos.toShortString() + ", can't be placed)");
+							MessageHolder.sendUniqueMessage(mc.player, stateSchematic.getBlock().getTranslationKey() + " can't be placed at " + pos.toShortString());
 							continue;
 						}
 						if (blockSchematic instanceof GrindstoneBlock) {
@@ -906,8 +914,10 @@ public class Printer {
 									npos = pos.down();
 								}
 								if (hasGui(world.getBlockState(npos).getBlock())) {
-									if (FAKE_ROTATION_BETA.getBooleanValue()) {
-										FakeAccurateBlockPlacement.request(stateSchematic, pos);
+									if (FAKE_ROTATION_BETA.getBooleanValue() && interact < maxInteract) {
+										if (FakeAccurateBlockPlacement.request(stateSchematic, pos)) {
+											interact++;
+										}
 										continue;
 									}
 									recordCause(pos, "Torch at " + pos.toShortString() + " can't be placed due to " + world.getBlockState(npos).getBlock().getTranslationKey() + "at " + npos.toShortString() + " has GUI");
@@ -932,8 +942,10 @@ public class Printer {
 								//but First check if its block with GUI*
 								Block checkGui = mc.world.getBlockState(npos).getBlock();
 								if (!mc.player.shouldCancelInteraction() && hasGui(checkGui)) {
-									if (blockSchematic instanceof TrapdoorBlock && FAKE_ROTATION_BETA.getBooleanValue()) {
-										FakeAccurateBlockPlacement.request(stateSchematic, pos);
+									if (blockSchematic instanceof TrapdoorBlock && FAKE_ROTATION_BETA.getBooleanValue() && interact < maxInteract) {
+										if (FakeAccurateBlockPlacement.request(stateSchematic, pos)) {
+											interact++;
+										}
 										continue;
 									}
 									//Has GUI so clickPos can't be clicked.
@@ -1075,7 +1087,7 @@ public class Printer {
 							continue;
 						} else {
 							if (!(sBlock instanceof FluidBlock)) {
-								if (FakeAccurateBlockPlacement.request(stateSchematic, pos)) {
+								if (interact < maxInteract && FakeAccurateBlockPlacement.request(stateSchematic, pos)) {
 									interact++;
 								}
 							}
@@ -1464,6 +1476,7 @@ public class Printer {
 				return false;
 			}
 			if (io.github.eatmyvenom.litematicin.utils.InventoryUtils.swapToItem(client, Items.MINECART.getDefaultStack())) {
+				itemSet.add(Items.MINECART);
 				ActionResult actionResult = client.interactionManager.interactBlock(client.player, Hand.MAIN_HAND, new BlockHitResult(clickPos, Direction.UP, pos, false)); //place block
 				if (actionResult.isAccepted()) {
 					cacheEasyPlacePosition(pos, false, 600);
@@ -1613,12 +1626,11 @@ public class Printer {
 			return false;
 		}
 		if (ExplicitObserver) {
-			if (OffsetStateSchematic.isOf(Blocks.BARRIER) || OffsetStateClient.isAir() && OffsetStateSchematic.isAir()) {
+			if (OffsetStateSchematic.isOf(Blocks.BARRIER) || OffsetStateClient.isAir() && OffsetStateSchematic.isAir() || OffsetStateSchematic.isOf(Blocks.VOID_AIR)) {
 				return false;
 			} //cave air wtf
 			return !OffsetStateSchematic.toString().equals(OffsetStateClient.toString());
 		}
-
 		return !OffsetStateClient.getBlock().equals(OffsetStateSchematic.getBlock());
 	}
 
