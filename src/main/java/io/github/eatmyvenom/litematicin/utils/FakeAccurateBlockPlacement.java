@@ -109,7 +109,7 @@ public class FakeAccurateBlockPlacement {
 		PosWithBlock obj = waitingQueue.poll();
 		if (obj != null) {
 			if (canPlace(obj.blockState)) {
-				pickFirst(obj.blockState);
+				pickFirst(obj.blockState, obj.pos);
 				placeBlock(obj.pos, obj.blockState);
 				return true;
 			}
@@ -205,7 +205,7 @@ public class FakeAccurateBlockPlacement {
 		if (isHandling()) {
 			if (requestedTicks == 0 && stateGrindStone != null && canPlace(state)) {
 				//instant place
-				pickFirst(state);
+				pickFirst(state, blockPos);
 				placeBlock(blockPos, state);
 				return true;
 			}
@@ -213,7 +213,7 @@ public class FakeAccurateBlockPlacement {
 		}
 		stateGrindStone = state;
 		if (waitingQueue.isEmpty()) {
-			pickFirst(state);
+			pickFirst(state, blockPos);
 			if (waitingQueue.offer(new PosWithBlock(blockPos, state))) {
 				request(fy, fp, lookRefdir, LitematicaMixinMod.FAKE_ROTATION_TICKS.getIntegerValue(), false);
 			}
@@ -281,12 +281,12 @@ public class FakeAccurateBlockPlacement {
 			return requestGrindStone(blockState, blockPos);
 		}
 		if (blockState.isOf(Blocks.HOPPER) || blockState.isIn(BlockTags.SHULKER_BOXES)) {
-			pickFirst(blockState);
+			pickFirst(blockState, blockPos);
 			placeBlock(blockPos, blockState);
 			return true;
 		}
 		if (!blockState.contains(Properties.FACING) && !blockState.contains(Properties.HORIZONTAL_FACING) && !(blockState.getBlock() instanceof AbstractRailBlock) && !(blockState.getBlock() instanceof TorchBlock)) {
-			pickFirst(blockState);
+			pickFirst(blockState, blockPos);
 			placeBlock(blockPos, blockState);
 			return true; //without facing properties
 		}
@@ -296,7 +296,7 @@ public class FakeAccurateBlockPlacement {
 				warningSet.add(blockState.getBlock());
 				System.out.printf("WARN : Block %s is not found\n", blockState.getBlock().toString());
 			}
-			pickFirst(blockState);
+			pickFirst(blockState, blockPos);
 			placeBlock(blockPos, blockState);
 			return true;
 		}
@@ -312,7 +312,7 @@ public class FakeAccurateBlockPlacement {
 		}
 		if (facing == null) {
 			//System.out.println(blockState);
-			pickFirst(blockState);
+			pickFirst(blockState, blockPos);
 			placeBlock(blockPos, blockState);
 			return true;
 		}
@@ -337,7 +337,7 @@ public class FakeAccurateBlockPlacement {
 			direction1 = facing.rotateYCounterclockwise();
 		}
 		if (order != 2 && (direction1 == null || (requestedTicks == 0 && fakeDirection == direction1 && fy == fakeYaw && fp == fakePitch)) && canPlaceWallMounted(blockState)) {
-			pickFirst(blockState);
+			pickFirst(blockState, blockPos);
 			placeBlock(blockPos, blockState);
 			return true;
 		}
@@ -366,10 +366,10 @@ public class FakeAccurateBlockPlacement {
 				}
 				tickElapsed += 1;
 				request(fy, fp, lookRefdir, LitematicaMixinMod.FAKE_ROTATION_TICKS.getIntegerValue(), true);
-				pickFirst(blockState);
+				pickFirst(blockState, blockPos);
 				placeBlock(blockPos, blockState);
 			} else {
-				pickFirst(blockState);
+				pickFirst(blockState, blockPos);
 				placeBlock(blockPos, blockState);
 			}
 			return true;
@@ -379,13 +379,13 @@ public class FakeAccurateBlockPlacement {
 				return false;
 			}
 			if (requestedTicks == 0 && fakeDirection == lookRefdir && fp == fakePitch && fy == fakeYaw) {
-				pickFirst(blockState);
+				pickFirst(blockState, blockPos);
 				placeBlock(blockPos, blockState);
 				return true;
 			}
 			if (waitingQueue.isEmpty()) {
 				request(fy, fp, lookRefdir, LitematicaMixinMod.FAKE_ROTATION_TICKS.getIntegerValue(), false);
-				pickFirst(blockState);
+				pickFirst(blockState, blockPos);
 				waitingQueue.offer(new PosWithBlock(blockPos, blockState));
 				return true;
 			}
@@ -448,7 +448,7 @@ public class FakeAccurateBlockPlacement {
 			appliedHitVec = Vec3d.ofCenter(pos); //follows player looking
 		}
 		BlockHitResult blockHitResult = new BlockHitResult(appliedHitVec, side, pos, true);
-		if (blockState.getBlock().asItem() == currentHandling && Printer.doSchematicWorldPickBlock(minecraftClient, blockState)) {
+		if (blockState.getBlock().asItem() == currentHandling && Printer.doSchematicWorldPickBlock(minecraftClient, blockState, pos)) {
 			MessageHolder.sendDebugMessage(player, "Placing " + blockState.getBlock().getTranslationKey() + " at " + pos.toShortString() + " facing : " + fi.dy.masa.malilib.util.BlockUtils.getFirstPropertyFacingValue(blockState));
 			MessageHolder.sendDebugMessage(player, "Player facing is set to : " + fakeDirection + " Yaw : " + fakeYaw + " Pitch : " + fakePitch + " ticks : " + requestedTicks + " for pos " + pos.toShortString());
 			interactionManager.interactBlock(player, Hand.MAIN_HAND, blockHitResult);
@@ -464,12 +464,12 @@ public class FakeAccurateBlockPlacement {
 		return false;
 	}
 
-	private static void pickFirst(BlockState blockState) {
+	private static void pickFirst(BlockState blockState, BlockPos pos) {
 		final MinecraftClient minecraftClient = MinecraftClient.getInstance();
 		currentHandling = blockState.getBlock().asItem();
 		handlingState = blockState;
 		requestedTicks = 0;
-		Printer.doSchematicWorldPickBlock(minecraftClient, blockState);
+		Printer.doSchematicWorldPickBlock(minecraftClient, blockState, pos);
 	}
 
 	// we just record pos + block and put in queue.

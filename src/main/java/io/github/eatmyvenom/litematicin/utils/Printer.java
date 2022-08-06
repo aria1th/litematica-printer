@@ -26,7 +26,10 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.fluid.LavaFluid;
 import net.minecraft.fluid.WaterFluid;
-import net.minecraft.item.*;
+import net.minecraft.item.BlockItem;
+import net.minecraft.item.ItemPlacementContext;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.state.property.Properties;
 import net.minecraft.tag.BlockTags;
 import net.minecraft.util.ActionResult;
@@ -54,7 +57,6 @@ public class Printer {
 	public static int worldTopY = 256;
 	private static final LinkedHashMap<Long, String> causeMap = new LinkedHashMap<>();
 	private static final Long2LongOpenHashMap referenceSet = new Long2LongOpenHashMap();
-	private static final HashSet<Item> itemSet = new HashSet<>();
 
 
 	// TODO: This must be moved to another class and not be static.
@@ -132,7 +134,6 @@ public class Printer {
 			return false;
 		}
 		if (!stack.isEmpty()) {
-			itemSet.add(stack.getItem());
 			return io.github.eatmyvenom.litematicin.utils.InventoryUtils.swapToItem(mc, stack);
 		}
 		return false;
@@ -239,7 +240,8 @@ public class Printer {
 
 	@Environment(EnvType.CLIENT)
 	public static ActionResult doPrinterAction(MinecraftClient mc) {
-		itemSet.clear();
+		io.github.eatmyvenom.litematicin.utils.InventoryUtils.itemChangeCount = 0;
+		io.github.eatmyvenom.litematicin.utils.InventoryUtils.handlingItem = null;
 		if (!DEBUG_MESSAGE.getBooleanValue()) {
 			causeMap.clear(); //reduce ram usage
 		}
@@ -395,7 +397,7 @@ public class Printer {
 		for (int y = fromY; y <= toY; y++) {
 			for (int x = fromX; x <= toX; x++) {
 				for (int z = fromZ; z <= toZ; z++) {
-					if (interact >= maxInteract || itemSet.size() >= PRINTER_MAX_ITEM_CHANGES.getIntegerValue()) {
+					if (interact >= maxInteract || io.github.eatmyvenom.litematicin.utils.InventoryUtils.itemChangeCount > PRINTER_MAX_ITEM_CHANGES.getIntegerValue()) {
 						lastPlaced = new Date().getTime();
 						return ActionResult.SUCCESS;
 					}
@@ -553,7 +555,6 @@ public class Printer {
 										if (level != Schematiclevel && !(level == 7 && Schematiclevel == 8)) {
 											Hand hand = Hand.MAIN_HAND;
 											if (io.github.eatmyvenom.litematicin.utils.InventoryUtils.swapToItem(mc, composableItem)) {
-												itemSet.add(composableItem.getItem());
 												Vec3d hitPos = new Vec3d(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5);
 												BlockHitResult hitResult = new BlockHitResult(hitPos, side, pos, false);
 												mc.interactionManager.interactBlock(mc.player, hand, hitResult); //COMPOSTER
@@ -569,7 +570,6 @@ public class Printer {
 											continue;
 										}
 									}
-
 									for (int i = 0; i < clickTimes; i++) // Click on the block a few times
 									{
 										Hand hand = Hand.MAIN_HAND;
@@ -799,7 +799,6 @@ public class Printer {
 								continue;
 							}
 							if (io.github.eatmyvenom.litematicin.utils.InventoryUtils.swapToItem(mc, lightStack)) {
-								itemSet.add(lightStack.getItem());
 								Vec3d hitPos = new Vec3d(0.5, 0.5, 0.5);
 								BlockHitResult hitResult = new BlockHitResult(hitPos, Direction.DOWN, new BlockPos(x, y + 1, z), false);
 								mc.interactionManager.interactBlock(mc.player, hand, hitResult); //LIGHT
@@ -860,7 +859,6 @@ public class Printer {
 								continue;
 							}
 							if (io.github.eatmyvenom.litematicin.utils.InventoryUtils.swapToItem(mc, iceStack)) {
-								itemSet.add(iceStack.getItem());
 								mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, new BlockHitResult(new Vec3d(pos.getX(), pos.getY(), pos.getZ()), Direction.DOWN, pos, false));
 								cacheEasyPlacePosition(pos, false);
 								if (sleepWhenRequired(mc)) {
@@ -1515,7 +1513,6 @@ public class Printer {
 				return false;
 			}
 			if (io.github.eatmyvenom.litematicin.utils.InventoryUtils.swapToItem(client, Items.MINECART.getDefaultStack())) {
-				itemSet.add(Items.MINECART);
 				ActionResult actionResult = client.interactionManager.interactBlock(client.player, Hand.MAIN_HAND, new BlockHitResult(clickPos, Direction.UP, pos, false)); //place block
 				if (actionResult.isAccepted()) {
 					cacheEasyPlacePosition(pos, false, 600);

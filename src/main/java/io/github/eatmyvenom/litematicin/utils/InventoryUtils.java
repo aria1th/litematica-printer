@@ -1,10 +1,12 @@
 package io.github.eatmyvenom.litematicin.utils;
 
+import io.github.eatmyvenom.litematicin.LitematicaMixinMod;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.LootableContainerBlockEntity;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ToolItem;
 import net.minecraft.network.packet.c2s.play.PlayerActionC2SPacket;
@@ -18,6 +20,8 @@ import java.util.List;
 
 public class InventoryUtils {
 	public static int lastCount = 0;
+	public static int itemChangeCount = 0;
+	public static Item handlingItem = null;
 
 	public static boolean areItemsExact(ItemStack a, ItemStack b) {
 		return ItemStack.areItemsEqual(a, b) && ItemStack.areNbtEqual(a, b);
@@ -64,11 +68,18 @@ public class InventoryUtils {
 		if (player == null || client.interactionManager == null) {
 			return false;
 		}
+		if (stack.getItem() != handlingItem) {
+			if (itemChangeCount > LitematicaMixinMod.PRINTER_MAX_ITEM_CHANGES.getIntegerValue()) {
+				return false;
+			}
+		}
 		if (!requiresSwap(client.player, stack)) {
 			lastCount = client.player.getMainHandStack().getCount();
 			return true;
 		}
 		if (survivalSwap(client, player, stack)) {
+			handlingItem = stack.getItem();
+			itemChangeCount++;
 			return true;
 		}
 		return creativeSwap(client, player, stack);
@@ -86,6 +97,8 @@ public class InventoryUtils {
 		player.getInventory().addPickBlock(stack);
 		client.interactionManager.clickCreativeStack(player.getMainHandStack(), 36 + player.getInventory().selectedSlot);
 		lastCount = 64;
+		handlingItem = stack.getItem();
+		itemChangeCount++;
 		return true;
 	}
 
