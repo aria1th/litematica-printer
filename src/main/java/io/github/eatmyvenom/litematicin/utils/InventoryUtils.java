@@ -8,7 +8,6 @@ import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ToolItem;
 import net.minecraft.network.packet.c2s.play.PlayerActionC2SPacket;
-import net.minecraft.network.packet.c2s.play.UpdateSelectedSlotC2SPacket;
 import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
@@ -95,7 +94,7 @@ public class InventoryUtils {
 		if (!canSwap(player, stack)) {
 			return false;
 		}
-		if (areItemsExact(player.getOffHandStack(), stack)) {
+		if (areItemsExact(player.getOffHandStack(), stack) && !areItemsExact(player.getMainHandStack(), stack)) {
 			lastCount = client.player.getOffHandStack().getCount();
 			client.getNetworkHandler().sendPacket(new PlayerActionC2SPacket(net.minecraft.network.packet.c2s.play.PlayerActionC2SPacket.Action.SWAP_ITEM_WITH_OFFHAND, BlockPos.ORIGIN, Direction.DOWN));
 			return true;
@@ -107,7 +106,7 @@ public class InventoryUtils {
 		lastCount = client.player.getInventory().getStack(slot).getCount();
 		if (PlayerInventory.isValidHotbarIndex(slot)) {
 			player.getInventory().selectedSlot = slot;
-			client.getNetworkHandler().sendPacket(new UpdateSelectedSlotC2SPacket(slot));
+			//client.getNetworkHandler().sendPacket(new UpdateSelectedSlotC2SPacket(slot));
 		} else {
 			int selectedSlot = player.getInventory().selectedSlot;
 			client.interactionManager.clickSlot(player.playerScreenHandler.syncId, slot, selectedSlot, SlotActionType.SWAP, player);
