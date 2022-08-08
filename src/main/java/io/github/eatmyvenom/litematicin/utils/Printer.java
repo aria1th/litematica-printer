@@ -89,7 +89,7 @@ public class Printer {
 	public static boolean canPickBlock(MinecraftClient mc, BlockState preference, BlockPos pos) {
 		World world = SchematicWorldHandler.getSchematicWorld();
 		ItemStack stack = MaterialCache.getInstance().getRequiredBuildItemForState(preference, world, pos);
-		if (!stack.isEmpty()) {
+		if (!stack.isEmpty() && stack.getItem() != Items.AIR) {
 			PlayerInventory inv = mc.player.getInventory();
 			if (!mc.player.getAbilities().creativeMode) {
 				int slot = inv.getSlotWithStack(stack);
@@ -397,14 +397,13 @@ public class Printer {
 		for (int y = fromY; y <= toY; y++) {
 			for (int x = fromX; x <= toX; x++) {
 				for (int z = fromZ; z <= toZ; z++) {
-					if (interact >= maxInteract || io.github.eatmyvenom.litematicin.utils.InventoryUtils.itemChangeCount > PRINTER_MAX_ITEM_CHANGES.getIntegerValue()) {
+					if (interact >= maxInteract) {
 						lastPlaced = new Date().getTime();
 						return ActionResult.SUCCESS;
 					}
 					if (FakeAccurateBlockPlacement.emptyWaitingQueue()) {
 						interact++;
 					}
-					;
 					if (FakeAccurateBlockPlacement.shouldReturnValue) {
 						FakeAccurateBlockPlacement.shouldReturnValue = false;
 						return ActionResult.SUCCESS;
@@ -683,7 +682,7 @@ public class Printer {
 						}
 						continue;
 					}
-					if (!FakeAccurateBlockPlacement.canPlace(stateSchematic)) {
+					if (!FakeAccurateBlockPlacement.canPlace(stateSchematic, pos)) {
 						continue;
 					}
 					if (sBlock instanceof PistonHeadBlock || stateSchematic.isOf(Blocks.MOVING_PISTON)) {
@@ -851,9 +850,9 @@ public class Printer {
 						Block blockSchematic = stateSchematic.getBlock();
 						//Don't place waterlogged block's original block before fluid since its painful
 						// 1. if
-						if (!isReplaceableWaterFluidSource(stateClient) &&
-							(stateSchematic.contains(Properties.WATERLOGGED) && stateSchematic.get(Properties.WATERLOGGED) || stateSchematic.isOf(Blocks.BUBBLE_COLUMN) || (stateSchematic.isOf(Blocks.WATER) && stateSchematic.get(FluidBlock.LEVEL) == 0)) &&
-							PRINTER_PLACE_ICE.getBooleanValue()) {
+						if (PRINTER_PLACE_ICE.getBooleanValue() && (isReplaceableWaterFluidSource(stateSchematic) && stateClient.getMaterial().isReplaceable() && !isReplaceableWaterFluidSource(stateClient) && !stateClient.isOf(Blocks.LAVA) ||
+							stateClient.getMaterial().isReplaceable() && containsWaterloggable(stateSchematic))
+						) {
 							ItemStack iceStack = Items.ICE.getDefaultStack();
 							if (!FakeAccurateBlockPlacement.canHandleOther(iceStack.getItem())) {
 								continue;
@@ -1788,6 +1787,10 @@ public class Printer {
 			checkState.getBlock() instanceof Waterloggable && checkState.contains(Properties.WATERLOGGED) && checkState.get(Properties.WATERLOGGED) && checkState.getMaterial().isReplaceable();
 	}
 
+	private static boolean containsWaterloggable(BlockState state) {
+		return state.getBlock() instanceof Waterloggable && state.get(Properties.WATERLOGGED);
+	}
+
 	private static boolean printerCheckCancel(BlockState stateSchematic, BlockState stateClient) {
 		Block blockSchematic = stateSchematic.getBlock();
 		if (blockSchematic instanceof SeaPickleBlock && stateSchematic.get(SeaPickleBlock.PICKLES) > 1) {
@@ -1988,7 +1991,7 @@ public class Printer {
 		}
 		return ADVANCED_ACCURATE_BLOCK_PLACEMENT.getBooleanValue() || SchematicBlock instanceof GlazedTerracottaBlock || SchematicBlock instanceof ObserverBlock || SchematicBlock instanceof RepeaterBlock || SchematicBlock instanceof TrapdoorBlock ||
 			SchematicBlock instanceof ComparatorBlock || SchematicBlock instanceof DispenserBlock || SchematicBlock instanceof PistonBlock || SchematicBlock instanceof StairsBlock;
-	}
+	} //Current carpet extra does not handle other facingBlocks, gnembon please update it
 
 	static Direction applyPlacementFacing(BlockState stateSchematic, Direction side, BlockState stateClient) {
 		Block blockSchematic = stateSchematic.getBlock();

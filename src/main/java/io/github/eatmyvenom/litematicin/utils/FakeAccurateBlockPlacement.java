@@ -2,6 +2,8 @@ package io.github.eatmyvenom.litematicin.utils;
 
 //see https://github.com/senseiwells/EssentialClient/blob/1.19.x/src/main/java/me/senseiwells/essentialclient/feature/BetterAccurateBlockPlacement.java
 
+import fi.dy.masa.litematica.materials.MaterialCache;
+import fi.dy.masa.litematica.world.SchematicWorldHandler;
 import io.github.eatmyvenom.litematicin.LitematicaMixinMod;
 import net.minecraft.block.*;
 import net.minecraft.block.enums.BlockHalf;
@@ -11,6 +13,7 @@ import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.network.ClientPlayerInteractionManager;
 import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
 import net.minecraft.state.property.Properties;
@@ -108,10 +111,9 @@ public class FakeAccurateBlockPlacement {
 		}
 		PosWithBlock obj = waitingQueue.poll();
 		if (obj != null) {
-			if (canPlace(obj.blockState)) {
+			if (canPlace(obj.blockState, obj.pos)) {
 				pickFirst(obj.blockState, obj.pos);
-				placeBlock(obj.pos, obj.blockState);
-				return true;
+				return placeBlock(obj.pos, obj.blockState);
 			}
 		}
 		waitingQueue.clear();
@@ -203,7 +205,7 @@ public class FakeAccurateBlockPlacement {
 			fy = 3;
 		}
 		if (isHandling()) {
-			if (requestedTicks == 0 && stateGrindStone != null && canPlace(state)) {
+			if (requestedTicks == 0 && stateGrindStone != null && canPlace(state, blockPos)) {
 				//instant place
 				pickFirst(state, blockPos);
 				placeBlock(blockPos, state);
@@ -274,7 +276,7 @@ public class FakeAccurateBlockPlacement {
 	 */
 	public static boolean request(BlockState blockState, BlockPos blockPos) {
 		// instant
-		if (!canPlace(blockState)) {
+		if (!canPlace(blockState, blockPos) || blockState.isAir() || MaterialCache.getInstance().getRequiredBuildItemForState(blockState, SchematicWorldHandler.getSchematicWorld(), blockPos).getItem() == Items.AIR) {
 			return false;
 		}
 		if (blockState.isOf(Blocks.GRINDSTONE)) {
@@ -387,7 +389,7 @@ public class FakeAccurateBlockPlacement {
 				request(fy, fp, lookRefdir, LitematicaMixinMod.FAKE_ROTATION_TICKS.getIntegerValue(), false);
 				pickFirst(blockState, blockPos);
 				waitingQueue.offer(new PosWithBlock(blockPos, blockState));
-				return true;
+				return false;
 			}
 		}
 		return false;
@@ -398,15 +400,16 @@ public class FakeAccurateBlockPlacement {
 	 * @param state : blockState with Facing, calculates if direction is correct and item is correct for given state
 	 * @return : can place or not
 	 */
-	public static boolean canPlace(BlockState state) {
+	public static boolean canPlace(BlockState state, BlockPos pos) {
 		if (!FAKE_ROTATION_BETA.getBooleanValue()) {
 			return true;
 		}
-		if (canHandleOther(state.getBlock().asItem())) {
+		if (canHandleOther(MaterialCache.getInstance().getRequiredBuildItemForState(state, SchematicWorldHandler.getSchematicWorld(), pos).getItem())) {
 			if (state.isOf(Blocks.GRINDSTONE)) {
 				if (stateGrindStone != null) {
 					return stateGrindStone.get(GrindstoneBlock.FACE) == state.get(GrindstoneBlock.FACE) && stateGrindStone.get(GrindstoneBlock.FACING) == state.get(GrindstoneBlock.FACING);
 				}
+				return false;
 			} else if (handlingState != null && (handlingState.getBlock() instanceof FacingBlock || handlingState.getBlock() instanceof HorizontalFacingBlock && !(handlingState.getBlock() instanceof WallMountedBlock))) {
 				Direction handling = fi.dy.masa.malilib.util.BlockUtils.getFirstPropertyFacingValue(handlingState);
 				Direction other = fi.dy.masa.malilib.util.BlockUtils.getFirstPropertyFacingValue(state);
@@ -448,7 +451,8 @@ public class FakeAccurateBlockPlacement {
 			appliedHitVec = Vec3d.ofCenter(pos); //follows player looking
 		}
 		BlockHitResult blockHitResult = new BlockHitResult(appliedHitVec, side, pos, true);
-		if (blockState.getBlock().asItem() == currentHandling && Printer.doSchematicWorldPickBlock(minecraftClient, blockState, pos)) {
+		ItemStack pickedItem = MaterialCache.getInstance().getRequiredBuildItemForState(blockState, SchematicWorldHandler.getSchematicWorld(), pos);
+		if (pickedItem.getItem() == currentHandling && Printer.doSchematicWorldPickBlock(minecraftClient, blockState, pos)) {
 			MessageHolder.sendDebugMessage(player, "Placing " + blockState.getBlock().getTranslationKey() + " at " + pos.toShortString() + " facing : " + fi.dy.masa.malilib.util.BlockUtils.getFirstPropertyFacingValue(blockState));
 			MessageHolder.sendDebugMessage(player, "Player facing is set to : " + fakeDirection + " Yaw : " + fakeYaw + " Pitch : " + fakePitch + " ticks : " + requestedTicks + " for pos " + pos.toShortString());
 			interactionManager.interactBlock(player, Hand.MAIN_HAND, blockHitResult);
@@ -460,13 +464,13 @@ public class FakeAccurateBlockPlacement {
 			Printer.cacheEasyPlacePosition(pos, false);
 			return true;
 		}
-		MessageHolder.sendDebugMessage("Handling placeBlock failed due to pickBlock assertion failure" + pos.toShortString());
+		MessageHolder.sendDebugMessage("Handling placeBlock failed due to pickBlock assertion failure" + pos.toShortString() + " wanted item :" + pickedItem.getItem() + " current handling : " + currentHandling.asItem());
 		return false;
 	}
 
 	private static void pickFirst(BlockState blockState, BlockPos pos) {
 		final MinecraftClient minecraftClient = MinecraftClient.getInstance();
-		currentHandling = blockState.getBlock().asItem();
+		currentHandling = MaterialCache.getInstance().getRequiredBuildItemForState(blockState, SchematicWorldHandler.getSchematicWorld(), pos).getItem();
 		handlingState = blockState;
 		requestedTicks = 0;
 		Printer.doSchematicWorldPickBlock(minecraftClient, blockState, pos);
