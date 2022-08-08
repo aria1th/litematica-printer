@@ -2,7 +2,7 @@
 
 ## Setup
 
-This mod requires Fabric with Litematica, Malilib, Fabric API. Install MultiMC and Fabric, for previous versions, use MultiConnect.
+This mod requires **Fabric with Litematica, Malilib, Fabric API. Install MultiMC and Fabric API**, for previous versions, use **MultiConnect**.
 
 Now it can place directional blocks in vanilla server with "Fake Rotation", or faster with "accurateBlockPlacement" with carpet-extra on server.
 
