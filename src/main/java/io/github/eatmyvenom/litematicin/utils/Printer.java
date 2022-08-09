@@ -841,17 +841,16 @@ public class Printer {
 								& 15) != stateSchematic.get(SignBlock.ROTATION)) {
 								continue;
 							}
-
 						}
-
 						Direction sideOrig = Direction.NORTH;
 						BlockPos npos = pos;
 						Direction side = applyPlacementFacing(stateSchematic, sideOrig, stateClient);
 						Block blockSchematic = stateSchematic.getBlock();
 						//Don't place waterlogged block's original block before fluid since its painful
 						// 1. if
-						if (PRINTER_PLACE_ICE.getBooleanValue() && (isReplaceableWaterFluidSource(stateSchematic) && stateClient.getMaterial().isReplaceable() && !isReplaceableWaterFluidSource(stateClient) && !stateClient.isOf(Blocks.LAVA) ||
-							stateClient.getMaterial().isReplaceable() && containsWaterloggable(stateSchematic))
+						if (PRINTER_PLACE_ICE.getBooleanValue() &&
+							(isReplaceableWaterFluidSource(stateSchematic) && stateClient.getMaterial().isReplaceable() && !isReplaceableWaterFluidSource(stateClient) && !stateClient.isOf(Blocks.LAVA) ||
+								PRINTER_WATERLOGGED_WATER_FIRST.getBooleanValue() && stateClient.getMaterial().isReplaceable() && containsWaterloggable(stateSchematic))
 						) {
 							ItemStack iceStack = Items.ICE.getDefaultStack();
 							if (!FakeAccurateBlockPlacement.canHandleOther(iceStack.getItem())) {
@@ -868,6 +867,7 @@ public class Printer {
 							} //ICE
 							else {
 								recordCause(pos, "Can't pick item " + Items.ICE.getTranslationKey() + " at " + pos.toShortString());
+								continue;
 							}
 						}
 						if (!canPickBlock(mc, stateSchematic, pos)) {
@@ -960,7 +960,7 @@ public class Printer {
 									if (blockSchematic instanceof WallTorchBlock || blockSchematic instanceof WallRedstoneTorchBlock) {
 										MessageHolder.sendDebugMessage(mc.player, "placing wall torch clicking " + npos.toShortString() + " torch facing : " + stateSchematic.get(WallTorchBlock.FACING).toString());
 										Vec3d hitVec = Vec3d.ofCenter(npos).add(Vec3d.of(stateSchematic.get(WallTorchBlock.FACING).getVector()).multiply(0.5));
-										if (!stateSchematic.get(RedstoneTorchBlock.LIT)) {
+										if (stateSchematic.contains(RedstoneTorchBlock.LIT) && !stateSchematic.get(RedstoneTorchBlock.LIT)) {
 											cacheEasyPlacePosition(pos.up(), false, 700);
 										}
 										Direction required = stateSchematic.get(WallTorchBlock.FACING);
@@ -1780,8 +1780,7 @@ public class Printer {
 	}
 
 	private static boolean isReplaceableWaterFluidSource(BlockState checkState) {
-		return checkState.getBlock() instanceof FluidBlock && checkState.get(FluidBlock.LEVEL) == 0 && checkState.getFluidState().getFluid() instanceof WaterFluid ||
-			checkState.isOf(Blocks.SEAGRASS) || checkState.isOf(Blocks.TALL_SEAGRASS) ||
+		return checkState.isOf(Blocks.SEAGRASS) || checkState.isOf(Blocks.TALL_SEAGRASS) ||
 			checkState.getFluidState().getFluid() instanceof WaterFluid && checkState.contains(FluidBlock.LEVEL) && checkState.get(FluidBlock.LEVEL) == 0 ||
 			checkState.getBlock() instanceof BubbleColumnBlock ||
 			checkState.getBlock() instanceof Waterloggable && checkState.contains(Properties.WATERLOGGED) && checkState.get(Properties.WATERLOGGED) && checkState.getMaterial().isReplaceable();
