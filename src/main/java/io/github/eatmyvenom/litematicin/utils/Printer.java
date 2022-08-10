@@ -891,6 +891,7 @@ public class Printer {
 							interact++;
 							continue;
 						}
+						int miliseconds = EASY_PLACE_CACHE_TIME.getIntegerValue();
 						if (blockSchematic instanceof WallMountedBlock || blockSchematic instanceof TorchBlock || blockSchematic instanceof WallSkullBlock
 							|| blockSchematic instanceof LadderBlock
 							|| blockSchematic instanceof TripwireHookBlock || blockSchematic instanceof WallSignBlock ||
@@ -961,14 +962,14 @@ public class Printer {
 										MessageHolder.sendDebugMessage(mc.player, "placing wall torch clicking " + npos.toShortString() + " torch facing : " + stateSchematic.get(WallTorchBlock.FACING).toString());
 										Vec3d hitVec = Vec3d.ofCenter(npos).add(Vec3d.of(stateSchematic.get(WallTorchBlock.FACING).getVector()).multiply(0.5));
 										if (stateSchematic.contains(RedstoneTorchBlock.LIT) && !stateSchematic.get(RedstoneTorchBlock.LIT)) {
-											cacheEasyPlacePosition(pos.up(), false, 700);
+											cacheEasyPlacePosition(pos.up(), false, miliseconds);
 										}
 										Direction required = stateSchematic.get(WallTorchBlock.FACING);
 										if (doSchematicWorldPickBlock(mc, stateSchematic, pos)) {
 											cacheEasyPlacePosition(pos, false);
 											interact++;
 											if (stateSchematic.contains(RedstoneTorchBlock.LIT) && !stateSchematic.get(RedstoneTorchBlock.LIT)) {
-												cacheEasyPlacePosition(pos.up(), false, 700);
+												cacheEasyPlacePosition(pos.up(), false, miliseconds);
 											}
 											mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, new BlockHitResult(hitVec, required, npos, false)); //place block
 											if (sleepWhenRequired(mc)) {
@@ -986,7 +987,7 @@ public class Printer {
 										cacheEasyPlacePosition(pos, false);
 										interact++;
 										if (stateSchematic.contains(RedstoneTorchBlock.LIT) && !stateSchematic.get(RedstoneTorchBlock.LIT)) {
-											cacheEasyPlacePosition(pos.up(), false, 700);
+											cacheEasyPlacePosition(pos.up(), false, miliseconds);
 										}
 										mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, new BlockHitResult(hitVec, Direction.UP, npos, false)); //place block
 										if (sleepWhenRequired(mc)) {
@@ -1367,7 +1368,7 @@ public class Printer {
 	}
 
 	private static boolean sleepWhenRequired(MinecraftClient mc) {
-		if (SLEEP_AFTER_CONSUME.getIntegerValue() > 0 && mc.player.getMainHandStack().isEmpty()) {
+		if (SLEEP_AFTER_CONSUME.getIntegerValue() > 0 && (mc.player.getMainHandStack().isEmpty() || io.github.eatmyvenom.litematicin.utils.InventoryUtils.lastCount == 1)) {
 			lastPlaced = new Date().getTime() + SLEEP_AFTER_CONSUME.getIntegerValue();
 			MessageHolder.sendUniqueMessageActionBar(mc.player, "Sleeping because stack is emptied!");
 			return true;
@@ -2115,7 +2116,7 @@ public class Printer {
 	}
 
 	public static void cacheEasyPlacePosition(BlockPos pos, boolean useClicked) {
-		PositionCache item = new PositionCache(pos, System.nanoTime(), useClicked ? 1000000000L : 1800000000L);
+		PositionCache item = new PositionCache(pos, System.nanoTime(), useClicked ? EASY_PLACE_CACHE_TIME.getIntegerValue() * 1000000L : 2800000000L);
 		// TODO: Create a separate cache for clickable items, as this just makes
 		// duplicates
 		if (useClicked) {

@@ -19,6 +19,7 @@ public class LitematicaMixinMod implements ModInitializer {
 	public static final ConfigBoolean DEBUG_EXTRA_MESSAGE = new ConfigBoolean("ShowDebugExtraMessages", false, "Show Debugs for block placement and fake rotations");
 	public static final ConfigBoolean DISABLE_SINGLEPLAYER_HANDLE = new ConfigBoolean("disableSingleplayerPlacementHandling", true, "Disables handling for fake rotations block state adjustment");
 	public static final ConfigInteger SLEEP_AFTER_CONSUME = new ConfigInteger("printerSleepStackEmptied", 200, 0, 8000, "Sleeps after stack is emptied (ms)");
+	public static final ConfigInteger EASY_PLACE_CACHE_TIME = new ConfigInteger("easyPlaceCacheMs", 1000, 200, 5000, "Cache time for Easyplace");
 	public static final ConfigInteger EASY_PLACE_MODE_RANGE_X = new ConfigInteger("easyPlaceModePrinterRangeX", 3, 0, 1024, "X Range for EasyPlace");
 	public static final ConfigInteger EASY_PLACE_MODE_RANGE_Y = new ConfigInteger("easyPlaceModePrinterRangeY", 3, 0, 1024, "Y Range for EasyPlace");
 	public static final ConfigInteger EASY_PLACE_MODE_RANGE_Z = new ConfigInteger("easyPlaceModePrinterRangeZ", 3, 0, 1024, "Z Range for EasyPlace");
@@ -54,6 +55,7 @@ public class LitematicaMixinMod implements ModInitializer {
 		EASY_PLACE_MODE_RANGE_X,
 		EASY_PLACE_MODE_RANGE_Y,
 		EASY_PLACE_MODE_RANGE_Z,
+		EASY_PLACE_CACHE_TIME,
 		PRINTER_MAX_BLOCKS,
 		PRINTER_MAX_ITEM_CHANGES,
 		PRINTER_BREAK_BLOCKS,
