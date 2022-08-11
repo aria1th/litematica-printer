@@ -25,6 +25,10 @@ public class WorldUtilsMixin {
 		cancellable = true
 	)
 	private static void onDoEasyPlaceAction(MinecraftClient mc, CallbackInfoReturnable<ActionResult> cir) {
+		if (mc.player == null) {
+			return;
+		}
+		mc.player.playerScreenHandler.disableSyncing();
 		ActionResult defaultResult = ActionResult.SUCCESS;
 		try {
 			defaultResult = Printer.doPrinterAction(mc);
@@ -37,8 +41,10 @@ public class WorldUtilsMixin {
 			}
 		} catch (AssertionError e) {
 			MessageHolder.sendOrderMessage("Order error happened " + e.getMessage());
+			mc.player.playerScreenHandler.enableSyncing();
 			cir.setReturnValue(ActionResult.FAIL);
 		}
+		mc.player.playerScreenHandler.enableSyncing();
 		cir.setReturnValue(defaultResult);
 		//return defaultResult;
 	}
