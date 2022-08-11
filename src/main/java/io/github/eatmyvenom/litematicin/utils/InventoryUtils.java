@@ -23,6 +23,10 @@ public class InventoryUtils {
 	public static int itemChangeCount = 0;
 	public static Item handlingItem = null;
 
+	public static ItemStack getMainHandStack(ClientPlayerEntity player) {
+		return player.getInventory().main.get(player.getInventory().selectedSlot);
+	}
+
 	public static boolean areItemsExact(ItemStack a, ItemStack b) {
 		return ItemStack.areItemsEqual(a, b) && ItemStack.areNbtEqual(a, b);
 	}
@@ -52,7 +56,7 @@ public class InventoryUtils {
 	}
 
 	public static boolean requiresSwap(ClientPlayerEntity player, ItemStack stack) {
-		return !areItemsExact(player.getMainHandStack(), stack);
+		return !areItemsExact(getMainHandStack(player), stack);
 	}
 
 	public static boolean canSwap(ClientPlayerEntity player, ItemStack stack) {
@@ -63,8 +67,8 @@ public class InventoryUtils {
 		return slotNum != -1 && areItemsExact(player.getInventory().getStack(slotNum), stack);
 	}
 
-	public static boolean swapToItem(MinecraftClient client, ItemStack stack) {
-		final ClientPlayerEntity player = client.player;
+	synchronized public static boolean swapToItem(MinecraftClient client, ItemStack stack) {
+		ClientPlayerEntity player = client.player;
 		if (player == null || client.interactionManager == null) {
 			return false;
 		}
@@ -72,12 +76,18 @@ public class InventoryUtils {
 			if (itemChangeCount > LitematicaMixinMod.PRINTER_MAX_ITEM_CHANGES.getIntegerValue()) {
 				return false;
 			}
+		} else {
+			lastCount--;
 		}
 		if (!requiresSwap(client.player, stack)) {
-			lastCount = client.player.getMainHandStack().getCount();
+			assert handlingItem == stack.getItem() : "Handling item :  " + handlingItem + " was not equal to " + stack.getItem();
+			MessageHolder.sendOrderMessage("Didn't require swap for item " + stack.getItem());
+			handlingItem = stack.getItem();
+			lastCount = getMainHandStack(player).getCount();
 			return true;
 		}
 		if (survivalSwap(client, player, stack)) {
+			MessageHolder.sendOrderMessage("Swapped to item " + stack.getItem());
 			handlingItem = stack.getItem();
 			itemChangeCount++;
 			return true;
@@ -95,7 +105,7 @@ public class InventoryUtils {
 			return false;
 		}
 		player.getInventory().addPickBlock(stack);
-		client.interactionManager.clickCreativeStack(player.getMainHandStack(), 36 + player.getInventory().selectedSlot);
+		client.interactionManager.clickCreativeStack(getMainHandStack(player), 36 + player.getInventory().selectedSlot);
 		lastCount = 64;
 		handlingItem = stack.getItem();
 		itemChangeCount++;
@@ -107,7 +117,7 @@ public class InventoryUtils {
 		if (!canSwap(player, stack)) {
 			return false;
 		}
-		if (areItemsExact(player.getOffHandStack(), stack) && !areItemsExact(player.getMainHandStack(), stack)) {
+		if (areItemsExact(player.getOffHandStack(), stack) && !areItemsExact(getMainHandStack(player), stack)) {
 			lastCount = client.player.getOffHandStack().getCount();
 			client.getNetworkHandler().sendPacket(new PlayerActionC2SPacket(net.minecraft.network.packet.c2s.play.PlayerActionC2SPacket.Action.SWAP_ITEM_WITH_OFFHAND, BlockPos.ORIGIN, Direction.DOWN));
 			return true;
@@ -125,7 +135,7 @@ public class InventoryUtils {
 			client.interactionManager.clickSlot(player.playerScreenHandler.syncId, slot, selectedSlot, SlotActionType.SWAP, player);
 		}
 		try {
-			assert player.getMainHandStack().isItemEqual(stack);
+			assert getMainHandStack(player).isItemEqual(stack);
 		} catch (Exception e) {
 			MessageHolder.sendMessageUncheckedUnique(player, stack.toString() + " does not match with " + player.getMainHandStack().toString() + "!");
 		}

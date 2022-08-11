@@ -6,8 +6,7 @@ import net.minecraft.text.Text;
 
 import java.util.HashSet;
 
-import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.DEBUG_EXTRA_MESSAGE;
-import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.DEBUG_MESSAGE;
+import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.*;
 
 public class MessageHolder {
 	private static final HashSet<String> uniqueStrings = new HashSet<>();
@@ -22,6 +21,13 @@ public class MessageHolder {
 	public static void sendDebugMessage(String string) {
 		ClientPlayerEntity player = MinecraftClient.getInstance().player;
 		if (DEBUG_EXTRA_MESSAGE.getBooleanValue()) {
+			player.sendMessage(Text.of(string));
+		}
+	}
+
+	public static void sendOrderMessage(String string) {
+		ClientPlayerEntity player = MinecraftClient.getInstance().player;
+		if (DEBUG_ORDER_PLACEMENTS.getBooleanValue()) {
 			player.sendMessage(Text.of(string));
 		}
 	}

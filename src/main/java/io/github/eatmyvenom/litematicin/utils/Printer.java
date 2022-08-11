@@ -140,8 +140,7 @@ public class Printer {
 	}
 
 	@Environment(EnvType.CLIENT)
-	public static boolean doSchematicWorldPickBlock(MinecraftClient mc, BlockState preference) {
-		ItemStack stack = preference.getBlock().asItem().getDefaultStack();
+	public static boolean doSchematicWorldPickBlock(MinecraftClient mc, ItemStack stack) {
 		if (!FakeAccurateBlockPlacement.canHandleOther(stack.getItem())) {
 			return false;
 		}
@@ -660,11 +659,6 @@ public class Printer {
 						} else {
 							continue;
 						}
-					} else if (sBlock instanceof NetherPortalBlock) {
-						stack = Items.FIRE_CHARGE.getDefaultStack();
-						if (mc.player.getInventory().getSlotWithStack(stack) == -1) {
-							stack = Items.FLINT_AND_STEEL.getDefaultStack();
-						}
 					}
 					if (ClearArea) {
 						Hand hand = Hand.MAIN_HAND;
@@ -787,8 +781,8 @@ public class Printer {
 						}
 						if (sBlock instanceof NetherPortalBlock && !sBlock.getName().equals(cBlock.getName())) {
 							ItemStack lightStack = Items.FIRE_CHARGE.getDefaultStack();
-							if (!FakeAccurateBlockPlacement.canHandleOther(lightStack.getItem())) {
-								continue;
+							if (mc.player.getInventory().getSlotWithStack(lightStack) == -1) {
+								lightStack = Items.FLINT_AND_STEEL.getDefaultStack();
 							}
 							Hand hand = Hand.MAIN_HAND;
 							BlockPos offsetPos = new BlockPos(x, y - 1, z);
@@ -797,7 +791,7 @@ public class Printer {
 							if (mc.player.getInventory().getSlotWithStack(lightStack) == -1 || offsetStateClient.isAir() || (!offsetStateClient.getBlock().getName().equals(offsetStateSchematic.getBlock().getName()))) {
 								continue;
 							}
-							if (io.github.eatmyvenom.litematicin.utils.InventoryUtils.swapToItem(mc, lightStack)) {
+							if (doSchematicWorldPickBlock(mc, lightStack)) {
 								Vec3d hitPos = new Vec3d(0.5, 0.5, 0.5);
 								BlockHitResult hitResult = new BlockHitResult(hitPos, Direction.DOWN, new BlockPos(x, y + 1, z), false);
 								mc.interactionManager.interactBlock(mc.player, hand, hitResult); //LIGHT

@@ -17,6 +17,7 @@ public class LitematicaMixinMod implements ModInitializer {
 	public static final ConfigBoolean INVENTORY_OPERATIONS_FILTER_ALLOW_NAMED = new ConfigBoolean("printerInventoryOperationAllowAllNamed", false, "Filter items can be replaced with named items with same stack size");
 	public static final ConfigBoolean DEBUG_MESSAGE = new ConfigBoolean("ShowDebugMessages", false, "Show Debugs and Reasons for block place failure");
 	public static final ConfigBoolean DEBUG_EXTRA_MESSAGE = new ConfigBoolean("ShowDebugExtraMessages", false, "Show Debugs for block placement and fake rotations");
+	public static final ConfigBoolean DEBUG_ORDER_PLACEMENTS = new ConfigBoolean("ShowDebugAndOrders", false, "Show Debugs for block picking / orders");
 	public static final ConfigBoolean DISABLE_SINGLEPLAYER_HANDLE = new ConfigBoolean("disableSingleplayerPlacementHandling", true, "Disables handling for fake rotations block state adjustment");
 	public static final ConfigInteger SLEEP_AFTER_CONSUME = new ConfigInteger("printerSleepStackEmptied", 200, 0, 8000, "Sleeps after stack is emptied (ms)");
 	public static final ConfigInteger EASY_PLACE_CACHE_TIME = new ConfigInteger("easyPlaceCacheMs", 1000, 200, 5000, "Cache time for Easyplace");
@@ -50,6 +51,7 @@ public class LitematicaMixinMod implements ModInitializer {
 	public static final ImmutableList<IConfigBase> betterList = originalList.addAll(ImmutableList.of(
 		DEBUG_MESSAGE,
 		DEBUG_EXTRA_MESSAGE,
+		DEBUG_ORDER_PLACEMENTS,
 		DISABLE_SINGLEPLAYER_HANDLE,
 		SLEEP_AFTER_CONSUME,
 		EASY_PLACE_MODE_RANGE_X,

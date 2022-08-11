@@ -35,6 +35,9 @@ public class WorldUtilsMixin {
 				mc.player.sendMessage(Text.of("Null pointer exception has occured, please upload log at https://github.com/aria1th/litematica-printer/issues"));
 				hasSent = true;
 			}
+		} catch (AssertionError e) {
+			MessageHolder.sendOrderMessage("Order error happened " + e.getMessage());
+			cir.setReturnValue(ActionResult.FAIL);
 		}
 		cir.setReturnValue(defaultResult);
 		//return defaultResult;

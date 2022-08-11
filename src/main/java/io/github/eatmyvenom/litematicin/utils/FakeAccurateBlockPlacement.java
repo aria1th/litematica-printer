@@ -445,6 +445,8 @@ public class FakeAccurateBlockPlacement {
 		BlockHitResult blockHitResult = new BlockHitResult(appliedHitVec, side, pos, true);
 		ItemStack pickedItem = MaterialCache.getInstance().getRequiredBuildItemForState(blockState, SchematicWorldHandler.getSchematicWorld(), pos);
 		if (pickedItem.getItem() == currentHandling && Printer.doSchematicWorldPickBlock(minecraftClient, blockState, pos)) {
+			MessageHolder.sendOrderMessage("Placing " + blockState.getBlock().getTranslationKey() + " at " + pos.toShortString() + " stack at hand is " + player.getMainHandStack());
+
 			MessageHolder.sendDebugMessage(player, "Placing " + blockState.getBlock().getTranslationKey() + " at " + pos.toShortString() + " facing : " + fi.dy.masa.malilib.util.BlockUtils.getFirstPropertyFacingValue(blockState));
 			MessageHolder.sendDebugMessage(player, "Player facing is set to : " + fakeDirection + " Yaw : " + fakeYaw + " Pitch : " + fakePitch + " ticks : " + requestedTicks + " for pos " + pos.toShortString());
 			interactionManager.interactBlock(player, Hand.MAIN_HAND, blockHitResult);
@@ -462,10 +464,13 @@ public class FakeAccurateBlockPlacement {
 
 	private static boolean pickFirst(BlockState blockState, BlockPos pos) {
 		final MinecraftClient minecraftClient = MinecraftClient.getInstance();
-		currentHandling = MaterialCache.getInstance().getRequiredBuildItemForState(blockState, SchematicWorldHandler.getSchematicWorld(), pos).getItem();
-		handlingState = blockState;
-		requestedTicks = 0;
-		return Printer.doSchematicWorldPickBlock(minecraftClient, blockState, pos);
+		if (Printer.doSchematicWorldPickBlock(minecraftClient, blockState, pos)) {
+			currentHandling = MaterialCache.getInstance().getRequiredBuildItemForState(blockState, SchematicWorldHandler.getSchematicWorld(), pos).getItem();
+			handlingState = blockState;
+			requestedTicks = 0;
+			return true;
+		}
+		return false;
 	}
 
 	// we just record pos + block and put in queue.
