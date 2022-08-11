@@ -271,7 +271,7 @@ public class FakeAccurateBlockPlacement {
 	 * @return boolean : if its registered and just can place it.
 	 * example : boolean canContinue = FakeAccurateBlockPlacement.request(SchematicState, BlockPos)
 	 */
-	public static boolean request(BlockState blockState, BlockPos blockPos) {
+	synchronized public static boolean request(BlockState blockState, BlockPos blockPos) {
 		// instant
 		if (!canPlace(blockState, blockPos) || blockState.isAir() || MaterialCache.getInstance().getRequiredBuildItemForState(blockState, SchematicWorldHandler.getSchematicWorld(), blockPos).getItem() == Items.AIR) {
 			return false;
@@ -409,7 +409,7 @@ public class FakeAccurateBlockPlacement {
 		return false;
 	}
 
-	private static boolean placeBlock(BlockPos pos, BlockState blockState) {
+	synchronized private static boolean placeBlock(BlockPos pos, BlockState blockState) {
 		if (!pickFirst(blockState, pos)) {
 			return false;
 		}
@@ -450,6 +450,7 @@ public class FakeAccurateBlockPlacement {
 			MessageHolder.sendDebugMessage(player, "Placing " + blockState.getBlock().getTranslationKey() + " at " + pos.toShortString() + " facing : " + fi.dy.masa.malilib.util.BlockUtils.getFirstPropertyFacingValue(blockState));
 			MessageHolder.sendDebugMessage(player, "Player facing is set to : " + fakeDirection + " Yaw : " + fakeYaw + " Pitch : " + fakePitch + " ticks : " + requestedTicks + " for pos " + pos.toShortString());
 			interactionManager.interactBlock(player, Hand.MAIN_HAND, blockHitResult);
+			InventoryUtils.decrementCount();
 			blockPlacedInTick++;
 			if (player.getMainHandStack().isEmpty()) {
 				shouldReturnValue = true;

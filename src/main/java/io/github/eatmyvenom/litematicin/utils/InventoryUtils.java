@@ -22,6 +22,13 @@ public class InventoryUtils {
 	public static int lastCount = 0;
 	public static int itemChangeCount = 0;
 	public static Item handlingItem = null;
+	public static Item previousItem = null; //only used for checks
+
+	public static void decrementCount() {
+		if (lastCount > 0) {
+			lastCount--;
+		}
+	}
 
 	public static ItemStack getMainHandStack(ClientPlayerEntity player) {
 		return player.getInventory().main.get(player.getInventory().selectedSlot);
@@ -56,7 +63,7 @@ public class InventoryUtils {
 	}
 
 	public static boolean requiresSwap(ClientPlayerEntity player, ItemStack stack) {
-		return !areItemsExact(getMainHandStack(player), stack);
+		return previousItem == null || lastCount == 0 ? !areItemsExact(getMainHandStack(player), stack) : !areItemsExact(previousItem.getDefaultStack(), stack);
 	}
 
 	public static boolean canSwap(ClientPlayerEntity player, ItemStack stack) {
@@ -72,23 +79,22 @@ public class InventoryUtils {
 		if (player == null || client.interactionManager == null) {
 			return false;
 		}
+		player.getInventory().updateItems();
 		if (stack.getItem() != handlingItem) {
 			if (itemChangeCount > LitematicaMixinMod.PRINTER_MAX_ITEM_CHANGES.getIntegerValue()) {
 				return false;
 			}
-		} else {
-			lastCount--;
 		}
 		if (!requiresSwap(client.player, stack)) {
-			assert handlingItem == stack.getItem() : "Handling item :  " + handlingItem + " was not equal to " + stack.getItem();
-			MessageHolder.sendOrderMessage("Didn't require swap for item " + stack.getItem());
-			handlingItem = stack.getItem();
+			assert previousItem == stack.getItem() : "Handling item :  " + handlingItem + " was not equal to " + stack.getItem();
+			MessageHolder.sendOrderMessage("Didn't require swap for item " + stack.getItem() + " previous handling item : " + previousItem);
 			lastCount = getMainHandStack(player).getCount();
 			return true;
 		}
 		if (survivalSwap(client, player, stack)) {
 			MessageHolder.sendOrderMessage("Swapped to item " + stack.getItem());
 			handlingItem = stack.getItem();
+			previousItem = handlingItem;
 			itemChangeCount++;
 			return true;
 		}
@@ -108,6 +114,7 @@ public class InventoryUtils {
 		client.interactionManager.clickCreativeStack(getMainHandStack(player), 36 + player.getInventory().selectedSlot);
 		lastCount = 64;
 		handlingItem = stack.getItem();
+		previousItem = handlingItem;
 		itemChangeCount++;
 		return true;
 	}
@@ -132,6 +139,7 @@ public class InventoryUtils {
 			//client.getNetworkHandler().sendPacket(new UpdateSelectedSlotC2SPacket(slot));
 		} else {
 			int selectedSlot = player.getInventory().selectedSlot;
+			MessageHolder.sendOrderMessage("Slot at " + slot + " is swapped with " + selectedSlot);
 			client.interactionManager.clickSlot(player.playerScreenHandler.syncId, slot, selectedSlot, SlotActionType.SWAP, player);
 		}
 		try {

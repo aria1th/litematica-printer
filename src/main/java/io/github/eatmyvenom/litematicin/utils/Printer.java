@@ -126,8 +126,8 @@ public class Printer {
 	 * New doSchematicWorldPickBlock that allows you to choose which block you want
 	 */
 	@Environment(EnvType.CLIENT)
-	public static boolean doSchematicWorldPickBlock(MinecraftClient mc, BlockState preference,
-	                                                BlockPos pos) {
+	synchronized public static boolean doSchematicWorldPickBlock(MinecraftClient mc, BlockState preference,
+	                                                             BlockPos pos) {
 		World world = SchematicWorldHandler.getSchematicWorld();
 		ItemStack stack = MaterialCache.getInstance().getRequiredBuildItemForState(preference, world, pos);
 		if (!FakeAccurateBlockPlacement.canHandleOther(stack.getItem())) {
@@ -140,7 +140,7 @@ public class Printer {
 	}
 
 	@Environment(EnvType.CLIENT)
-	public static boolean doSchematicWorldPickBlock(MinecraftClient mc, ItemStack stack) {
+	synchronized public static boolean doSchematicWorldPickBlock(MinecraftClient mc, ItemStack stack) {
 		if (!FakeAccurateBlockPlacement.canHandleOther(stack.getItem())) {
 			return false;
 		}
@@ -238,7 +238,7 @@ public class Printer {
 	}
 
 	@Environment(EnvType.CLIENT)
-	public static ActionResult doPrinterAction(MinecraftClient mc) {
+	synchronized public static ActionResult doPrinterAction(MinecraftClient mc) {
 		io.github.eatmyvenom.litematicin.utils.InventoryUtils.itemChangeCount = 0;
 		io.github.eatmyvenom.litematicin.utils.InventoryUtils.handlingItem = null;
 		if (!DEBUG_MESSAGE.getBooleanValue()) {
@@ -556,6 +556,7 @@ public class Printer {
 												Vec3d hitPos = new Vec3d(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5);
 												BlockHitResult hitResult = new BlockHitResult(hitPos, side, pos, false);
 												mc.interactionManager.interactBlock(mc.player, hand, hitResult); //COMPOSTER
+												io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount();
 												cacheEasyPlacePosition(pos, false);
 												lastPlaced = new Date().getTime() + 200;
 												return ActionResult.SUCCESS;
@@ -666,6 +667,7 @@ public class Printer {
 							Vec3d hitPos = new Vec3d(0.5, 0.5, 0.5);
 							BlockHitResult hitResult = new BlockHitResult(hitPos, Direction.UP, pos, false);
 							mc.interactionManager.interactBlock(mc.player, hand, hitResult); //FLUID REMOVAL
+							io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount();
 							cacheEasyPlacePosition(pos, false);
 							if (sleepWhenRequired(mc)) {
 								return ActionResult.SUCCESS;
@@ -852,6 +854,7 @@ public class Printer {
 							}
 							if (io.github.eatmyvenom.litematicin.utils.InventoryUtils.swapToItem(mc, iceStack)) {
 								mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, new BlockHitResult(new Vec3d(pos.getX(), pos.getY(), pos.getZ()), Direction.DOWN, pos, false));
+								io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount();
 								cacheEasyPlacePosition(pos, false);
 								if (sleepWhenRequired(mc)) {
 									return ActionResult.SUCCESS;
@@ -966,6 +969,7 @@ public class Printer {
 												cacheEasyPlacePosition(pos.up(), false, miliseconds);
 											}
 											mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, new BlockHitResult(hitVec, required, npos, false)); //place block
+											io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount();
 											if (sleepWhenRequired(mc)) {
 												return ActionResult.SUCCESS;
 											}
@@ -984,6 +988,7 @@ public class Printer {
 											cacheEasyPlacePosition(pos.up(), false, miliseconds);
 										}
 										mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, new BlockHitResult(hitVec, Direction.UP, npos, false)); //place block
+										io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount();
 										if (sleepWhenRequired(mc)) {
 											return ActionResult.SUCCESS;
 										}
@@ -1000,6 +1005,7 @@ public class Printer {
 											cacheEasyPlacePosition(pos.up(), false, 700);
 										}
 										mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, new BlockHitResult(hitVec, required, npos, false)); //place block
+										io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount();
 										if (sleepWhenRequired(mc)) {
 											return ActionResult.SUCCESS;
 										}
@@ -1013,6 +1019,7 @@ public class Printer {
 										cacheEasyPlacePosition(pos, false);
 										mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, new BlockHitResult(Vec3d.of(pos),
 											stateSchematic.get(TrapdoorBlock.FACING).getOpposite(), pos, false)); //place block
+										io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount();
 										if (sleepWhenRequired(mc)) {
 											return ActionResult.SUCCESS;
 										}
@@ -1027,6 +1034,7 @@ public class Printer {
 										cacheEasyPlacePosition(pos, false);
 										mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, new BlockHitResult(Vec3d.of(pos),
 											stateSchematic.get(GrindstoneBlock.FACING).getOpposite(), pos, false)); //place block
+										io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount();
 										if (sleepWhenRequired(mc)) {
 											return ActionResult.SUCCESS;
 										}
@@ -1040,6 +1048,7 @@ public class Printer {
 										cacheEasyPlacePosition(pos, false);
 										mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, new BlockHitResult(Vec3d.of(pos),
 											stateSchematic.get(EndRodBlock.FACING).getOpposite(), pos, false)); //place block
+										io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount();
 										interact++;
 										if (sleepWhenRequired(mc)) {
 											return ActionResult.SUCCESS;
@@ -1077,6 +1086,7 @@ public class Printer {
 									cacheEasyPlacePosition(pos, false);
 									interact++;
 									mc.interactionManager.interactBlock(mc.player, hand, hitResult); //SNOW LAYERS
+									io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount();
 									if (sleepWhenRequired(mc)) {
 										return ActionResult.SUCCESS;
 									}
@@ -1091,6 +1101,7 @@ public class Printer {
 						if (!FAKE_ROTATION_BETA.getBooleanValue() || ACCURATE_BLOCK_PLACEMENT.getBooleanValue()) { //Accurateblockplacement, or vanilla but no fake
 							if (doSchematicWorldPickBlock(mc, stateSchematic, pos)) {
 								mc.interactionManager.interactBlock(mc.player, hand, hitResult); //PLACE BLOCK
+								io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount();
 								cacheEasyPlacePosition(pos, false);
 								if (sleepWhenRequired(mc)) {
 									return ActionResult.SUCCESS;
@@ -1115,6 +1126,7 @@ public class Printer {
 								hitResult = new BlockHitResult(hitPos, side, npos, false);
 								if (doSchematicWorldPickBlock(mc, stateSchematic, pos)) {
 									mc.interactionManager.interactBlock(mc.player, hand, hitResult); //double slab
+									io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount();
 									cacheEasyPlacePosition(pos, false);
 									if (sleepWhenRequired(mc)) {
 										return ActionResult.SUCCESS;
@@ -1133,6 +1145,7 @@ public class Printer {
 								hitResult = new BlockHitResult(hitPos, side, npos, false);
 								if (doSchematicWorldPickBlock(mc, stateSchematic, pos)) {
 									mc.interactionManager.interactBlock(mc.player, hand, hitResult); //double slab
+									io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount();
 									cacheEasyPlacePosition(pos, false);
 									if (sleepWhenRequired(mc)) {
 										return ActionResult.SUCCESS;
