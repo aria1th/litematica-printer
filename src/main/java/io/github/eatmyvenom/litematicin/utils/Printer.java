@@ -573,7 +573,7 @@ public class Printer {
 									{
 										Hand hand = Hand.MAIN_HAND;
 
-										Vec3d hitPos = new Vec3d(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5);
+										Vec3d hitPos = Vec3d.ofCenter(pos);
 
 										BlockHitResult hitResult = new BlockHitResult(hitPos, side, pos, false);
 
@@ -618,7 +618,7 @@ public class Printer {
 								Direction side = Direction.UP;
 								if (ShapeBoolean) {
 									Hand hand = Hand.MAIN_HAND;
-									Vec3d hitPos = new Vec3d(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5);
+									Vec3d hitPos = Vec3d.ofCenter(pos);
 									BlockHitResult hitResult = new BlockHitResult(hitPos, side, pos, false);
 									mc.interactionManager.interactBlock(mc.player, hand, hitResult); //CACTUS
 									cacheEasyPlacePosition(pos, true);
@@ -664,7 +664,7 @@ public class Printer {
 					if (ClearArea) {
 						Hand hand = Hand.MAIN_HAND;
 						if (ClearArea && io.github.eatmyvenom.litematicin.utils.InventoryUtils.swapToItem(mc, stack)) {
-							Vec3d hitPos = new Vec3d(0.5, 0.5, 0.5);
+							Vec3d hitPos = Vec3d.ofCenter(pos).add(0, 0.5, 0);
 							BlockHitResult hitResult = new BlockHitResult(hitPos, Direction.UP, pos, false);
 							mc.interactionManager.interactBlock(mc.player, hand, hitResult); //FLUID REMOVAL
 							io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount();
@@ -794,8 +794,8 @@ public class Printer {
 								continue;
 							}
 							if (doSchematicWorldPickBlock(mc, lightStack)) {
-								Vec3d hitPos = new Vec3d(0.5, 0.5, 0.5);
-								BlockHitResult hitResult = new BlockHitResult(hitPos, Direction.DOWN, new BlockPos(x, y + 1, z), false);
+								Vec3d hitPos = Vec3d.ofCenter(new BlockPos(x, y - 1, z)).add(0, 0.5, 0);
+								BlockHitResult hitResult = new BlockHitResult(hitPos, Direction.UP, new BlockPos(x, y - 1, z), false);
 								mc.interactionManager.interactBlock(mc.player, hand, hitResult); //LIGHT
 								cacheEasyPlacePosition(pos, false);
 								if (sleepWhenRequired(mc)) {
@@ -814,7 +814,7 @@ public class Printer {
 						}
 						if (facing != null) {
 							FacingData facedata = FacingData.getFacingData(stateSchematic);
-							if (facedata == null && !simulateFacingData(stateSchematic, pos, new Vec3d(0.5, 0.5, 0.5)) && !(stateSchematic.getBlock() instanceof AbstractRailBlock)) {
+							if (facedata == null && !simulateFacingData(stateSchematic, pos, Vec3d.ofCenter(pos)) && !(stateSchematic.getBlock() instanceof AbstractRailBlock)) {
 								MessageHolder.sendMessageUncheckedUnique(mc.player, stateSchematic.getBlock() + " does not have facing data, please add this!");
 								//continue;
 							}
