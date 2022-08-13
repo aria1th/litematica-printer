@@ -25,7 +25,6 @@ import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.fluid.LavaFluid;
-import net.minecraft.fluid.WaterFluid;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.ItemPlacementContext;
 import net.minecraft.item.ItemStack;
@@ -89,7 +88,7 @@ public class Printer {
 
 	public static boolean canPickBlock(MinecraftClient mc, BlockState preference, BlockPos pos) {
 		World world = SchematicWorldHandler.getSchematicWorld();
-		ItemStack stack = MaterialCache.getInstance().getRequiredBuildItemForState(preference, world, pos);
+		ItemStack stack = preference.isOf(Blocks.WATER) && PRINTER_PLACE_ICE.getBooleanValue() ? Items.ICE.getDefaultStack() : MaterialCache.getInstance().getRequiredBuildItemForState(preference, world, pos);
 		if (!stack.isEmpty() && stack.getItem() != Items.AIR) {
 			PlayerInventory inv = mc.player.getInventory();
 			if (!mc.player.getAbilities().creativeMode) {
@@ -130,7 +129,7 @@ public class Printer {
 	synchronized public static boolean doSchematicWorldPickBlock(MinecraftClient mc, BlockState preference,
 	                                                             BlockPos pos) {
 		World world = SchematicWorldHandler.getSchematicWorld();
-		ItemStack stack = MaterialCache.getInstance().getRequiredBuildItemForState(preference, world, pos);
+		ItemStack stack = preference.isOf(Blocks.WATER) && PRINTER_PLACE_ICE.getBooleanValue() ? Items.ICE.getDefaultStack() : MaterialCache.getInstance().getRequiredBuildItemForState(preference, world, pos);
 		if (!FakeAccurateBlockPlacement.canHandleOther(stack.getItem())) {
 			return false;
 		}
@@ -1790,7 +1789,7 @@ public class Printer {
 
 	private static boolean isReplaceableWaterFluidSource(BlockState checkState) {
 		return checkState.isOf(Blocks.SEAGRASS) || checkState.isOf(Blocks.TALL_SEAGRASS) ||
-			checkState.getFluidState().getFluid() instanceof WaterFluid && checkState.contains(FluidBlock.LEVEL) && checkState.get(FluidBlock.LEVEL) == 0 ||
+			checkState.isOf(Blocks.WATER) && checkState.contains(FluidBlock.LEVEL) && checkState.get(FluidBlock.LEVEL) == 0 ||
 			checkState.getBlock() instanceof BubbleColumnBlock ||
 			checkState.getBlock() instanceof Waterloggable && checkState.contains(Properties.WATERLOGGED) && checkState.get(Properties.WATERLOGGED) && checkState.getMaterial().isReplaceable();
 	}
