@@ -1,12 +1,14 @@
 package io.github.eatmyvenom.litematicin.utils;
 
 import fi.dy.masa.litematica.world.SchematicWorldHandler;
-import fi.dy.masa.malilib.util.GuiUtils;
 import io.github.eatmyvenom.litematicin.LitematicaMixinMod;
 import net.minecraft.block.*;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.screen.ingame.*;
+import net.minecraft.client.gui.screen.ingame.Generic3x3ContainerScreen;
+import net.minecraft.client.gui.screen.ingame.GenericContainerScreen;
+import net.minecraft.client.gui.screen.ingame.HopperScreen;
+import net.minecraft.client.gui.screen.ingame.InventoryScreen;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.ItemStack;
@@ -150,6 +152,12 @@ class ItemInputs {
 			client.player.closeHandledScreen();
 			return;
 		}
+		if (client.player.currentScreenHandler == client.player.playerScreenHandler) {
+			MessageHolder.sendUniqueMessageActionBar(client.player, "Screen is not extra screen");
+			return;
+		}
+		client.player.currentScreenHandler.enableSyncing();
+		client.player.currentScreenHandler.syncState();
 		List<ItemStack> requiredStacks = getRaycastRequiredItemStacks(client);
 		if (requiredStacks.isEmpty()) {
 			MessageHolder.sendUniqueDebugMessage("required stacks were empty for " + where.toShortString());
@@ -217,12 +225,12 @@ class ItemInputs {
 		if (holding == -1) {
 			return;
 		} //actually we can do this
-		HandledScreen<? extends ScreenHandler> gui = (HandledScreen<?>) GuiUtils.getCurrentScreen();
-		leftClickSlot(gui, holding);
-		for (int i = 0; i < stack.getCount() - gui.getScreenHandler().getSlot(targetSlot).getStack().getCount(); i++) {
-			rightClickSlot(gui, targetSlot);
+		ScreenHandler screenHandler = client.player.currentScreenHandler;
+		leftClickSlot(screenHandler, holding);
+		for (int i = 0; i < stack.getCount() - screenHandler.getSlot(targetSlot).getStack().getCount(); i++) {
+			rightClickSlot(screenHandler, targetSlot);
 		}
-		leftClickSlot(gui, holding);
+		leftClickSlot(screenHandler, holding);
 		MessageHolder.sendUniqueDebugMessage("Sent item from " + holding + " to " + targetSlot);
 		//client.interactionManager.clickSlot(client.player.currentScreenHandler.syncId, targetSlot, holding, SlotActionType.SWAP, client.player);
 	}
@@ -237,33 +245,33 @@ class ItemInputs {
 			return;
 		}
 		//else we need to clear
-		HandledScreen<? extends ScreenHandler> gui = (HandledScreen<?>) GuiUtils.getCurrentScreen();
+		ScreenHandler gui = client.player.currentScreenHandler;
 		leftClickSlot(gui, targetSlot);
 		clearCursor(client);
 	}
 
-	private static void leftClickSlot(HandledScreen<? extends ScreenHandler> gui, int slotNum) {
+	private static void leftClickSlot(ScreenHandler gui, int slotNum) {
 		clickSlot(gui, slotNum, 0, SlotActionType.PICKUP);
 	}
 
-	private static void rightClickSlot(HandledScreen<? extends ScreenHandler> gui, int slotNum) {
+	private static void rightClickSlot(ScreenHandler gui, int slotNum) {
 		clickSlot(gui, slotNum, 1, SlotActionType.PICKUP);
 	}
 
-	private static void shiftClickSlot(HandledScreen<? extends ScreenHandler> gui, int slotNum) {
+	private static void shiftClickSlot(ScreenHandler gui, int slotNum) {
 		clickSlot(gui, slotNum, 0, SlotActionType.QUICK_MOVE);
 	}
 
-	public static void clickSlot(HandledScreen<? extends ScreenHandler> gui, int slotNum, int button, SlotActionType action) {
-		if (slotNum >= 0 && slotNum < gui.getScreenHandler().slots.size()) {
-			Slot slot = gui.getScreenHandler().getSlot(slotNum);
+	public static void clickSlot(ScreenHandler gui, int slotNum, int button, SlotActionType action) {
+		if (slotNum >= 0 && slotNum < gui.slots.size()) {
+			Slot slot = gui.getSlot(slotNum);
 			clickSlot(gui, slot, button, action);
 		}
 	}
 
-	public static void clickSlot(HandledScreen<? extends ScreenHandler> gui, Slot slot, int button, SlotActionType action) {
+	public static void clickSlot(ScreenHandler gui, Slot slot, int button, SlotActionType action) {
 		try {
-			MinecraftClient.getInstance().interactionManager.clickSlot(gui.getScreenHandler().syncId, slot.id, button, action, MinecraftClient.getInstance().player);
+			MinecraftClient.getInstance().interactionManager.clickSlot(gui.syncId, slot.id, button, action, MinecraftClient.getInstance().player);
 		} catch (Exception e) {
 			MessageHolder.sendMessageUncheckedUnique(MinecraftClient.getInstance().player, "Clicking slot failed ");
 			MessageHolder.sendMessageUncheckedUnique(MinecraftClient.getInstance().player, e.getMessage());
@@ -298,7 +306,6 @@ class ItemInputs {
 	}
 
 	private static BlockPos rayCast(MinecraftClient minecraftClient) {
-
 		if (clickedPos == null) {
 			MessageHolder.sendUniqueMessageActionBar(minecraftClient.player, "Current raycast is set to null");
 			return null;

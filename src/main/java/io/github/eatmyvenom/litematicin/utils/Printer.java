@@ -40,6 +40,7 @@ import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
+import net.minecraft.world.dimension.AreaHelper;
 
 import java.util.*;
 
@@ -781,7 +782,7 @@ public class Printer {
 								}
 							}
 						}
-						if (sBlock instanceof NetherPortalBlock && !sBlock.getName().equals(cBlock.getName())) {
+						if (sBlock instanceof NetherPortalBlock && !sBlock.getName().equals(cBlock.getName()) && AreaHelper.getNewPortal(mc.world, pos, Direction.Axis.X).isPresent()) {
 							ItemStack lightStack = Items.FIRE_CHARGE.getDefaultStack();
 							if (mc.player.getInventory().getSlotWithStack(lightStack) == -1) {
 								lightStack = Items.FLINT_AND_STEEL.getDefaultStack();
