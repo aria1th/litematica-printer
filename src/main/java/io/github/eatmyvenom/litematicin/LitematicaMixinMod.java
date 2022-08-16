@@ -25,8 +25,9 @@ public class LitematicaMixinMod implements ModInitializer {
 	public static final ConfigInteger EASY_PLACE_MODE_RANGE_Y = new ConfigInteger("easyPlaceModePrinterRangeY", 3, 0, 1024, "Y Range for EasyPlace");
 	public static final ConfigInteger EASY_PLACE_MODE_RANGE_Z = new ConfigInteger("easyPlaceModePrinterRangeZ", 3, 0, 1024, "Z Range for EasyPlace");
 	public static final ConfigInteger PRINTER_MAX_BLOCKS = new ConfigInteger("easyPlaceModePrinterMaxBlocks", 3, 1, 1000000, "Max block interactions per cycle");
-	public static final ConfigInteger PRINTER_MAX_ITEM_CHANGES = new ConfigInteger("easyPlaceModePrinterMaxItemChanges", 3, 1, 1000000, "Max item categories per cycle");
+	public static final ConfigInteger PRINTER_MAX_ITEM_CHANGES = new ConfigInteger("easyPlaceModePrinterMaxItemChanges", 3, 0, 1000000, "Max item categories per cycle");
 	public static final ConfigBoolean PRINTER_BREAK_BLOCKS = new ConfigBoolean("printerBreakBlocks", false, "Automatically breaks blocks.");
+	public static final ConfigBoolean DISABLE_SYNC = new ConfigBoolean("disableInventorySync", false, "Disables sync with inventory.");
 	public static final ConfigDouble EASY_PLACE_MODE_DELAY = new ConfigDouble("easyPlaceModeDelay", 0.2, 0.0, 1.0, "Delay between printing blocks.\n Recommended to set value over 0.05(50ms).");
 	public static final ConfigBoolean EASY_PLACE_MODE_HOTBAR_ONLY = new ConfigBoolean("easyPlaceModeHotbarOnly", false, "Only place blocks from your hotbar.");
 	public static final ConfigBoolean FLIPPIN_CACTUS = new ConfigBoolean("printerFlippincactus", false, "If FlippinCactus is enabled and cactus is on mainhand, will not place block and do rotations only.");
@@ -43,12 +44,15 @@ public class LitematicaMixinMod implements ModInitializer {
 	public static final ConfigBoolean ADVANCED_ACCURATE_BLOCK_PLACEMENT = new ConfigBoolean("CarpetExtraFixedVersion", false, "If carpet extra is updated, turn on to allow all facingblock rotation");
 	public static final ConfigBoolean BEDROCK_BREAKING = new ConfigBoolean("printerBedrockBreaking", false, "Clear Bedrock mismatch with Bedrock Breaker");
 	public static final ConfigBoolean BEDROCK_BREAKING_FORCE_TORCH = new ConfigBoolean("printerBedrockBreakingUseSlimeblock", false, "BecrockBreaker uses slime block to force torch location");
+	public static final ConfigInteger BEDROCK_BREAKING_RANGE_SAFE = new ConfigInteger("bedrockBreakingCheckRange", 3, 0, 1024, "Safety distance between bedrock breakings");
+	public static final ConfigInteger BEDROCK_BREAKING_CLEAR_WAIT = new ConfigInteger("bedrockBreakingClearTicks", 6, 0, 1024, "Waiting ticks after processing bedrock");
 	public static final ConfigBoolean PRINTER_PLACE_ICE = new ConfigBoolean("printerUseIceForWater", false, "Should printer place ice where water/waterlogged should be?");
 	public static final ConfigBoolean PRINTER_PLACE_MINECART = new ConfigBoolean("printerPlaceMinecart", true, "Should printer place minecart?(its smarter than average)");
 	public static final ConfigBoolean FAKE_ROTATION_BETA = new ConfigBoolean("printerFakeRotation", false, "Printer will use fake rotations to place block correctly, at least in vanilla.");
 	public static final ConfigInteger FAKE_ROTATION_TICKS = new ConfigInteger("printerFakeRotationTicks", 2, 0, 1000000, "Ticks between fake block packets");
 	public static final ConfigInteger FAKE_ROTATION_LIMIT = new ConfigInteger("printerFakeRotationLimitPerTicks", 1, 1, 1000000, "Maximum fake placement per tick, prone to cause error(require:FakeRotationTick = 0)");
 	public static final ImmutableList<IConfigBase> betterList = originalList.addAll(ImmutableList.of(
+		DISABLE_SYNC,
 		DEBUG_MESSAGE,
 		DEBUG_EXTRA_MESSAGE,
 		DEBUG_ORDER_PLACEMENTS,
@@ -84,6 +88,8 @@ public class LitematicaMixinMod implements ModInitializer {
 		AVOID_CHECK_ONLY_PISTONS,
 		BEDROCK_BREAKING,
 		BEDROCK_BREAKING_FORCE_TORCH,
+		BEDROCK_BREAKING_RANGE_SAFE,
+		BEDROCK_BREAKING_CLEAR_WAIT,
 		FAKE_ROTATION_BETA,
 		FAKE_ROTATION_TICKS,
 		FAKE_ROTATION_LIMIT)

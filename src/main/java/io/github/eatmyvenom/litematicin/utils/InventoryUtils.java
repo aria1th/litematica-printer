@@ -76,12 +76,13 @@ public class InventoryUtils {
 
 	synchronized public static boolean swapToItem(MinecraftClient client, ItemStack stack) {
 		ClientPlayerEntity player = client.player;
+		int maxChange = LitematicaMixinMod.PRINTER_MAX_ITEM_CHANGES.getIntegerValue();
 		if (player == null || client.interactionManager == null) {
 			return false;
 		}
 		player.getInventory().updateItems();
 		if (stack.getItem() != handlingItem) {
-			if (itemChangeCount > LitematicaMixinMod.PRINTER_MAX_ITEM_CHANGES.getIntegerValue()) {
+			if (maxChange != 0 && itemChangeCount > maxChange) {
 				return false;
 			}
 		}
@@ -136,6 +137,7 @@ public class InventoryUtils {
 		lastCount = client.player.getInventory().getStack(slot).getCount();
 		if (PlayerInventory.isValidHotbarIndex(slot)) {
 			player.getInventory().selectedSlot = slot;
+			MessageHolder.sendOrderMessage("Selected Slot " + slot);
 			//client.getNetworkHandler().sendPacket(new UpdateSelectedSlotC2SPacket(slot));
 		} else {
 			int selectedSlot = player.getInventory().selectedSlot;

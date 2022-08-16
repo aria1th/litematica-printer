@@ -205,7 +205,8 @@ public class Printer {
 		}
 		if (reasonPos != null) {
 			if (pos.asLong() == reasonPos.asLong()) {
-				throw new AssertionError("Position should not equal to reason position!");
+				causeMap.put(pos.asLong(), "self registered+\n");
+				//throw new AssertionError("Position should not equal to reason position!");
 			}
 			referenceSet.put(pos.asLong(), reasonPos.asLong());
 		}
@@ -237,12 +238,24 @@ public class Printer {
 		return causeMap.getOrDefault(pos, BlockPos.fromLong(pos).toShortString() + " : Not registered");
 	}
 
+	private static boolean isPositionWithinBox(Box box, BlockPos pos) {
+		if (box == null) {
+			return true;
+		}
+		BlockPos pos1 = box.getPos1();
+		BlockPos pos2 = box.getPos2();
+		return (pos1.getX() <= pos.getX() && pos.getX() <= pos2.getX() && pos1.getY() <= pos.getY() && pos.getY() <= pos2.getY() && pos1.getZ() <= pos.getZ() && pos.getZ() <= pos2.getZ());
+	}
+
 	@Environment(EnvType.CLIENT)
 	synchronized public static ActionResult doPrinterAction(MinecraftClient mc) {
 		io.github.eatmyvenom.litematicin.utils.InventoryUtils.itemChangeCount = 0;
 		io.github.eatmyvenom.litematicin.utils.InventoryUtils.handlingItem = null;
 		if (!DEBUG_MESSAGE.getBooleanValue()) {
 			causeMap.clear(); //reduce ram usage
+		}
+		if (!BEDROCK_BREAKING.getBooleanValue()) {
+			BedrockBreaker.clear();
 		}
 		FakeAccurateBlockPlacement.requestedTicks = Math.max(-2, FakeAccurateBlockPlacement.requestedTicks);
 		if (breaker.isBreakingBlock()) {
@@ -280,7 +293,7 @@ public class Printer {
 		ItemStack composableItem = Items.PUMPKIN_PIE.getDefaultStack();
 		SubChunkPos cpos = new SubChunkPos(tracePos);
 		List<PlacementPart> list = DataManager.getSchematicPlacementManager().getAllPlacementsTouchingSubChunk(cpos);
-
+		Box selectedBox = null;
 		if (list.isEmpty() && !ClearArea) {
 			return ActionResult.PASS;
 		}
@@ -321,7 +334,6 @@ public class Printer {
 						final int boxXMax = Math.max(box.getPos1().getX(), box.getPos2().getX());
 						final int boxYMax = Math.max(box.getPos1().getY(), box.getPos2().getY());
 						final int boxZMax = Math.max(box.getPos1().getZ(), box.getPos2().getZ());
-
 						if (posX < boxXMin || posX > boxXMax || posY < boxYMin || posY > boxYMax || posZ < boxZMin
 							|| posZ > boxZMax) {
 							continue;
@@ -333,7 +345,7 @@ public class Printer {
 						minZ = boxZMin;
 						maxZ = boxZMax;
 						foundBox = true;
-
+						selectedBox = box;
 						break;
 					}
 
@@ -441,7 +453,6 @@ public class Printer {
 							} else if (BedrockBreaker.isBlockNotInstantBreakable(stateClient.getBlock()) && BEDROCK_BREAKING.getBooleanValue()) {
 								BedrockBreaker.scheduledTickHandler(mc, pos);
 								continue;
-
 							} else if (BEDROCK_BREAKING.getBooleanValue()) {
 								BedrockBreaker.scheduledTickHandler(mc, null);
 								continue;
@@ -751,7 +762,7 @@ public class Printer {
 								MessageHolder.sendUniqueMessage(mc.player, sBlock.getTranslationKey() + " at " + " is placed ignoring push limit checks, check printerSuppressPushLimitPistons option.");
 							}
 						} else if (smartRedstone && sBlock instanceof ObserverBlock) {
-							if (ObserverUpdateOrder(mc, world, pos)) {
+							if (ObserverUpdateOrder(mc, world, pos, selectedBox)) {
 								if (FLIPPIN_CACTUS.getBooleanValue() && canBypass(mc, world, pos)) {
 									stateSchematic = stateSchematic.with(ObserverBlock.FACING, stateSchematic.get(ObserverBlock.FACING).getOpposite());
 								} else {
@@ -1214,13 +1225,13 @@ public class Printer {
 			if (!isCorrectDustState(mc, world, pos.offset(direction))) {
 				return true;
 			}
-			if (!isCorrectDustState(mc, world, pos.offset(direction, 2))) {
+			if (direction.getAxis() != Direction.Axis.Y && !isCorrectDustState(mc, world, pos.offset(direction, 2))) {
 				return true;
 			}
 			if (!isCorrectDustState(mc, world, pos.offset(direction).up())) {
 				return true;
 			}
-			if (!isCorrectDustState(mc, world, pos.offset(direction, 2).up())) {
+			if (direction.getAxis() != Direction.Axis.Y && !isCorrectDustState(mc, world, pos.offset(direction, 2).up())) {
 				return true;
 			}
 		}
@@ -1326,7 +1337,7 @@ public class Printer {
 	@SuppressWarnings({"ConstantConditions"})
 	private static BlockPos isObserverCantAvoidOutput(MinecraftClient mc, World schematicWorld, BlockPos pos) {
 		if (isQCableBlock(schematicWorld.getBlockState(pos))) {
-			if (schematicWorld.getBlockState(pos.up(2)).isOf(Blocks.OBSERVER) && ObserverCantAvoid(mc, schematicWorld, Direction.UP, pos.up(2))) {
+			if (schematicWorld.getBlockState(pos.up(2)).isOf(Blocks.OBSERVER) && !mc.world.getBlockState(pos.up(2)).isOf(Blocks.OBSERVER) && ObserverCantAvoid(mc, schematicWorld, Direction.UP, pos.up(2))) {
 				if (mc.world.getBlockState(pos.up(3)) != schematicWorld.getBlockState(pos.up(3))) {
 					return pos.up(3);
 				}
@@ -1334,7 +1345,7 @@ public class Printer {
 		}
 		for (Direction direction : Direction.values()) {
 			BlockState offsetState = schematicWorld.getBlockState(pos.offset(direction));
-			if (offsetState.getBlock() instanceof ObserverBlock && offsetState.get(ObserverBlock.FACING) == direction) {
+			if (offsetState.getBlock() instanceof ObserverBlock && !mc.world.getBlockState(pos.offset(direction)).isOf(Blocks.OBSERVER) && offsetState.get(ObserverBlock.FACING) == direction) {
 				Map.Entry<Boolean, BlockPos> value = isWatchingCorrectState(mc, schematicWorld, pos.offset(direction), null, false);
 				if (!value.getKey()) {
 					return pos.offset(direction);
@@ -1352,7 +1363,8 @@ public class Printer {
 			//Horizontal,
 			BlockPos qcPos = pos.offset(direction).up();
 			BlockState qcState = schematicWorld.getBlockState(qcPos);
-			if (qcState.getBlock() instanceof ObserverBlock && qcState.get(ObserverBlock.FACING) == direction) {
+			BlockState existingState = mc.world.getBlockState(qcPos);
+			if (qcState.getBlock() instanceof ObserverBlock && !existingState.isOf(Blocks.OBSERVER) && qcState.get(ObserverBlock.FACING) == direction) {
 				Map.Entry<Boolean, BlockPos> value = isWatchingCorrectState(mc, schematicWorld, qcPos, null, false);
 				if (!value.getKey()) {
 					return pos.offset(direction);
@@ -1362,7 +1374,7 @@ public class Printer {
 			else if (qcState.isSolidBlock(schematicWorld, qcPos)) {
 				qcPos = qcPos.offset(direction);
 				qcState = schematicWorld.getBlockState(qcPos);
-				if (qcState.getBlock() instanceof ObserverBlock && qcState.get(ObserverBlock.FACING) == direction) {
+				if (qcState.getBlock() instanceof ObserverBlock && !existingState.isOf(Blocks.OBSERVER) && qcState.get(ObserverBlock.FACING) == direction) {
 					Map.Entry<Boolean, BlockPos> value = isWatchingCorrectState(mc, schematicWorld, qcPos, null, false);
 					if (!value.getKey()) {
 						return pos.offset(direction);
@@ -1647,7 +1659,7 @@ public class Printer {
 			stateA.get(DoorBlock.HALF) == stateB.get(DoorBlock.HALF);
 	}
 
-	private static boolean ObserverUpdateOrder(MinecraftClient mc, World world, BlockPos pos) {
+	private static boolean ObserverUpdateOrder(MinecraftClient mc, World world, BlockPos pos, Box selectedBox) {
 		//returns true if observer should not be placed
 		boolean ExplicitObserver = PRINTER_OBSERVER_AVOID_ALL.getBooleanValue();
 		BlockState stateSchematic = world.getBlockState(pos);
@@ -1664,6 +1676,9 @@ public class Printer {
 			return false;
 		}
 		posOffset = pos.offset(facingSchematic);
+		if (!isPositionWithinBox(selectedBox, posOffset)) {
+			return false;
+		}
 		OffsetStateSchematic = world.getBlockState(posOffset);
 		OffsetStateClient = mc.world.getBlockState(posOffset);
 		if (OffsetStateSchematic.isOf(Blocks.BARRIER)) {

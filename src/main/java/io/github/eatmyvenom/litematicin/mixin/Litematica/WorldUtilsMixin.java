@@ -1,6 +1,7 @@
 package io.github.eatmyvenom.litematicin.mixin.Litematica;
 
 import fi.dy.masa.litematica.util.WorldUtils;
+import io.github.eatmyvenom.litematicin.LitematicaMixinMod;
 import io.github.eatmyvenom.litematicin.utils.MessageHolder;
 import io.github.eatmyvenom.litematicin.utils.Printer;
 import net.minecraft.client.MinecraftClient;
@@ -43,8 +44,11 @@ public class WorldUtilsMixin {
 			MessageHolder.sendOrderMessage("Order error happened " + e.getMessage());
 			mc.player.playerScreenHandler.enableSyncing();
 			cir.setReturnValue(ActionResult.FAIL);
+			return;
 		}
-		mc.player.playerScreenHandler.enableSyncing();
+		if (!LitematicaMixinMod.DISABLE_SYNC.getBooleanValue()) {
+			mc.player.playerScreenHandler.enableSyncing();
+		}
 		cir.setReturnValue(defaultResult);
 		//return defaultResult;
 	}
