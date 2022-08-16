@@ -451,10 +451,10 @@ public class Printer {
 									return ActionResult.SUCCESS;
 								}
 							} else if (BedrockBreaker.isBlockNotInstantBreakable(stateClient.getBlock()) && BEDROCK_BREAKING.getBooleanValue()) {
-								BedrockBreaker.scheduledTickHandler(mc, pos);
+								interact += BedrockBreaker.scheduledTickHandler(mc, pos);
 								continue;
 							} else if (BEDROCK_BREAKING.getBooleanValue()) {
-								BedrockBreaker.scheduledTickHandler(mc, null);
+								interact += BedrockBreaker.scheduledTickHandler(mc, null);
 								continue;
 							} else if (!positionStorage.hasPos(pos)) { // For survival
 								boolean replaceable = mc.world.getBlockState(pos).getMaterial().isReplaceable();
