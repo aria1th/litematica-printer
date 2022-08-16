@@ -399,9 +399,9 @@ public class BedrockBreaker {
 		return ret;
 	}
 
-	synchronized public static void scheduledTickHandler(MinecraftClient mc, @Nullable BlockPos pos) {
+	synchronized public static int scheduledTickHandler(MinecraftClient mc, @Nullable BlockPos pos) {
 		if (!isItemPrePared(mc)) {
-			return;
+			return 0;
 		}
 		rangeX = EASY_PLACE_MODE_RANGE_X.getIntegerValue();
 		rangeY = EASY_PLACE_MODE_RANGE_Y.getIntegerValue();
@@ -410,7 +410,7 @@ public class BedrockBreaker {
 		int interacted = 0;
 		interacted += BedrockBreaker.processRemainder(mc, maxInteract);
 		if (interacted >= maxInteract) {
-			return;
+			return interacted;
 		}
 		MaxReach = Math.max(Math.max(rangeX, rangeY), rangeZ);
 		removeScheduledPos(mc);
@@ -437,7 +437,7 @@ public class BedrockBreaker {
 		}
 		for (Long posLong : targetPosMap.keySet()) {
 			if (interacted >= maxInteract) {
-				return;
+				return interacted;
 			}
 			PositionCache item = targetPosMap.get(posLong);
 			if (item == null || !item.isAllPosInRange(mc)) {
@@ -445,6 +445,7 @@ public class BedrockBreaker {
 			}
 			interacted += item.doSomething(mc);
 		}
+		return interacted;
 	}
 
 	public static void tick() {
