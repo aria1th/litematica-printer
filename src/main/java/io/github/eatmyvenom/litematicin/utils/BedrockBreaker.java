@@ -97,7 +97,7 @@ public class BedrockBreaker {
 				continue;
 			}
 			// check torch can be placed
-			if (TorchBlock.sideCoversSmallSquare(world, torchCheck.down(), Direction.DOWN)) {
+			if (!world.getBlockState(torchCheck.down()).isOf(Blocks.PISTON) && TorchBlock.sideCoversSmallSquare(world, torchCheck.down(), Direction.DOWN)) {
 				return new TorchData(torchCheck, Direction.UP);
 			} else if (forceSlimeBlock && canPlaceSlime(mc)) {
 				BlockPos slimePos = torchCheck.down();
@@ -133,7 +133,7 @@ public class BedrockBreaker {
 				continue;
 			}
 			// check torch can be placed
-			if (TorchBlock.sideCoversSmallSquare(world, torchCheck.down(), Direction.DOWN)) {
+			if (!world.getBlockState(torchCheck.down()).isOf(Blocks.PISTON) && TorchBlock.sideCoversSmallSquare(world, torchCheck.down(), Direction.DOWN)) {
 				return new TorchData(torchCheck, Direction.UP);
 			} else if (forceSlimeBlock && canPlaceSlime(mc)) {
 				BlockPos slimePos = torchCheck.down();
@@ -165,7 +165,7 @@ public class BedrockBreaker {
 			if (!world.getBlockState(torchCheck).isAir() && !world.getBlockState(torchCheck).getMaterial().isReplaceable()) {
 				return null;
 			}
-			if (TorchBlock.sideCoversSmallSquare(world, torchCheck.down(), Direction.DOWN)) {
+			if (!world.getBlockState(torchCheck.down()).isOf(Blocks.PISTON) && TorchBlock.sideCoversSmallSquare(world, torchCheck.down(), Direction.DOWN)) {
 				return new TorchData(torchCheck, Direction.UP);
 			} else if (forceSlimeBlock && canPlaceSlime(mc)) {
 				BlockPos slimePos = torchCheck.down();
@@ -196,6 +196,9 @@ public class BedrockBreaker {
 	public static boolean canPlaceAt(Direction lv, World world, BlockPos pos) {
 		BlockPos lv2 = pos.offset(lv.getOpposite());
 		BlockState lv3 = world.getBlockState(lv2);
+		if (lv3.isOf(Blocks.PISTON)) {
+			return false;
+		}
 		return lv3.isSideSolidFullSquare(world, lv2, lv);
 	}
 
@@ -368,7 +371,7 @@ public class BedrockBreaker {
 			return;
 		}
 		mc.getNetworkHandler().sendPacket(new PlayerActionC2SPacket(PlayerActionC2SPacket.Action.START_DESTROY_BLOCK, pos, direction, 64));
-		positionStorage.registerPos(pos, false);
+		//positionStorage.registerPos(pos, false);
 	}
 
 
@@ -387,7 +390,9 @@ public class BedrockBreaker {
 	}
 
 	public static int processRemainder(MinecraftClient mc, int maxInteract) {
+		//positionStorage.refresh(mc.world);
 		int ret = 0;
+		switchTool(mc);
 		ArrayList<BlockPos> attackList = positionStorage.getFalseMarkedHasBlockPosInAttackRange(mc.world, mc.player.getPos(), MaxReach);
 		for (BlockPos position : attackList) {
 			if (ret >= maxInteract) {
@@ -414,7 +419,7 @@ public class BedrockBreaker {
 		}
 		MaxReach = Math.max(Math.max(rangeX, rangeY), rangeZ);
 		removeScheduledPos(mc);
-		if (pos != null && isPositionInRange(mc, pos) && canProcess(mc, pos) && new Date().getTime() - lastPlaced > 1000.0 * EASY_PLACE_MODE_DELAY.getDoubleValue()) {
+		if (pos != null && !targetPosMap.containsKey(pos.asLong()) && isPositionInRange(mc, pos) && canProcess(mc, pos) && new Date().getTime() - lastPlaced > 1000.0 * EASY_PLACE_MODE_DELAY.getDoubleValue()) {
 			TorchPath torch = getPistonTorchPosDir(mc, pos);
 			if (torch != null && torch.isAllPosInRange(mc)) {
 				lastPlaced = new Date().getTime();
@@ -433,7 +438,6 @@ public class BedrockBreaker {
 				interacted += 2;
 				targetPosMap.put(pos.asLong(), new PositionCache(PistonPos, PistonExtendFacing, TorchPos, pos, SlimePos));
 			}
-			positionStorage.refresh(mc.world);
 		}
 		for (Long posLong : targetPosMap.keySet()) {
 			if (interacted >= maxInteract) {
@@ -501,7 +505,7 @@ public class BedrockBreaker {
 		private void refresh(ClientWorld world) {
 			switch (this.state) {
 				case WAIT: {
-					if (CurrentTick > this.SysTime) {
+					if (CurrentTick == this.SysTime + 1 || CurrentTick > this.SysTime + 4) {
 						this.state = State.EXTENDED;
 					}
 				}
@@ -547,6 +551,7 @@ public class BedrockBreaker {
 		public void processBreaking(MinecraftClient mc) {
 			switchTool(mc);
 			if (slimePos != null && !mc.world.getBlockState(slimePos).isAir()) {
+				attackBlock(mc, torchPos, Direction.UP);
 				attackBlock(mc, slimePos, Direction.UP);
 				MessageHolder.sendDebugMessage("Broke slime at " + slimePos.toShortString());
 			} else {

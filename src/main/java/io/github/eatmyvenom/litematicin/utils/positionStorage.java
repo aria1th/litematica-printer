@@ -1,5 +1,7 @@
 package io.github.eatmyvenom.litematicin.utils;
 
+import net.minecraft.block.Block;
+import net.minecraft.block.Blocks;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
@@ -29,17 +31,20 @@ public class positionStorage {
 	}
 
 	public static void refresh(World world) {
-		for (Long longPos : positionMap.keySet().stream().filter(longPos -> world.getBlockState(BlockPos.fromLong(longPos)).isAir()).collect(Collectors.toList())) {
+		for (Long longPos : positionMap.keySet().stream().filter(longPos -> !positionMap.get(longPos) && !match(world.getBlockState(BlockPos.fromLong(longPos)).getBlock())).collect(Collectors.toList())) {
 			positionMap.remove(longPos);
 		}
+	}
 
+	private static boolean match(Block block) {
+		return block == Blocks.PISTON || block == Blocks.REDSTONE_TORCH || block == Blocks.SLIME_BLOCK;
 	}
 
 	public static ArrayList<BlockPos> getFalseMarkedHasBlockPosInAttackRange(World world, Vec3d pos, int attackRange) {
 		ArrayList<BlockPos> FalseMarkedList = new ArrayList<>();
 		for (Long position : positionMap.keySet()) {
 			BlockPos blockPos = BlockPos.fromLong(position);
-			if (!positionMap.get(position) && !world.getBlockState(blockPos).isAir() && world.getBlockState(blockPos).getHardness(world, blockPos) != -1 && blockPos.isWithinDistance(pos, attackRange)) {
+			if (!positionMap.get(position) && match(world.getBlockState(blockPos).getBlock()) && blockPos.isWithinDistance(pos, attackRange)) {
 				FalseMarkedList.add(blockPos);
 			}
 		}
