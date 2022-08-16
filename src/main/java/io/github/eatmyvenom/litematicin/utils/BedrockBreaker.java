@@ -42,6 +42,25 @@ public class BedrockBreaker {
 		positionStorage.clear();
 	}
 
+	private static boolean shouldExtend(World world, BlockPos pos, Direction pistonFace) {
+		for (Direction direction : Direction.values()) {
+			if (direction != pistonFace && world.isEmittingRedstonePower(pos.offset(direction), direction)) {
+				return true;
+			}
+		}
+		if (world.isEmittingRedstonePower(pos, Direction.DOWN)) {
+			return true;
+		} else {
+			BlockPos blockPos = pos.up();
+			for (Direction qcDirections : Direction.values()) {
+				if (qcDirections != Direction.DOWN && world.isEmittingRedstonePower(blockPos.offset(qcDirections), qcDirections)) {
+					return true;
+				}
+			}
+			return false;
+		}
+	}
+
 	@Nullable
 	public static TorchPath getPistonTorchPosDir(MinecraftClient mc, BlockPos bedrockPos) {
 		for (Direction lv : Direction.values()) {
@@ -60,6 +79,9 @@ public class BedrockBreaker {
 				}
 				BlockPos checkAir = pistonPos.offset(pistonFacing);
 				if (!isBlockPosinYRange(checkAir)) {
+					continue;
+				}
+				if (shouldExtend(mc.world, pistonPos, pistonFacing)) {
 					continue;
 				}
 				if (mc.world.getBlockState(checkAir).isAir() || mc.world.getBlockState(checkAir).getMaterial().isReplaceable()) {
