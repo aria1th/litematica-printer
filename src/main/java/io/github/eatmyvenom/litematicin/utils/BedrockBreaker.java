@@ -386,11 +386,17 @@ public class BedrockBreaker {
 		return (pX - aX) * (pX - aX) + (pY - aY) * (pY - aY) + (pZ - aZ) * (pZ - aZ) < MaxReach * MaxReach;
 	}
 
-	public static void processRemainder(MinecraftClient mc) {
+	public static int processRemainder(MinecraftClient mc, int maxInteract) {
+		int ret = 0;
 		ArrayList<BlockPos> attackList = positionStorage.getFalseMarkedHasBlockPosInAttackRange(mc.world, mc.player.getPos(), MaxReach);
 		for (BlockPos position : attackList) {
+			if (ret >= maxInteract) {
+				return ret;
+			}
 			attackBlock(mc, position, Direction.UP);
+			ret++;
 		}
+		return ret;
 	}
 
 	synchronized public static void scheduledTickHandler(MinecraftClient mc, @Nullable BlockPos pos) {
@@ -400,9 +406,14 @@ public class BedrockBreaker {
 		rangeX = EASY_PLACE_MODE_RANGE_X.getIntegerValue();
 		rangeY = EASY_PLACE_MODE_RANGE_Y.getIntegerValue();
 		rangeZ = EASY_PLACE_MODE_RANGE_Z.getIntegerValue(); //reset range values
+		int maxInteract = PRINTER_MAX_BLOCKS.getIntegerValue();
+		int interacted = 0;
+		interacted += BedrockBreaker.processRemainder(mc, maxInteract);
+		if (interacted >= maxInteract) {
+			return;
+		}
 		MaxReach = Math.max(Math.max(rangeX, rangeY), rangeZ);
 		removeScheduledPos(mc);
-		processRemainder(mc);
 		if (pos != null && isPositionInRange(mc, pos) && canProcess(mc, pos) && new Date().getTime() - lastPlaced > 1000.0 * EASY_PLACE_MODE_DELAY.getDoubleValue()) {
 			TorchPath torch = getPistonTorchPosDir(mc, pos);
 			if (torch != null && torch.isAllPosInRange(mc)) {
@@ -419,16 +430,20 @@ public class BedrockBreaker {
 				}
 				placeTorch(mc, TorchPos, TorchFacing);
 				placePiston(mc, PistonPos, PistonFacing);
+				interacted += 2;
 				targetPosMap.put(pos.asLong(), new PositionCache(PistonPos, PistonExtendFacing, TorchPos, pos, SlimePos));
 			}
 			positionStorage.refresh(mc.world);
 		}
 		for (Long posLong : targetPosMap.keySet()) {
+			if (interacted >= maxInteract) {
+				return;
+			}
 			PositionCache item = targetPosMap.get(posLong);
 			if (item == null || !item.isAllPosInRange(mc)) {
 				continue;
 			}
-			item.doSomething(mc);
+			interacted += item.doSomething(mc);
 		}
 	}
 
@@ -498,12 +513,19 @@ public class BedrockBreaker {
 			}
 		}
 
-		public void doSomething(MinecraftClient mc) {
+		public int doSomething(MinecraftClient mc) {
 			refresh(mc.world);
 			switch (this.state) {
-				case EXTENDED -> this.processBreaking(mc);
-				case FAIL -> this.resetFailure(mc);
+				case EXTENDED -> {
+					this.processBreaking(mc);
+					return 4;
+				}
+				case FAIL -> {
+					this.resetFailure(mc);
+					return 3;
+				}
 			}
+			return 0;
 		}
 
 		public boolean isIdle() {
