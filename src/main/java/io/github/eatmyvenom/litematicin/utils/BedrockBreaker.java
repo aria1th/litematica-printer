@@ -590,6 +590,7 @@ public class BedrockBreaker {
 		public void resetFailure(MinecraftClient mc) {
 			switchTool(mc);
 			if (slimePos != null && !mc.world.getBlockState(slimePos).isAir()) {
+				attackBlock(mc, torchPos, Direction.UP);
 				attackBlock(mc, slimePos, Direction.UP);
 				MessageHolder.sendDebugMessage("Broke slime at + (failure) " + slimePos.toShortString());
 			} else {

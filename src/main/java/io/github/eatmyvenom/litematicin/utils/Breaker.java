@@ -25,7 +25,7 @@ public class Breaker implements IClientTickHandler {
 		TickHandler.getInstance().registerClientTickHandler(this);
 	}
 
-	public void startBreakingBlock(BlockPos pos, MinecraftClient mc) {
+	public boolean startBreakingBlock(BlockPos pos, MinecraftClient mc) {
 		this.breakingBlock = true;
 		this.pos = pos;
 		// Check for best tool in inventory
@@ -36,7 +36,13 @@ public class Breaker implements IClientTickHandler {
 			InventoryUtils.swapToItem(mc, stack);
 		}
 		// Start breaking
+		BlockState blockState = mc.world.getBlockState(pos);
+		if (blockState.calcBlockBreakingDelta(mc.player, mc.player.world, pos) >= 1.0F) {
+			mc.interactionManager.attackBlock(pos, Direction.UP);
+			return false;
+		}
 		TickHandler.getInstance().registerClientTickHandler(this);
+		return true;
 	}
 
 	public boolean isBreakingBlock() {
