@@ -49,7 +49,7 @@ import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.*;
 public class Printer {
 
 
-	private static final List<PositionCache> positionCache = new ArrayList<>();
+	private static final LinkedHashMap<Map.Entry<Long, Boolean>, PositionCache> positionCache = new LinkedHashMap<>();
 	// For printing delay
 	public static long lastPlaced = new Date().getTime();
 	public static Breaker breaker = new Breaker();
@@ -1113,6 +1113,13 @@ public class Printer {
 						if (stateSchematic.contains(RedstoneTorchBlock.LIT) && !stateSchematic.get(RedstoneTorchBlock.LIT)) {
 							cacheEasyPlacePosition(pos.up(), false, 700);
 						}
+						Set<BlockPos> shouldCache = ObserverCantAvoidPos(mc, world, pos);
+						if (!shouldCache.isEmpty()) {
+							shouldCache.forEach(a -> {
+								MessageHolder.sendDebugMessage("Caching position " + a.toShortString() + " because observer can't avoid ");
+								cacheEasyPlacePosition(a, true, 150);
+							});
+						}
 						if (!FAKE_ROTATION_BETA.getBooleanValue() || ACCURATE_BLOCK_PLACEMENT.getBooleanValue()) { //Accurateblockplacement, or vanilla but no fake
 							if (doSchematicWorldPickBlock(mc, stateSchematic, pos)) {
 								mc.interactionManager.interactBlock(mc.player, hand, hitResult); //PLACE BLOCK
@@ -1356,15 +1363,16 @@ public class Printer {
 	@SuppressWarnings({"ConstantConditions"})
 	private static BlockPos isObserverCantAvoidOutput(MinecraftClient mc, World schematicWorld, BlockPos pos) {
 		if (isQCableBlock(schematicWorld.getBlockState(pos))) {
-			if (schematicWorld.getBlockState(pos.up(2)).isOf(Blocks.OBSERVER) && !mc.world.getBlockState(pos.up(2)).isOf(Blocks.OBSERVER) && ObserverCantAvoid(mc, schematicWorld, Direction.UP, pos.up(2))) {
-				if (mc.world.getBlockState(pos.up(3)) != schematicWorld.getBlockState(pos.up(3))) {
+			if (schematicWorld.getBlockState(pos.up(2)).isOf(Blocks.OBSERVER) && schematicWorld.getBlockState(pos.up(2)).get(ObserverBlock.FACING) == Direction.UP) {
+				if (mc.world.getBlockState(pos.up(3)) != schematicWorld.getBlockState(pos.up(3)) || mc.world.getBlockState(pos.up(2)).contains(ObserverBlock.POWERED) && mc.world.getBlockState(pos.up(2)).get(ObserverBlock.POWERED)) {
+					MessageHolder.sendDebugMessage("Position at " + pos.toShortString() + " has observer that will QC, but not watching correct state");
 					return pos.up(3);
 				}
 			}
 		}
 		for (Direction direction : Direction.values()) {
 			BlockState offsetState = schematicWorld.getBlockState(pos.offset(direction));
-			if (offsetState.getBlock() instanceof ObserverBlock && !mc.world.getBlockState(pos.offset(direction)).isOf(Blocks.OBSERVER) && offsetState.get(ObserverBlock.FACING) == direction) {
+			if (offsetState.getBlock() instanceof ObserverBlock && offsetState.get(ObserverBlock.FACING) == direction) {
 				Map.Entry<Boolean, BlockPos> value = isWatchingCorrectState(mc, schematicWorld, pos.offset(direction), null, false);
 				if (!value.getKey()) {
 					return pos.offset(direction);
@@ -1497,41 +1505,86 @@ public class Printer {
 		}
 	}
 
-	private static BlockPos ObserverCantAvoidPos(MinecraftClient mc, World world, Direction facingSchematic, BlockPos pos) {
-		//returns true if observer should be placed regardless of state
-		BlockPos Posoffset = pos.offset(facingSchematic);
-		BlockState OffsetStateSchematic = world.getBlockState(Posoffset);
-		Block offsetBlock = OffsetStateSchematic.getBlock();
-		if (OffsetStateSchematic.isOf(Blocks.NOTE_BLOCK)) {
-			if (isNoteBlockInstrumentError(mc, world, Posoffset) || isDoorHingeError(mc, world, pos)) {
-				//everything is correct but litematica error
-				return null;
+	private static List<BlockPos> getNeighborsExcept(BlockPos pos, Direction except) {
+		List<BlockPos> retVal = new ArrayList<>(5);
+		for (Direction direction : Direction.values()) {
+			if (direction == except.getOpposite()) {
+				continue;
 			}
-			return Posoffset;
+			retVal.add(pos.offset(direction));
 		}
-		if (facingSchematic.equals(Direction.UP)) {
-			if (offsetBlock instanceof WallBlock || offsetBlock instanceof ComparatorBlock ||
-				offsetBlock instanceof RepeaterBlock || offsetBlock instanceof FallingBlock ||
-				offsetBlock instanceof AbstractRailBlock || offsetBlock instanceof NoteBlock ||
-				offsetBlock instanceof BubbleColumnBlock || offsetBlock instanceof RedstoneWireBlock ||
-				((offsetBlock instanceof WallMountedBlock) && OffsetStateSchematic.get(WallMountedBlock.FACE) == WallMountLocation.FLOOR)) {
-				return null;
-			}
-			return Posoffset;
-		} else if (facingSchematic.equals(Direction.DOWN)) {
-			if (offsetBlock instanceof WallBlock || offsetBlock instanceof WallMountedBlock && OffsetStateSchematic.get(WallMountedBlock.FACE) == WallMountLocation.CEILING) {
-				return null;
-			}
-			return Posoffset;
-		} else {
-			if (offsetBlock instanceof WallBlock || offsetBlock instanceof WallMountedBlock &&
-				OffsetStateSchematic.get(WallMountedBlock.FACE) == WallMountLocation.WALL && OffsetStateSchematic.get(WallMountedBlock.FACING) == facingSchematic) {
-				return null;
-			}
-			return Posoffset;
-		}
+		return retVal;
 	}
-	
+
+	/*
+		if block is observer updating block, then return position to not place until its finished
+	 */
+	private static Set<BlockPos> ObserverCantAvoidPos(MinecraftClient mc, World world, BlockPos pos) {
+		//returns true if observer should be placed regardless of state
+		BlockPos posOffset;
+		Set<BlockPos> relatedPos = new HashSet<>(6);
+		BlockState offsetStateSchematic;
+		BlockState targetState = world.getBlockState(pos);
+		Block block = targetState.getBlock();
+		if (block instanceof ComparatorBlock || block instanceof RepeaterBlock || block instanceof FallingBlock ||
+			block instanceof AbstractRailBlock || block instanceof RedstoneWireBlock ||
+			((block instanceof WallMountedBlock) && targetState.get(WallMountedBlock.FACE) == WallMountLocation.FLOOR)) {
+			//check downward
+			if (world.getBlockState(pos.down()).isOf(Blocks.OBSERVER) && world.getBlockState(pos.down()).get(ObserverBlock.FACING) == Direction.UP) {
+				relatedPos.add(pos.down(2));
+				relatedPos.addAll(getNeighborsExcept(pos, Direction.DOWN));
+				if (world.getBlockState(pos.down(3)).getBlock() instanceof PistonBlock) {
+					relatedPos.add(pos.down(3));
+				}
+				return relatedPos;
+			}
+		}
+		if (block instanceof NoteBlock) {
+			if (!isNoteBlockInstrumentError(mc, world, pos)) {
+				relatedPos.add(pos.down(2));
+				relatedPos.addAll(getNeighborsExcept(pos, Direction.DOWN));
+				if (world.getBlockState(pos.down(3)).getBlock() instanceof PistonBlock) {
+					relatedPos.add(pos.down(3));
+				}
+				return relatedPos;
+			}
+		} else if (block instanceof DoorBlock) {
+			if (!isDoorHingeError(mc, world, pos)) {
+				relatedPos.add(pos.down(2));
+				relatedPos.addAll(getNeighborsExcept(pos, Direction.DOWN));
+				if (world.getBlockState(pos.down(3)).getBlock() instanceof PistonBlock) {
+					relatedPos.add(pos.down(3));
+				}
+				return relatedPos;
+			}
+		}
+		for (Direction direction : Direction.values()) {
+			posOffset = pos.offset(direction);
+			offsetStateSchematic = world.getBlockState(posOffset);
+			if (offsetStateSchematic.isOf(Blocks.OBSERVER) && offsetStateSchematic.get(ObserverBlock.FACING) == direction.getOpposite()) {
+				if (block instanceof WallBlock) {
+					relatedPos.add(pos.offset(direction, 2));
+					relatedPos.addAll(getNeighborsExcept(pos, direction));
+					if (world.getBlockState(pos.offset(direction, 2).down()).getBlock() instanceof PistonBlock) {
+						relatedPos.add(pos.offset(direction, 2).down());
+					}
+				} else if (block instanceof WallMountedBlock) {
+					if (targetState.get(WallMountedBlock.FACE) == WallMountLocation.CEILING && direction == Direction.UP ||
+						targetState.get(WallMountedBlock.FACE) == WallMountLocation.FLOOR && direction == Direction.DOWN ||
+						targetState.get(WallMountedBlock.FACE) == WallMountLocation.WALL && targetState.get(WallMountedBlock.FACING) == direction.getOpposite()
+					) {
+						relatedPos.add(pos.offset(direction, 2));
+						relatedPos.addAll(getNeighborsExcept(pos, direction));
+						if (world.getBlockState(pos.offset(direction, 2).down()).getBlock() instanceof PistonBlock) {
+							relatedPos.add(pos.offset(direction, 2).down());
+						}
+					}
+				}
+			}
+		}
+		return relatedPos;
+	}
+
 
 	private static boolean shouldAvoidPlaceCart(BlockPos pos, World schematicWorld) {
 		//avoids TNT priming
@@ -2134,13 +2187,12 @@ public class Printer {
 		long currentTime = System.nanoTime();
 		boolean cached = false;
 
-		for (int i = 0; i < positionCache.size(); ++i) {
-			PositionCache val = positionCache.get(i);
+		for (Map.Entry<Long, Boolean> keys : List.copyOf(positionCache.keySet())) {
+			PositionCache val = positionCache.get(keys);
 			boolean expired = val.hasExpired(currentTime);
 
 			if (expired) {
-				positionCache.remove(i);
-				--i;
+				positionCache.remove(keys);
 			} else if (val.getPos().equals(pos)) {
 				// Item placement and "using"/"clicking" (changing delay for repeaters) are
 				// diffferent
@@ -2153,7 +2205,6 @@ public class Printer {
 				}
 			}
 		}
-
 		return cached;
 	}
 
@@ -2164,7 +2215,15 @@ public class Printer {
 		if (useClicked) {
 			item.hasClicked = true;
 		}
-		positionCache.add(item);
+		Map.Entry<Long, Boolean> entry = Map.entry(pos.asLong(), useClicked);
+		if (positionCache.containsKey(entry)) {
+			PositionCache value = positionCache.get(entry);
+			if (item.timeout > value.timeout) {
+				positionCache.put(entry, item);
+			}
+		} else {
+			positionCache.put(entry, item);
+		}
 	}
 
 	public static void cacheEasyPlacePosition(BlockPos pos, boolean useClicked, int miliseconds) {
@@ -2174,7 +2233,15 @@ public class Printer {
 		if (useClicked) {
 			item.hasClicked = true;
 		}
-		positionCache.add(item);
+		Map.Entry<Long, Boolean> entry = Map.entry(pos.asLong(), useClicked);
+		if (positionCache.containsKey(entry)) {
+			PositionCache value = positionCache.get(entry);
+			if (item.timeout > value.timeout) {
+				positionCache.put(entry, item);
+			}
+		} else {
+			positionCache.put(entry, item);
+		}
 	}
 
 	public static Vec3d applyCarpetProtocolHitVec(BlockPos pos, BlockState state) {
@@ -2232,14 +2299,12 @@ public class Printer {
 
 	public static class PositionCache {
 		private final BlockPos pos;
-		private final long time;
 		private final long timeout;
 		public boolean hasClicked = false;
 
 		private PositionCache(BlockPos pos, long time, long timeout) {
 			this.pos = pos;
-			this.time = time;
-			this.timeout = timeout;
+			this.timeout = time + timeout;
 		}
 
 		public BlockPos getPos() {
@@ -2247,7 +2312,7 @@ public class Printer {
 		}
 
 		public boolean hasExpired(long currentTime) {
-			return currentTime - this.time > this.timeout;
+			return currentTime > this.timeout;
 		}
 	}
 }
