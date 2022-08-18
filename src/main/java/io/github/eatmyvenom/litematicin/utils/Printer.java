@@ -780,7 +780,7 @@ public class Printer {
 								}
 							}
 						}
-						if (ExplicitObserver) {
+						if (smartRedstone && ExplicitObserver) {
 							BlockPos observerPos = isObserverCantAvoidOutput(mc, world, pos);
 							if (observerPos != null) {
 								recordCause(pos, sBlock.getTranslationKey() + " at " + pos.toShortString() + " is waiting for preceded observer at " + observerPos.toShortString(), observerPos);
@@ -1110,15 +1110,17 @@ public class Printer {
 							continue;
 						}
 						//finally places block
-						if (stateSchematic.contains(RedstoneTorchBlock.LIT) && !stateSchematic.get(RedstoneTorchBlock.LIT)) {
-							cacheEasyPlacePosition(pos.up(), false, 700);
-						}
-						Set<BlockPos> shouldCache = ObserverCantAvoidPos(mc, world, pos);
-						if (!shouldCache.isEmpty()) {
-							shouldCache.forEach(a -> {
-								MessageHolder.sendDebugMessage("Caching position " + a.toShortString() + " because observer can't avoid ");
-								cacheEasyPlacePosition(a, true, 150);
-							});
+						if (smartRedstone) {
+							if (stateSchematic.contains(RedstoneTorchBlock.LIT) && !stateSchematic.get(RedstoneTorchBlock.LIT)) {
+								cacheEasyPlacePosition(pos.up(), false, 700);
+							}
+							Set<BlockPos> shouldCache = ObserverCantAvoidPos(mc, world, pos);
+							if (!shouldCache.isEmpty()) {
+								shouldCache.forEach(a -> {
+									MessageHolder.sendDebugMessage("Caching position " + a.toShortString() + " because observer can't avoid ");
+									cacheEasyPlacePosition(a, true, 150);
+								});
+							}
 						}
 						if (!FAKE_ROTATION_BETA.getBooleanValue() || ACCURATE_BLOCK_PLACEMENT.getBooleanValue()) { //Accurateblockplacement, or vanilla but no fake
 							if (doSchematicWorldPickBlock(mc, stateSchematic, pos)) {
