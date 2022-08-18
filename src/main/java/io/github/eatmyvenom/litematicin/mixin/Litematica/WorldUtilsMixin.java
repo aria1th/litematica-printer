@@ -42,7 +42,10 @@ public class WorldUtilsMixin {
 			}
 		} catch (AssertionError e) {
 			MessageHolder.sendOrderMessage("Order error happened " + e.getMessage());
-			mc.player.playerScreenHandler.enableSyncing();
+			MessageHolder.sendMessageUncheckedUnique(mc.player, "Order Error Happened " + e.getMessage());
+			if (!LitematicaMixinMod.DISABLE_SYNC.getBooleanValue()) {
+				mc.player.playerScreenHandler.enableSyncing();
+			}
 			cir.setReturnValue(ActionResult.FAIL);
 			return;
 		}

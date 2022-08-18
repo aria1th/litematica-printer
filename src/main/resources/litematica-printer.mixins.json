@@ -4,17 +4,16 @@
   "package": "io.github.eatmyvenom.litematicin.mixin",
   "compatibilityLevel": "JAVA_17",
   "plugin": "io.github.eatmyvenom.litematicin.utils.MixinConfigPlugin",
-  "mixins": [
-  ],
   "client": [
+    "EssentialClient.FakeLookMixin",
     "Litematica.ConfigsMixin",
     "Litematica.GuiConfigsMixin",
+    "Litematica.MinecraftClientMixin",
     "Litematica.WorldUtilsMixin",
-	"Litematica.MinecraftClientMixin",
-	"quasiEssentialClient.ClientPlayerEntityMixin",
-	"quasiEssentialClient.ItemPlacementContextMixin",
-	"quasiEssentialClient.ItemUsageContextMixin",
-	"EssentialClient.FakeLookMixin"
+    "MinecraftClient.ClientPlayNetworkHandlerMixin",
+    "quasiEssentialClient.ClientPlayerEntityMixin",
+    "quasiEssentialClient.ItemPlacementContextMixin",
+    "quasiEssentialClient.ItemUsageContextMixin"
   ],
   "injectors": {
     "defaultRequire": 1

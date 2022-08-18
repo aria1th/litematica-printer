@@ -423,229 +423,240 @@ public class Printer {
 					double dy = mc.player.getY() - y - 0.5;
 					double dz = mc.player.getZ() - z - 0.5;
 
-					if (dx * dx + dy * dy + dz * dz > MaxReach * MaxReach) // Check if within reach distance
-					{
+					if (dx * dx + dy * dy + dz * dz > MaxReach * MaxReach) {
 						continue;
 					}
 
 					BlockPos pos = new BlockPos(x, y, z);
-					if (!range.isPositionWithinRange(pos) && !ClearArea) {
-						continue;
-					}
-					BlockState stateSchematic = world.getBlockState(pos);
-					BlockState stateClient = mc.world.getBlockState(pos);
-					if (!ClearArea && breakBlocks && stateSchematic != null && !(stateClient.getBlock() instanceof SnowBlock) &&
-						!stateClient.isAir() &&
-						!(stateClient.isOf(Blocks.WATER) || stateClient.isOf(Blocks.LAVA) || stateClient.isOf(Blocks.BUBBLE_COLUMN)) &&
-						!stateClient.isOf(Blocks.PISTON_HEAD) && !stateClient.isOf(Blocks.MOVING_PISTON)) {
-						if (!stateClient.getBlock().getName().equals(stateSchematic.getBlock().getName()) ||
-							(stateClient.getBlock() instanceof SlabBlock && stateSchematic.getBlock() instanceof SlabBlock && stateClient.get(SlabBlock.TYPE) != stateSchematic.get(SlabBlock.TYPE))
-								&& dx * dx + Math.pow(dy + 1.5, 2) + dz * dz <= MaxReach * MaxReach) {
-
-							if (mc.player.getAbilities().creativeMode) {
-								mc.interactionManager.attackBlock(pos, Direction.DOWN);
-								interact++;
-
-								if (interact >= maxInteract) {
-									lastPlaced = new Date().getTime();
-									return ActionResult.SUCCESS;
-								}
-							} else if (BedrockBreaker.isBlockNotInstantBreakable(stateClient.getBlock()) && BEDROCK_BREAKING.getBooleanValue()) {
-								interact += BedrockBreaker.scheduledTickHandler(mc, pos);
-								continue;
-							} else if (BEDROCK_BREAKING.getBooleanValue()) {
-								interact += BedrockBreaker.scheduledTickHandler(mc, null);
-								continue;
-							} else if (!positionStorage.hasPos(pos)) { // For survival
-								boolean replaceable = mc.world.getBlockState(pos).getMaterial().isReplaceable();
-								if (!replaceable && mc.world.getBlockState(pos).getHardness(world, pos) == -1) {
-									continue;
-								}
-								if (replaceable || mc.world.getBlockState(pos).getHardness(world, pos) == 0) {
-									mc.interactionManager.attackBlock(pos, Direction.DOWN);
-									return ActionResult.SUCCESS;
-								}
-								if (!replaceable) {
-									if (breaker.startBreakingBlock(pos, mc)) {
-										return ActionResult.SUCCESS;
-									}
-								} // it need to avoid unbreakable blocks and just added and lava, but its not block so somehow made it work
+					BlockState stateSchematic;
+					BlockState stateClient;
+					if (!ClearArea && !Flippincactus && !BEDROCK_BREAKING.getBooleanValue()) {
+						if (world.isAir(pos)) {
+							continue;
+						} else {
+							if (world.getBlockState(pos) == mc.world.getBlockState(pos)) {
 								continue;
 							}
 						}
 					}
+					stateSchematic = world.getBlockState(pos);
+					stateClient = mc.world.getBlockState(pos);
+					if (!ClearArea) {
+						if (!range.isPositionWithinRange(pos)) {
+							continue;
+						}
+						if (breakBlocks && stateSchematic != null && !(stateClient.getBlock() instanceof SnowBlock) &&
+							!stateClient.isAir() &&
+							!(stateClient.isOf(Blocks.WATER) || stateClient.isOf(Blocks.LAVA) || stateClient.isOf(Blocks.BUBBLE_COLUMN)) &&
+							!stateClient.isOf(Blocks.PISTON_HEAD) && !stateClient.isOf(Blocks.MOVING_PISTON)) {
+							if (!stateClient.getBlock().getName().equals(stateSchematic.getBlock().getName()) ||
+								(stateClient.getBlock() instanceof SlabBlock && stateSchematic.getBlock() instanceof SlabBlock && stateClient.get(SlabBlock.TYPE) != stateSchematic.get(SlabBlock.TYPE))
+									&& dx * dx + Math.pow(dy + 1.5, 2) + dz * dz <= MaxReach * MaxReach) {
 
-					// Abort if there is already a block in the target position
-					if (!ClearArea && (MaxFlip || printerCheckCancel(stateSchematic, stateClient))) {
-						/*
-						 * Sometimes, blocks have other states like the delay on a repeater. So, this
-						 * code clicks the block until the state is the same I don't know if Schematica
-						 * does this too, I just did it because I work with a lot of redstone
-						 */
-						if (!MaxFlip && !stateClient.isAir() && !mc.player.isSneaking() && !isPositionCached(pos, true)) {
-							Block cBlock = stateClient.getBlock();
-							Block sBlock = stateSchematic.getBlock();
-
-							if (cBlock.getName().equals(sBlock.getName())) {
-								Direction facingSchematic = fi.dy.masa.malilib.util.BlockUtils
-									.getFirstPropertyFacingValue(stateSchematic);
-								Direction facingClient = fi.dy.masa.malilib.util.BlockUtils
-									.getFirstPropertyFacingValue(stateClient);
-
-								if (facingSchematic == facingClient) {
-									int clickTimes = 0;
-									Direction side = Direction.NORTH;
-									if (sBlock instanceof RepeaterBlock && !ACCURATE_BLOCK_PLACEMENT.getBooleanValue()) {
-										int clientDelay = stateClient.get(RepeaterBlock.DELAY);
-										int schematicDelay = stateSchematic.get(RepeaterBlock.DELAY);
-										if (clientDelay != schematicDelay) {
-
-											if (clientDelay < schematicDelay) {
-												clickTimes = schematicDelay - clientDelay;
-											} else if (clientDelay > schematicDelay) {
-												clickTimes = schematicDelay + (4 - clientDelay);
-											}
-										}
-										side = Direction.UP;
-									} else if (sBlock instanceof ComparatorBlock && !ACCURATE_BLOCK_PLACEMENT.getBooleanValue()) {
-										if (stateSchematic.get(ComparatorBlock.MODE) != stateClient
-											.get(ComparatorBlock.MODE)) {
-											clickTimes = 1;
-										}
-										side = Direction.UP;
-									} else if (sBlock instanceof LeverBlock) {
-										if (stateSchematic.get(LeverBlock.POWERED) != stateClient
-											.get(LeverBlock.POWERED)) {
-											clickTimes = 1;
-										}
-
-										/*
-										 * I dont know if this direction code is needed. I am just doing it anyway to
-										 * make it "make sense" to the server (I am emulating what the client does so
-										 * the server isn't confused)
-										 */
-										if (stateClient.get(LeverBlock.FACE) == WallMountLocation.CEILING) {
-											side = Direction.DOWN;
-										} else if (stateClient.get(LeverBlock.FACE) == WallMountLocation.FLOOR) {
-											side = Direction.UP;
-										} else {
-											side = stateClient.get(LeverBlock.FACING);
-										}
-
-									} else if (sBlock instanceof TrapdoorBlock) {
-										if (stateSchematic.getMaterial() != Material.METAL && stateSchematic
-											.get(TrapdoorBlock.OPEN) != stateClient.get(TrapdoorBlock.OPEN)) {
-											clickTimes = 1;
-										}
-									} else if (sBlock instanceof FenceGateBlock) {
-										if (stateSchematic.get(FenceGateBlock.OPEN) != stateClient
-											.get(FenceGateBlock.OPEN)) {
-											clickTimes = 1;
-										}
-									} else if (sBlock instanceof DoorBlock) {
-										if (stateClient.getMaterial() != Material.METAL && stateSchematic
-											.get(DoorBlock.OPEN) != stateClient.get(DoorBlock.OPEN)) {
-											clickTimes = 1;
-										}
-									} else if (sBlock instanceof NoteBlock) {
-										int note = stateClient.get(NoteBlock.NOTE);
-										int targetNote = stateSchematic.get(NoteBlock.NOTE);
-										if (note != targetNote) {
-											if (note < targetNote) {
-												clickTimes = targetNote - note;
-											} else if (note > targetNote) {
-												clickTimes = targetNote + (25 - note);
-											}
-										}
-									} else if (sBlock instanceof ComposterBlock && FillInventory) {
-										if (!FakeAccurateBlockPlacement.canHandleOther(composableItem.getItem())) {
-											continue;
-										}
-										int level = stateClient.get(ComposterBlock.LEVEL);
-										int Schematiclevel = stateSchematic.get(ComposterBlock.LEVEL);
-										if (level != Schematiclevel && !(level == 7 && Schematiclevel == 8)) {
-											Hand hand = Hand.MAIN_HAND;
-											if (io.github.eatmyvenom.litematicin.utils.InventoryUtils.swapToItem(mc, composableItem)) {
-												Vec3d hitPos = new Vec3d(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5);
-												BlockHitResult hitResult = new BlockHitResult(hitPos, side, pos, false);
-												mc.interactionManager.interactBlock(mc.player, hand, hitResult); //COMPOSTER
-												io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount();
-												cacheEasyPlacePosition(pos, false);
-												lastPlaced = new Date().getTime() + 200;
-												return ActionResult.SUCCESS;
-											}
-										} else {
-											cacheEasyPlacePosition(pos, true);
-										}
-									} else if (!isPositionCached(pos, false) && PRINTER_PLACE_MINECART.getBooleanValue() && sBlock instanceof DetectorRailBlock && cBlock instanceof DetectorRailBlock) {
-										if (!shouldAvoidPlaceCart(pos, world) && placeCart(stateSchematic, mc, pos)) {
-											continue;
-										}
-									}
-									for (int i = 0; i < clickTimes; i++) // Click on the block a few times
-									{
-										Hand hand = Hand.MAIN_HAND;
-
-										Vec3d hitPos = Vec3d.ofCenter(pos);
-
-										BlockHitResult hitResult = new BlockHitResult(hitPos, side, pos, false);
-
-										mc.interactionManager.interactBlock(mc.player, hand, hitResult); //NOTEBLOCK, REPEATER...
-										interact++;
-									}
-
-									if (clickTimes > 0) {
-										cacheEasyPlacePosition(pos, true, 3600);
-									}
-
-								} //can place vanilla
-							}
-						} else if (!ClearArea && MaxFlip) {
-							Block cBlock = stateClient.getBlock();
-							Block sBlock = stateSchematic.getBlock();
-							if (cBlock.getName().equals(sBlock.getName())) {
-								boolean ShapeBoolean = false;
-								boolean ShouldFix = false;
-								if (sBlock instanceof AbstractRailBlock) {
-									if (sBlock instanceof RailBlock) {
-										String SchematicRailShape = stateSchematic.get(RailBlock.SHAPE).toString();
-										String ClientRailShape = stateClient.get(RailBlock.SHAPE).toString();
-										ShouldFix = !Objects.equals(SchematicRailShape, ClientRailShape);
-										ShapeBoolean = !Objects.equals(SchematicRailShape, ClientRailShape) && ((Objects.equals(SchematicRailShape, "south_west") || Objects.equals(SchematicRailShape, "north_west") ||
-											Objects.equals(SchematicRailShape, "south_east") || Objects.equals(SchematicRailShape, "north_east")) && (Objects.equals(ClientRailShape, "south_west") ||
-											Objects.equals(ClientRailShape, "north_west") || Objects.equals(ClientRailShape, "south_east") || Objects.equals(ClientRailShape, "north_east")) ||
-											(Objects.equals(SchematicRailShape, "east_west") || Objects.equals(SchematicRailShape, "north_south")) && (Objects.equals(ClientRailShape, "east_west") || Objects.equals(ClientRailShape, "north_south")));
-									} else {
-										String SchematicRailShape = stateSchematic.get(PoweredRailBlock.SHAPE).toString();
-										String ClientRailShape = stateClient.get(PoweredRailBlock.SHAPE).toString();
-										ShouldFix = !Objects.equals(SchematicRailShape, ClientRailShape);
-										ShapeBoolean = !Objects.equals(SchematicRailShape, ClientRailShape) && (Objects.equals(SchematicRailShape, "east_west") || Objects.equals(SchematicRailShape, "north_south")) &&
-											(Objects.equals(ClientRailShape, "east_west") || Objects.equals(ClientRailShape, "north_south"));
-									}
-								} else if (sBlock instanceof ObserverBlock || sBlock instanceof PistonBlock || sBlock instanceof RepeaterBlock || sBlock instanceof ComparatorBlock || sBlock instanceof FenceGateBlock || sBlock instanceof TrapdoorBlock) {
-									Direction facingSchematic = fi.dy.masa.malilib.util.BlockUtils.getFirstPropertyFacingValue(stateSchematic);
-									Direction facingClient = fi.dy.masa.malilib.util.BlockUtils.getFirstPropertyFacingValue(stateClient);
-									ShouldFix = facingSchematic != facingClient;
-									ShapeBoolean = facingClient.getOpposite().equals(facingSchematic);
-								}
-								Direction side = Direction.UP;
-								if (ShapeBoolean) {
-									Hand hand = Hand.MAIN_HAND;
-									Vec3d hitPos = Vec3d.ofCenter(pos);
-									BlockHitResult hitResult = new BlockHitResult(hitPos, side, pos, false);
-									mc.interactionManager.interactBlock(mc.player, hand, hitResult); //CACTUS
-									cacheEasyPlacePosition(pos, true);
+								if (mc.player.getAbilities().creativeMode) {
+									mc.interactionManager.attackBlock(pos, Direction.DOWN);
 									interact++;
-								} else if (breakBlocks && ShouldFix) { //cannot fix via flippincactus
-									mc.interactionManager.attackBlock(pos, Direction.DOWN);//by one hit possible?
-									breaker.startBreakingBlock(pos, mc); //register
-									return ActionResult.SUCCESS;
+
+									if (interact >= maxInteract) {
+										lastPlaced = new Date().getTime();
+										return ActionResult.SUCCESS;
+									}
+								} else if (BedrockBreaker.isBlockNotInstantBreakable(stateClient.getBlock()) && BEDROCK_BREAKING.getBooleanValue()) {
+									interact += BedrockBreaker.scheduledTickHandler(mc, pos);
+									continue;
+								} else if (BEDROCK_BREAKING.getBooleanValue()) {
+									interact += BedrockBreaker.scheduledTickHandler(mc, null);
+									continue;
+								} else if (!positionStorage.hasPos(pos)) { // For survival
+									boolean replaceable = mc.world.getBlockState(pos).getMaterial().isReplaceable();
+									if (!replaceable && mc.world.getBlockState(pos).getHardness(world, pos) == -1) {
+										continue;
+									}
+									if (replaceable || mc.world.getBlockState(pos).getHardness(world, pos) == 0) {
+										mc.interactionManager.attackBlock(pos, Direction.DOWN);
+										return ActionResult.SUCCESS;
+									}
+									if (!replaceable) {
+										if (breaker.startBreakingBlock(pos, mc)) {
+											return ActionResult.SUCCESS;
+										}
+									} // it need to avoid unbreakable blocks and just added and lava, but its not block so somehow made it work
+									continue;
 								}
-								continue;
 							}
-						} //flip
-						continue;
-					} //cancel normal placing
+						}
+						// Abort if there is already a block in the target position
+						if (MaxFlip || printerCheckCancel(stateSchematic, stateClient)) {
+							/*
+							 * Sometimes, blocks have other states like the delay on a repeater. So, this
+							 * code clicks the block until the state is the same I don't know if Schematica
+							 * does this too, I just did it because I work with a lot of redstone
+							 */
+							if (!MaxFlip && !stateClient.isAir() && !mc.player.isSneaking() && !isPositionCached(pos, true)) {
+								Block cBlock = stateClient.getBlock();
+								Block sBlock = stateSchematic.getBlock();
+
+								if (cBlock.getName().equals(sBlock.getName())) {
+									Direction facingSchematic = fi.dy.masa.malilib.util.BlockUtils
+										.getFirstPropertyFacingValue(stateSchematic);
+									Direction facingClient = fi.dy.masa.malilib.util.BlockUtils
+										.getFirstPropertyFacingValue(stateClient);
+
+									if (facingSchematic == facingClient) {
+										int clickTimes = 0;
+										Direction side = Direction.NORTH;
+										if (sBlock instanceof RepeaterBlock && !ACCURATE_BLOCK_PLACEMENT.getBooleanValue()) {
+											int clientDelay = stateClient.get(RepeaterBlock.DELAY);
+											int schematicDelay = stateSchematic.get(RepeaterBlock.DELAY);
+											if (clientDelay != schematicDelay) {
+
+												if (clientDelay < schematicDelay) {
+													clickTimes = schematicDelay - clientDelay;
+												} else if (clientDelay > schematicDelay) {
+													clickTimes = schematicDelay + (4 - clientDelay);
+												}
+											}
+											side = Direction.UP;
+										} else if (sBlock instanceof ComparatorBlock && !ACCURATE_BLOCK_PLACEMENT.getBooleanValue()) {
+											if (stateSchematic.get(ComparatorBlock.MODE) != stateClient
+												.get(ComparatorBlock.MODE)) {
+												clickTimes = 1;
+											}
+											side = Direction.UP;
+										} else if (sBlock instanceof LeverBlock) {
+											if (stateSchematic.get(LeverBlock.POWERED) != stateClient
+												.get(LeverBlock.POWERED)) {
+												clickTimes = 1;
+											}
+
+											/*
+											 * I dont know if this direction code is needed. I am just doing it anyway to
+											 * make it "make sense" to the server (I am emulating what the client does so
+											 * the server isn't confused)
+											 */
+											if (stateClient.get(LeverBlock.FACE) == WallMountLocation.CEILING) {
+												side = Direction.DOWN;
+											} else if (stateClient.get(LeverBlock.FACE) == WallMountLocation.FLOOR) {
+												side = Direction.UP;
+											} else {
+												side = stateClient.get(LeverBlock.FACING);
+											}
+
+										} else if (sBlock instanceof TrapdoorBlock) {
+											if (stateSchematic.getMaterial() != Material.METAL && stateSchematic
+												.get(TrapdoorBlock.OPEN) != stateClient.get(TrapdoorBlock.OPEN)) {
+												clickTimes = 1;
+											}
+										} else if (sBlock instanceof FenceGateBlock) {
+											if (stateSchematic.get(FenceGateBlock.OPEN) != stateClient
+												.get(FenceGateBlock.OPEN)) {
+												clickTimes = 1;
+											}
+										} else if (sBlock instanceof DoorBlock) {
+											if (stateClient.getMaterial() != Material.METAL && stateSchematic
+												.get(DoorBlock.OPEN) != stateClient.get(DoorBlock.OPEN)) {
+												clickTimes = 1;
+											}
+										} else if (sBlock instanceof NoteBlock) {
+											int note = stateClient.get(NoteBlock.NOTE);
+											int targetNote = stateSchematic.get(NoteBlock.NOTE);
+											if (note != targetNote) {
+												if (note < targetNote) {
+													clickTimes = targetNote - note;
+												} else if (note > targetNote) {
+													clickTimes = targetNote + (25 - note);
+												}
+											}
+										} else if (sBlock instanceof ComposterBlock && FillInventory) {
+											if (!FakeAccurateBlockPlacement.canHandleOther(composableItem.getItem())) {
+												continue;
+											}
+											int level = stateClient.get(ComposterBlock.LEVEL);
+											int Schematiclevel = stateSchematic.get(ComposterBlock.LEVEL);
+											if (level != Schematiclevel && !(level == 7 && Schematiclevel == 8)) {
+												Hand hand = Hand.MAIN_HAND;
+												if (io.github.eatmyvenom.litematicin.utils.InventoryUtils.swapToItem(mc, composableItem)) {
+													Vec3d hitPos = new Vec3d(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5);
+													BlockHitResult hitResult = new BlockHitResult(hitPos, side, pos, false);
+													mc.interactionManager.interactBlock(mc.player, hand, hitResult); //COMPOSTER
+													io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount();
+													cacheEasyPlacePosition(pos, false);
+													lastPlaced = new Date().getTime() + 200;
+													return ActionResult.SUCCESS;
+												}
+											} else {
+												cacheEasyPlacePosition(pos, true);
+											}
+										} else if (!isPositionCached(pos, false) && PRINTER_PLACE_MINECART.getBooleanValue() && sBlock instanceof DetectorRailBlock && cBlock instanceof DetectorRailBlock) {
+											if (!shouldAvoidPlaceCart(pos, world) && placeCart(stateSchematic, mc, pos)) {
+												continue;
+											}
+										}
+										for (int i = 0; i < clickTimes; i++) // Click on the block a few times
+										{
+											Hand hand = Hand.MAIN_HAND;
+
+											Vec3d hitPos = Vec3d.ofCenter(pos);
+
+											BlockHitResult hitResult = new BlockHitResult(hitPos, side, pos, false);
+
+											mc.interactionManager.interactBlock(mc.player, hand, hitResult); //NOTEBLOCK, REPEATER...
+											interact++;
+										}
+
+										if (clickTimes > 0) {
+											cacheEasyPlacePosition(pos, true, 3600);
+										}
+
+									} //can place vanilla
+								}
+							} else if (!ClearArea && MaxFlip) {
+								Block cBlock = stateClient.getBlock();
+								Block sBlock = stateSchematic.getBlock();
+								if (cBlock.getName().equals(sBlock.getName())) {
+									boolean ShapeBoolean = false;
+									boolean ShouldFix = false;
+									if (sBlock instanceof AbstractRailBlock) {
+										if (sBlock instanceof RailBlock) {
+											String SchematicRailShape = stateSchematic.get(RailBlock.SHAPE).toString();
+											String ClientRailShape = stateClient.get(RailBlock.SHAPE).toString();
+											ShouldFix = !Objects.equals(SchematicRailShape, ClientRailShape);
+											ShapeBoolean = !Objects.equals(SchematicRailShape, ClientRailShape) && ((Objects.equals(SchematicRailShape, "south_west") || Objects.equals(SchematicRailShape, "north_west") ||
+												Objects.equals(SchematicRailShape, "south_east") || Objects.equals(SchematicRailShape, "north_east")) && (Objects.equals(ClientRailShape, "south_west") ||
+												Objects.equals(ClientRailShape, "north_west") || Objects.equals(ClientRailShape, "south_east") || Objects.equals(ClientRailShape, "north_east")) ||
+												(Objects.equals(SchematicRailShape, "east_west") || Objects.equals(SchematicRailShape, "north_south")) && (Objects.equals(ClientRailShape, "east_west") || Objects.equals(ClientRailShape, "north_south")));
+										} else {
+											String SchematicRailShape = stateSchematic.get(PoweredRailBlock.SHAPE).toString();
+											String ClientRailShape = stateClient.get(PoweredRailBlock.SHAPE).toString();
+											ShouldFix = !Objects.equals(SchematicRailShape, ClientRailShape);
+											ShapeBoolean = !Objects.equals(SchematicRailShape, ClientRailShape) && (Objects.equals(SchematicRailShape, "east_west") || Objects.equals(SchematicRailShape, "north_south")) &&
+												(Objects.equals(ClientRailShape, "east_west") || Objects.equals(ClientRailShape, "north_south"));
+										}
+									} else if (sBlock instanceof ObserverBlock || sBlock instanceof PistonBlock || sBlock instanceof RepeaterBlock || sBlock instanceof ComparatorBlock || sBlock instanceof FenceGateBlock || sBlock instanceof TrapdoorBlock) {
+										Direction facingSchematic = fi.dy.masa.malilib.util.BlockUtils.getFirstPropertyFacingValue(stateSchematic);
+										Direction facingClient = fi.dy.masa.malilib.util.BlockUtils.getFirstPropertyFacingValue(stateClient);
+										ShouldFix = facingSchematic != facingClient;
+										ShapeBoolean = facingClient.getOpposite().equals(facingSchematic);
+									}
+									Direction side = Direction.UP;
+									if (ShapeBoolean) {
+										Hand hand = Hand.MAIN_HAND;
+										Vec3d hitPos = Vec3d.ofCenter(pos);
+										BlockHitResult hitResult = new BlockHitResult(hitPos, side, pos, false);
+										mc.interactionManager.interactBlock(mc.player, hand, hitResult); //CACTUS
+										cacheEasyPlacePosition(pos, true);
+										interact++;
+									} else if (breakBlocks && ShouldFix) { //cannot fix via flippincactus
+										mc.interactionManager.attackBlock(pos, Direction.DOWN);//by one hit possible?
+										breaker.startBreakingBlock(pos, mc); //register
+										return ActionResult.SUCCESS;
+									}
+									continue;
+								}
+							} //flip
+							continue;
+						} //cancel normal placing
+					}
 					if (!ClearArea && MaxFlip) {
 						continue;
 					}
@@ -875,12 +886,11 @@ public class Printer {
 									return ActionResult.SUCCESS;
 								}
 								interact++;
-								continue;
 							} //ICE
 							else {
 								recordCause(pos, "Can't pick item " + Items.ICE.getTranslationKey() + " at " + pos.toShortString());
-								continue;
 							}
+							continue;
 						}
 						if (!canPickBlock(mc, stateSchematic, pos)) {
 							//mc.player.sendMessage(Text.of("Can't pick block"),true);
@@ -1379,11 +1389,6 @@ public class Printer {
 				if (!value.getKey()) {
 					return pos.offset(direction);
 				}
-				/*if (mc.world.getBlockState(pos.offset(direction,2)).getMaterial().isReplaceable() != schematicWorld.getBlockState(pos.offset(direction,2)).getMaterial().isReplaceable() &&
-					ObserverCantAvoid(mc, schematicWorld, direction, pos.offset(direction) ))
-				{
-					return pos.offset(direction);
-				}*/
 			}
 			//QC
 			if (direction == Direction.UP || direction == Direction.DOWN || !isQCableBlock(schematicWorld, pos)) {
@@ -1416,7 +1421,7 @@ public class Printer {
 	}
 
 	private static boolean sleepWhenRequired(MinecraftClient mc) {
-		if (SLEEP_AFTER_CONSUME.getIntegerValue() > 0 && (mc.player.getMainHandStack().isEmpty() || io.github.eatmyvenom.litematicin.utils.InventoryUtils.lastCount == 1)) {
+		if (SLEEP_AFTER_CONSUME.getIntegerValue() > 0 && io.github.eatmyvenom.litematicin.utils.InventoryUtils.lastCount <= 0) {
 			lastPlaced = new Date().getTime() + SLEEP_AFTER_CONSUME.getIntegerValue();
 			MessageHolder.sendUniqueMessageActionBar(mc.player, "Sleeping because stack is emptied!");
 			return true;
@@ -1918,18 +1923,7 @@ public class Printer {
 		if (blockClient instanceof SnowBlock && stateClient.get(SnowBlock.LAYERS) < 3 && !(stateSchematic.getBlock() instanceof SnowBlock)) {
 			return false;
 		}
-		// This is a lot simpler than below. But slightly lacks functionality.
 		return !stateClient.isAir() && !stateClient.getMaterial().isReplaceable();
-		/*
-		 * if (trace.getType() != HitResult.Type.BLOCK) { return false; }
-		 */
-		// BlockHitResult hitResult = (BlockHitResult) trace;
-		// ItemPlacementContext ctx = new ItemPlacementContext(new
-		// ItemUsageContext(player, Hand.MAIN_HAND, hitResult));
-
-		// if (stateClient.canReplace(ctx) == false) {
-		// return true;
-		// }
 	}
 
 	/**

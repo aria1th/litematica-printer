@@ -23,6 +23,7 @@ public class InventoryUtils {
 	public static int itemChangeCount = 0;
 	public static Item handlingItem = null;
 	public static Item previousItem = null; //only used for checks
+	public static int trackedSelectedSlot = -1;
 
 	public static void decrementCount() {
 		if (lastCount > 0) {
@@ -80,16 +81,17 @@ public class InventoryUtils {
 		if (player == null || client.interactionManager == null) {
 			return false;
 		}
-		player.getInventory().updateItems();
+		//player.getInventory().updateItems();
 		if (stack.getItem() != handlingItem) {
 			if (maxChange != 0 && itemChangeCount > maxChange) {
 				return false;
 			}
 		}
-		if (!requiresSwap(client.player, stack)) {
+		if (!requiresSwap(player, stack)) {
+			assert trackedSelectedSlot == -1 || trackedSelectedSlot == player.getInventory().selectedSlot : "Selected slot changed for external reason! : expected %s, current %s".formatted(trackedSelectedSlot, player.getInventory().selectedSlot);
 			assert previousItem == stack.getItem() : "Handling item :  " + handlingItem + " was not equal to " + stack.getItem();
 			MessageHolder.sendOrderMessage("Didn't require swap for item " + stack.getItem() + " previous handling item : " + previousItem);
-			lastCount = getMainHandStack(player).getCount();
+			lastCount = player.getAbilities().creativeMode ? 65536 : getMainHandStack(player).getCount();
 			return true;
 		}
 		if (survivalSwap(client, player, stack)) {
@@ -111,9 +113,12 @@ public class InventoryUtils {
 		if (!player.getAbilities().creativeMode) {
 			return false;
 		}
-		player.getInventory().addPickBlock(stack);
-		client.interactionManager.clickCreativeStack(getMainHandStack(player), 36 + player.getInventory().selectedSlot);
-		lastCount = 64;
+		MessageHolder.sendOrderMessage("Clicked creative stack " + stack.getItem());
+		//player.getInventory().addPickBlock(stack);
+		int selectedSlot = player.getInventory().selectedSlot;
+		player.playerScreenHandler.getSlot(36 + selectedSlot).setStack(stack);
+		client.interactionManager.clickCreativeStack(getMainHandStack(player), 36 + selectedSlot);
+		lastCount = 65536;
 		handlingItem = stack.getItem();
 		previousItem = handlingItem;
 		itemChangeCount++;
@@ -126,7 +131,7 @@ public class InventoryUtils {
 			return false;
 		}
 		if (areItemsExact(player.getOffHandStack(), stack) && !areItemsExact(getMainHandStack(player), stack)) {
-			lastCount = client.player.getOffHandStack().getCount();
+			lastCount = client.player.getAbilities().creativeMode ? 65536 : client.player.getOffHandStack().getCount();
 			client.getNetworkHandler().sendPacket(new PlayerActionC2SPacket(net.minecraft.network.packet.c2s.play.PlayerActionC2SPacket.Action.SWAP_ITEM_WITH_OFFHAND, BlockPos.ORIGIN, Direction.DOWN));
 			return true;
 		}
@@ -134,15 +139,31 @@ public class InventoryUtils {
 		if (slot == -1) {
 			return false;
 		}
-		lastCount = client.player.getInventory().getStack(slot).getCount();
+		lastCount = client.player.getAbilities().creativeMode ? 65536 : client.player.getInventory().getStack(slot).getCount();
 		if (PlayerInventory.isValidHotbarIndex(slot)) {
 			player.getInventory().selectedSlot = slot;
+			trackedSelectedSlot = slot;
 			MessageHolder.sendOrderMessage("Selected Slot " + slot);
 			//client.getNetworkHandler().sendPacket(new UpdateSelectedSlotC2SPacket(slot));
 		} else {
-			int selectedSlot = player.getInventory().selectedSlot;
-			MessageHolder.sendOrderMessage("Slot at " + slot + " is swapped with " + selectedSlot);
-			client.interactionManager.clickSlot(player.playerScreenHandler.syncId, slot, selectedSlot, SlotActionType.SWAP, player);
+			int emptySlot = -1;
+			for (int i = 0; i < 9; i++) {
+				if (player.getInventory().main.get(i).isEmpty()) {
+					emptySlot = i;
+					break;
+				}
+			}
+			if (emptySlot != -1) {
+				MessageHolder.sendOrderMessage("Slot at " + slot + " is sent to " + emptySlot);
+				client.interactionManager.clickSlot(player.playerScreenHandler.syncId, slot, 1, SlotActionType.QUICK_MOVE, player);
+				player.getInventory().selectedSlot = emptySlot;
+				trackedSelectedSlot = emptySlot;
+			} else {
+				int selectedSlot = player.getInventory().selectedSlot;
+				MessageHolder.sendOrderMessage("Slot at " + slot + " is swapped with " + selectedSlot);
+				client.interactionManager.clickSlot(player.playerScreenHandler.syncId, slot, selectedSlot, SlotActionType.SWAP, player);
+			}
+
 		}
 		try {
 			assert getMainHandStack(player).isItemEqual(stack);

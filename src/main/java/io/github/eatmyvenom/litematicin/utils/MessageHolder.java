@@ -5,12 +5,14 @@ import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.text.Text;
 
 import java.util.HashSet;
+import java.util.Objects;
 
 import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.*;
 
 public class MessageHolder {
 	private static final HashSet<String> uniqueStrings = new HashSet<>();
 	private static final HashSet<String> errorLogger = new HashSet<>();
+	private static String orderPreviousMessage = "";
 
 	public static void sendDebugMessage(ClientPlayerEntity player, String string) {
 		if (DEBUG_EXTRA_MESSAGE.getBooleanValue()) {
@@ -27,7 +29,8 @@ public class MessageHolder {
 
 	public static void sendOrderMessage(String string) {
 		ClientPlayerEntity player = MinecraftClient.getInstance().player;
-		if (DEBUG_ORDER_PLACEMENTS.getBooleanValue()) {
+		if (DEBUG_ORDER_PLACEMENTS.getBooleanValue() && !Objects.equals(orderPreviousMessage, string)) {
+			orderPreviousMessage = string;
 			player.sendMessage(Text.of(string));
 		}
 	}
