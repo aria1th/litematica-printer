@@ -51,7 +51,9 @@ public class Printer {
 
 	private static final LinkedHashMap<Map.Entry<Long, Boolean>, PositionCache> positionCache = new LinkedHashMap<>();
 	// For printing delay
+	public static boolean isSleeping = false;
 	public static long lastPlaced = new Date().getTime();
+	private static boolean shouldSleepLonger = false;
 	public static Breaker breaker = new Breaker();
 	public static int worldBottomY = 0;
 	public static int worldTopY = 256;
@@ -269,6 +271,9 @@ public class Printer {
 		}
 		if (new Date().getTime() < lastPlaced + 1000.0 * EASY_PLACE_MODE_DELAY.getDoubleValue()) {
 			return ActionResult.PASS;
+		} else {
+			isSleeping = false;
+			io.github.eatmyvenom.litematicin.utils.InventoryUtils.usedSlots.clear();
 		}
 		BlockPos tracePos = mc.player.getBlockPos();
 		int posX = tracePos.getX();
@@ -404,12 +409,17 @@ public class Printer {
 		toX = Math.min(toX, (int) mc.player.getX() + rangeX);
 		toY = Math.min(toY, (int) mc.player.getY() + rangeY);
 		toZ = Math.min(toZ, (int) mc.player.getZ() + rangeZ);
-
+		long startTime = new Date().getTime();
 		for (int y = fromY; y <= toY; y++) {
 			for (int x = fromX; x <= toX; x++) {
 				for (int z = fromZ; z <= toZ; z++) {
 					if (interact >= maxInteract) {
-						lastPlaced = new Date().getTime();
+						if (shouldSleepLonger) {
+							shouldSleepLonger = false;
+							lastPlaced = Math.max(lastPlaced, new Date().getTime() + SLEEP_AFTER_CONSUME.getIntegerValue());
+						} else {
+							lastPlaced = Math.max(lastPlaced, new Date().getTime());
+						}
 						return ActionResult.SUCCESS;
 					}
 					if (FakeAccurateBlockPlacement.emptyWaitingQueue()) {
@@ -458,7 +468,12 @@ public class Printer {
 									interact++;
 
 									if (interact >= maxInteract) {
-										lastPlaced = new Date().getTime();
+										if (shouldSleepLonger) {
+											shouldSleepLonger = false;
+											lastPlaced = Math.max(lastPlaced, new Date().getTime() + SLEEP_AFTER_CONSUME.getIntegerValue());
+										} else {
+											lastPlaced = Math.max(lastPlaced, new Date().getTime());
+										}
 										return ActionResult.SUCCESS;
 									}
 								} else if (BedrockBreaker.isBlockNotInstantBreakable(stateClient.getBlock()) && BEDROCK_BREAKING.getBooleanValue()) {
@@ -581,7 +596,12 @@ public class Printer {
 													mc.interactionManager.interactBlock(mc.player, hand, hitResult); //COMPOSTER
 													io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount();
 													cacheEasyPlacePosition(pos, false);
-													lastPlaced = new Date().getTime() + 200;
+													if (shouldSleepLonger) {
+														shouldSleepLonger = false;
+														lastPlaced = Math.max(lastPlaced, new Date().getTime() + 200 + SLEEP_AFTER_CONSUME.getIntegerValue());
+													} else {
+														lastPlaced = Math.max(lastPlaced, new Date().getTime() + 200);
+													}
 													return ActionResult.SUCCESS;
 												}
 											} else {
@@ -693,9 +713,7 @@ public class Printer {
 							mc.interactionManager.interactBlock(mc.player, hand, hitResult); //FLUID REMOVAL
 							io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount();
 							cacheEasyPlacePosition(pos, false);
-							if (sleepWhenRequired(mc)) {
-								return ActionResult.SUCCESS;
-							}
+							sleepWhenRequired(mc);
 							if (isReplaceableFluidSource(stateClient) || cBlock instanceof SnowBlock) {
 								lastPlaced = new Date().getTime() + 200;
 							}
@@ -824,10 +842,13 @@ public class Printer {
 								BlockHitResult hitResult = new BlockHitResult(hitPos, Direction.UP, new BlockPos(x, y - 1, z), false);
 								mc.interactionManager.interactBlock(mc.player, hand, hitResult); //LIGHT
 								cacheEasyPlacePosition(pos, false);
-								if (sleepWhenRequired(mc)) {
-									return ActionResult.SUCCESS;
+								sleepWhenRequired(mc);
+								if (shouldSleepLonger) {
+									shouldSleepLonger = false;
+									lastPlaced = Math.max(lastPlaced, new Date().getTime() + 200 + SLEEP_AFTER_CONSUME.getIntegerValue());
+								} else {
+									lastPlaced = Math.max(lastPlaced, new Date().getTime() + 200);
 								}
-								lastPlaced = new Date().getTime() + 200;
 								interact++;
 							}
 						}
@@ -882,9 +903,7 @@ public class Printer {
 								mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, new BlockHitResult(new Vec3d(pos.getX(), pos.getY(), pos.getZ()), Direction.DOWN, pos, false));
 								io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount();
 								cacheEasyPlacePosition(pos, false);
-								if (sleepWhenRequired(mc)) {
-									return ActionResult.SUCCESS;
-								}
+								sleepWhenRequired(mc);
 								interact++;
 							} //ICE
 							else {
@@ -995,9 +1014,7 @@ public class Printer {
 											}
 											mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, new BlockHitResult(hitVec, required, npos, false)); //place block
 											io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount();
-											if (sleepWhenRequired(mc)) {
-												return ActionResult.SUCCESS;
-											}
+											sleepWhenRequired(mc);
 										}
 										continue;
 									}
@@ -1014,9 +1031,7 @@ public class Printer {
 										}
 										mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, new BlockHitResult(hitVec, Direction.UP, npos, false)); //place block
 										io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount();
-										if (sleepWhenRequired(mc)) {
-											return ActionResult.SUCCESS;
-										}
+										sleepWhenRequired(mc);
 									}
 									continue;
 								} else if (canPlaceFace(FacingData.getFacingData(stateSchematic), stateSchematic, primaryFacing, horizontalFacing)) { // no gui
@@ -1031,9 +1046,7 @@ public class Printer {
 										}
 										mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, new BlockHitResult(hitVec, required, npos, false)); //place block
 										io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount();
-										if (sleepWhenRequired(mc)) {
-											return ActionResult.SUCCESS;
-										}
+										sleepWhenRequired(mc);
 									}
 									continue;
 								}
@@ -1045,9 +1058,7 @@ public class Printer {
 										mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, new BlockHitResult(Vec3d.of(pos),
 											stateSchematic.get(TrapdoorBlock.FACING).getOpposite(), pos, false)); //place block
 										io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount();
-										if (sleepWhenRequired(mc)) {
-											return ActionResult.SUCCESS;
-										}
+										sleepWhenRequired(mc);
 										interact++;
 									}
 									continue;
@@ -1060,9 +1071,7 @@ public class Printer {
 										mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, new BlockHitResult(Vec3d.of(pos),
 											stateSchematic.get(GrindstoneBlock.FACING).getOpposite(), pos, false)); //place block
 										io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount();
-										if (sleepWhenRequired(mc)) {
-											return ActionResult.SUCCESS;
-										}
+										sleepWhenRequired(mc);
 										interact++;
 									}
 								}
@@ -1075,9 +1084,7 @@ public class Printer {
 											stateSchematic.get(EndRodBlock.FACING).getOpposite(), pos, false)); //place block
 										io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount();
 										interact++;
-										if (sleepWhenRequired(mc)) {
-											return ActionResult.SUCCESS;
-										}
+										sleepWhenRequired(mc);
 									}
 								}
 								continue;
@@ -1112,9 +1119,7 @@ public class Printer {
 									interact++;
 									mc.interactionManager.interactBlock(mc.player, hand, hitResult); //SNOW LAYERS
 									io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount();
-									if (sleepWhenRequired(mc)) {
-										return ActionResult.SUCCESS;
-									}
+									sleepWhenRequired(mc);
 								}
 							}
 							continue;
@@ -1137,9 +1142,7 @@ public class Printer {
 								mc.interactionManager.interactBlock(mc.player, hand, hitResult); //PLACE BLOCK
 								io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount();
 								cacheEasyPlacePosition(pos, false);
-								if (sleepWhenRequired(mc)) {
-									return ActionResult.SUCCESS;
-								}
+								sleepWhenRequired(mc);
 								interact++;
 							}
 							continue;
@@ -1162,9 +1165,7 @@ public class Printer {
 									mc.interactionManager.interactBlock(mc.player, hand, hitResult); //double slab
 									io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount();
 									cacheEasyPlacePosition(pos, false);
-									if (sleepWhenRequired(mc)) {
-										return ActionResult.SUCCESS;
-									}
+									sleepWhenRequired(mc);
 									interact++;
 								}
 								continue;
@@ -1181,9 +1182,7 @@ public class Printer {
 									mc.interactionManager.interactBlock(mc.player, hand, hitResult); //double slab
 									io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount();
 									cacheEasyPlacePosition(pos, false);
-									if (sleepWhenRequired(mc)) {
-										return ActionResult.SUCCESS;
-									}
+									sleepWhenRequired(mc);
 									interact++;
 								}
 								continue;
@@ -1191,7 +1190,12 @@ public class Printer {
 						}
 
 						if (interact >= maxInteract) {
-							lastPlaced = new Date().getTime();
+							if (shouldSleepLonger) {
+								shouldSleepLonger = false;
+								lastPlaced = Math.max(lastPlaced, new Date().getTime() + SLEEP_AFTER_CONSUME.getIntegerValue());
+							} else {
+								lastPlaced = Math.max(lastPlaced, new Date().getTime());
+							}
 							return ActionResult.SUCCESS;
 						}
 
@@ -1204,7 +1208,12 @@ public class Printer {
 		}
 
 		if (interact > 0) {
-			lastPlaced = new Date().getTime();
+			if (shouldSleepLonger) {
+				shouldSleepLonger = false;
+				lastPlaced = Math.max(lastPlaced, new Date().getTime() + SLEEP_AFTER_CONSUME.getIntegerValue());
+			} else {
+				lastPlaced = Math.max(lastPlaced, new Date().getTime());
+			}
 			return ActionResult.SUCCESS;
 		}
 		if (!(mc.player.getMainHandStack().getItem() instanceof BlockItem) && !(mc.player.getOffHandStack().getItem() instanceof BlockItem)) {
@@ -1422,8 +1431,10 @@ public class Printer {
 
 	private static boolean sleepWhenRequired(MinecraftClient mc) {
 		if (SLEEP_AFTER_CONSUME.getIntegerValue() > 0 && io.github.eatmyvenom.litematicin.utils.InventoryUtils.lastCount <= 0) {
+			shouldSleepLonger = true;
 			lastPlaced = new Date().getTime() + SLEEP_AFTER_CONSUME.getIntegerValue();
 			MessageHolder.sendUniqueMessageActionBar(mc.player, "Sleeping because stack is emptied!");
+			isSleeping = true;
 			return true;
 		}
 		return false;

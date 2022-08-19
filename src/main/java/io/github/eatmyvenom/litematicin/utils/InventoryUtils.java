@@ -1,6 +1,7 @@
 package io.github.eatmyvenom.litematicin.utils;
 
 import io.github.eatmyvenom.litematicin.LitematicaMixinMod;
+import it.unimi.dsi.fastutil.ints.IntArraySet;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.LootableContainerBlockEntity;
 import net.minecraft.client.MinecraftClient;
@@ -24,11 +25,27 @@ public class InventoryUtils {
 	public static Item handlingItem = null;
 	public static Item previousItem = null; //only used for checks
 	public static int trackedSelectedSlot = -1;
+	public static IntArraySet usedSlots = new IntArraySet(9);
 
 	public static void decrementCount() {
 		if (lastCount > 0) {
 			lastCount--;
 		}
+	}
+
+	public static int getAvailableSlot() {
+		for (int i = 0; i < 9; i++) {
+			if (usedSlots.contains(i)) {
+				continue;
+			}
+			usedSlots.add(i);
+			return i;
+		}
+		return -1;
+	}
+
+	public static boolean hasEmptyHotbar() {
+		return usedSlots.size() < 9;
 	}
 
 	public static ItemStack getMainHandStack(ClientPlayerEntity player) {
@@ -92,9 +109,11 @@ public class InventoryUtils {
 			assert previousItem == stack.getItem() : "Handling item :  " + handlingItem + " was not equal to " + stack.getItem();
 			MessageHolder.sendOrderMessage("Didn't require swap for item " + stack.getItem() + " previous handling item : " + previousItem);
 			lastCount = player.getAbilities().creativeMode ? 65536 : getMainHandStack(player).getCount();
+			usedSlots.add(player.getInventory().selectedSlot);
 			return true;
 		}
 		if (survivalSwap(client, player, stack)) {
+			usedSlots.add(player.getInventory().selectedSlot);
 			MessageHolder.sendOrderMessage("Swapped to item " + stack.getItem());
 			handlingItem = stack.getItem();
 			previousItem = handlingItem;
@@ -115,9 +134,12 @@ public class InventoryUtils {
 		}
 		MessageHolder.sendOrderMessage("Clicked creative stack " + stack.getItem());
 		//player.getInventory().addPickBlock(stack);
-		int selectedSlot = player.getInventory().selectedSlot;
+
+		int selectedSlot = getAvailableSlot();
+		player.getInventory().selectedSlot = selectedSlot;
 		player.playerScreenHandler.getSlot(36 + selectedSlot).setStack(stack);
 		client.interactionManager.clickCreativeStack(getMainHandStack(player), 36 + selectedSlot);
+		usedSlots.add(player.getInventory().selectedSlot);
 		lastCount = 65536;
 		handlingItem = stack.getItem();
 		previousItem = handlingItem;
@@ -139,30 +161,22 @@ public class InventoryUtils {
 		if (slot == -1) {
 			return false;
 		}
-		lastCount = client.player.getAbilities().creativeMode ? 65536 : client.player.getInventory().getStack(slot).getCount();
 		if (PlayerInventory.isValidHotbarIndex(slot)) {
 			player.getInventory().selectedSlot = slot;
 			trackedSelectedSlot = slot;
 			MessageHolder.sendOrderMessage("Selected Slot " + slot);
+			lastCount = client.player.getAbilities().creativeMode ? 65536 : client.player.getInventory().getStack(slot).getCount();
 			//client.getNetworkHandler().sendPacket(new UpdateSelectedSlotC2SPacket(slot));
 		} else {
-			int emptySlot = -1;
-			for (int i = 0; i < 9; i++) {
-				if (player.getInventory().main.get(i).isEmpty()) {
-					emptySlot = i;
-					break;
-				}
+			int selectedSlot = getAvailableSlot();
+			if (selectedSlot == -1) {
+				MessageHolder.sendOrderMessage("All hotbar slots are used");
+				return false;
 			}
-			if (emptySlot != -1) {
-				MessageHolder.sendOrderMessage("Slot at " + slot + " is sent to " + emptySlot);
-				client.interactionManager.clickSlot(player.playerScreenHandler.syncId, slot, 1, SlotActionType.QUICK_MOVE, player);
-				player.getInventory().selectedSlot = emptySlot;
-				trackedSelectedSlot = emptySlot;
-			} else {
-				int selectedSlot = player.getInventory().selectedSlot;
-				MessageHolder.sendOrderMessage("Slot at " + slot + " is swapped with " + selectedSlot);
-				client.interactionManager.clickSlot(player.playerScreenHandler.syncId, slot, selectedSlot, SlotActionType.SWAP, player);
-			}
+			lastCount = client.player.getAbilities().creativeMode ? 65536 : client.player.getInventory().getStack(slot).getCount();
+			MessageHolder.sendOrderMessage("Slot at " + slot + " is swapped with " + selectedSlot);
+			client.interactionManager.clickSlot(player.playerScreenHandler.syncId, slot, selectedSlot, SlotActionType.SWAP, player);
+			player.getInventory().selectedSlot = selectedSlot;
 
 		}
 		try {

@@ -1,7 +1,6 @@
 package io.github.eatmyvenom.litematicin.mixin.Litematica;
 
 import fi.dy.masa.litematica.util.WorldUtils;
-import io.github.eatmyvenom.litematicin.LitematicaMixinMod;
 import io.github.eatmyvenom.litematicin.utils.MessageHolder;
 import io.github.eatmyvenom.litematicin.utils.Printer;
 import net.minecraft.client.MinecraftClient;
@@ -29,7 +28,6 @@ public class WorldUtilsMixin {
 		if (mc.player == null) {
 			return;
 		}
-		mc.player.playerScreenHandler.disableSyncing();
 		ActionResult defaultResult = ActionResult.SUCCESS;
 		try {
 			defaultResult = Printer.doPrinterAction(mc);
@@ -43,14 +41,8 @@ public class WorldUtilsMixin {
 		} catch (AssertionError e) {
 			MessageHolder.sendOrderMessage("Order error happened " + e.getMessage());
 			MessageHolder.sendMessageUncheckedUnique(mc.player, "Order Error Happened " + e.getMessage());
-			if (!LitematicaMixinMod.DISABLE_SYNC.getBooleanValue()) {
-				mc.player.playerScreenHandler.enableSyncing();
-			}
 			cir.setReturnValue(ActionResult.FAIL);
 			return;
-		}
-		if (!LitematicaMixinMod.DISABLE_SYNC.getBooleanValue()) {
-			mc.player.playerScreenHandler.enableSyncing();
 		}
 		cir.setReturnValue(defaultResult);
 		//return defaultResult;

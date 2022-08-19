@@ -452,7 +452,7 @@ public class FakeAccurateBlockPlacement {
 			interactionManager.interactBlock(player, Hand.MAIN_HAND, blockHitResult);
 			InventoryUtils.decrementCount();
 			blockPlacedInTick++;
-			if (InventoryUtils.lastCount <= 0) {
+			if (InventoryUtils.lastCount <= 0 && SLEEP_AFTER_CONSUME.getIntegerValue() > 0) {
 				shouldReturnValue = true;
 				Printer.lastPlaced = new Date().getTime() + SLEEP_AFTER_CONSUME.getIntegerValue();
 			}
