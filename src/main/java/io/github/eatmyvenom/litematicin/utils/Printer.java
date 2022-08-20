@@ -440,13 +440,19 @@ public class Printer {
 					BlockPos pos = new BlockPos(x, y, z);
 					BlockState stateSchematic;
 					BlockState stateClient;
-					if (!ClearArea && !Flippincactus && !BEDROCK_BREAKING.getBooleanValue()) {
+
+					if (!breakBlocks && !ClearArea && !Flippincactus && !BEDROCK_BREAKING.getBooleanValue()) {
 						if (world.isAir(pos)) {
 							continue;
 						} else {
 							if (world.getBlockState(pos) == mc.world.getBlockState(pos)) {
 								continue;
 							}
+						}
+					}
+					if (breakBlocks) {
+						if (PRINTER_BREAK_IGNORE_EXTRA.getBooleanValue() && world.isAir(pos)) {
+							continue;
 						}
 					}
 					stateSchematic = world.getBlockState(pos);

@@ -184,6 +184,9 @@ public class BedrockBreaker {
 		}
 		BlockPos torchCheck = pistonPos.down(); // down
 		if (pos2 != torchCheck && isBlockPosinYRange(torchCheck)) {
+			if (torchCheck.equals(pos1) || torchCheck.equals(pos2)) {
+				return null;
+			}
 			if (!world.getBlockState(torchCheck).isAir() && !world.getBlockState(torchCheck).getMaterial().isReplaceable()) {
 				return null;
 			}
