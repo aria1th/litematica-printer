@@ -11,8 +11,18 @@ import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.*;
 
 public class MessageHolder {
 	private static final HashSet<String> uniqueStrings = new HashSet<>();
+	private static final HashSet<String> uniquePacketInfos = new HashSet<>();
 	private static final HashSet<String> errorLogger = new HashSet<>();
 	private static String orderPreviousMessage = "";
+
+	public static void sendPacketOrders(String string) {
+		final ClientPlayerEntity player = MinecraftClient.getInstance().player;
+		if (uniquePacketInfos.contains(string)) {
+			return;
+		}
+		uniquePacketInfos.add(string);
+		player.sendMessage(Text.of(string));
+	}
 
 	public static void sendDebugMessage(ClientPlayerEntity player, String string) {
 		if (DEBUG_EXTRA_MESSAGE.getBooleanValue()) {
@@ -21,14 +31,14 @@ public class MessageHolder {
 	}
 
 	public static void sendDebugMessage(String string) {
-		ClientPlayerEntity player = MinecraftClient.getInstance().player;
+		final ClientPlayerEntity player = MinecraftClient.getInstance().player;
 		if (DEBUG_EXTRA_MESSAGE.getBooleanValue()) {
 			player.sendMessage(Text.of(string));
 		}
 	}
 
 	public static void sendOrderMessage(String string) {
-		ClientPlayerEntity player = MinecraftClient.getInstance().player;
+		final ClientPlayerEntity player = MinecraftClient.getInstance().player;
 		if (DEBUG_ORDER_PLACEMENTS.getBooleanValue() && !Objects.equals(orderPreviousMessage, string)) {
 			orderPreviousMessage = string;
 			player.sendMessage(Text.of(string));
@@ -45,7 +55,7 @@ public class MessageHolder {
 	}
 
 	public static void sendUniqueDebugMessage(String string) {
-		ClientPlayerEntity player = MinecraftClient.getInstance().player;
+		final ClientPlayerEntity player = MinecraftClient.getInstance().player;
 		if (DEBUG_EXTRA_MESSAGE.getBooleanValue()) {
 			if (!uniqueStrings.contains(string)) {
 				player.sendMessage(Text.of(string));
@@ -59,6 +69,19 @@ public class MessageHolder {
 			player.sendMessage(Text.of(string));
 			errorLogger.add(string);
 		}
+	}
+
+	public static void sendMessageUncheckedUnique(String string) {
+		final ClientPlayerEntity player = MinecraftClient.getInstance().player;
+		if (!errorLogger.contains(string)) {
+			player.sendMessage(Text.of(string));
+			errorLogger.add(string);
+		}
+	}
+
+	public static void sendMessageUnchecked(String string) {
+		final ClientPlayerEntity player = MinecraftClient.getInstance().player;
+		player.sendMessage(Text.of(string));
 	}
 
 	public static void sendUniqueMessage(ClientPlayerEntity player, String string) {

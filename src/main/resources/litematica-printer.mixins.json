@@ -10,6 +10,7 @@
     "Litematica.GuiConfigsMixin",
     "Litematica.MinecraftClientMixin",
     "Litematica.WorldUtilsMixin",
+    "MinecraftClient.ClientPlayerInteractionManagerMixin",
     "MinecraftClient.ClientPlayNetworkHandlerMixin",
     "quasiEssentialClient.ClientPlayerEntityMixin",
     "quasiEssentialClient.ItemPlacementContextMixin",

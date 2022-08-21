@@ -14,20 +14,31 @@ import java.util.Set;
 //see IMixinConfigPlugin
 public class MixinConfigPlugin implements IMixinConfigPlugin {
 	@Override
-	public void onLoad(String mixinPackage) {}
+	public void onLoad(String mixinPackage) {
+	}
 
 	@Override
-	public String getRefMapperConfig() { return null; }
+	public String getRefMapperConfig() {
+		return null;
+	}
 
 	@Override
 	public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
 		List<String> fakeLookMixins = Lists.newArrayList(
 			"io.github.eatmyvenom.litematicin.mixin.EssentialClient.FakeLookMixin"
 		);
+		List<String> desyncOptions = Lists.newArrayList(
+			"io.github.eatmyvenom.litematicin.mixin.MinecraftClient.ClientPlayerInteractionManagerMixin",
+			"io.github.eatmyvenom.litematicin.mixin.MinecraftClient.ClientPlayNetworkHandlerMixin"
+		);
 
 		if (fakeLookMixins.contains(mixinClassName)) {
 			Optional<ModContainer> container = FabricLoader.getInstance().getModContainer("essential-client");
 			return container.isPresent();
+		}
+		if (desyncOptions.contains(mixinClassName)) {
+			Optional<ModContainer> container = FabricLoader.getInstance().getModContainer("matchrevisions");
+			return container.isEmpty();
 		}
 		return true;
 	}
@@ -38,7 +49,9 @@ public class MixinConfigPlugin implements IMixinConfigPlugin {
 	}
 
 	@Override
-	public List<String> getMixins() { return null; }
+	public List<String> getMixins() {
+		return null;
+	}
 
 	@Override
 	public void preApply(String targetClassName, ClassNode targetClass, String mixinClassName, IMixinInfo mixinInfo) {
