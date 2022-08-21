@@ -244,9 +244,11 @@ public class Printer {
 		if (box == null) {
 			return true;
 		}
-		BlockPos pos1 = box.getPos1();
-		BlockPos pos2 = box.getPos2();
-		return (pos1.getX() <= pos.getX() && pos.getX() <= pos2.getX() && pos1.getY() <= pos.getY() && pos.getY() <= pos2.getY() && pos1.getZ() <= pos.getZ() && pos.getZ() <= pos2.getZ());
+		BlockPos start = box.getPos1();
+		BlockPos end = box.getPos2();
+		BlockPos ref1 = new BlockPos(Math.min(start.getX(), end.getX()), Math.min(start.getY(), end.getY()), Math.min(start.getZ(), end.getZ()));
+		BlockPos ref2 = new BlockPos(Math.max(start.getX(), end.getX()), Math.max(start.getY(), end.getY()), Math.max(start.getZ(), end.getZ()));
+		return (ref1.getX() <= pos.getX() && pos.getX() <= ref2.getX() && ref1.getY() <= pos.getY() && pos.getY() <= ref2.getY() && ref1.getZ() <= pos.getZ() && pos.getZ() <= ref2.getZ());
 	}
 
 	@Environment(EnvType.CLIENT)
@@ -1786,8 +1788,7 @@ public class Printer {
 		}
 		if (OffsetStateSchematic.getBlock() instanceof DoorBlock && OffsetStateClient.getBlock() instanceof DoorBlock &&
 			OffsetStateSchematic.get(DoorBlock.POWERED) == OffsetStateClient.get(DoorBlock.POWERED) &&
-			OffsetStateSchematic.get(DoorBlock.FACING) == OffsetStateClient.get(DoorBlock.FACING)) //hinge error
-		{
+			OffsetStateSchematic.get(DoorBlock.FACING) == OffsetStateClient.get(DoorBlock.FACING)) {
 			return false;
 		}
 		if (ExplicitObserver) {
