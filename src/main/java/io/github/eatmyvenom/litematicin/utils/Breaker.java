@@ -29,6 +29,10 @@ public class Breaker implements IClientTickHandler {
 		this.breakingBlock = true;
 		this.pos = pos;
 		// Check for best tool in inventory
+		if (mc.world.getBlockState(pos).getHardness(mc.world, pos) == 0) {
+			mc.interactionManager.attackBlock(pos, Direction.UP);
+			return false;
+		}
 		int bestSlotId = getBestItemSlotIdToMineBlock(mc, pos);
 		// If slot isn't selected, change
 		if (bestSlotId != -1) {

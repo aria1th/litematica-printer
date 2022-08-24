@@ -1,7 +1,8 @@
 package io.github.eatmyvenom.litematicin.utils;
 
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
 import io.github.eatmyvenom.litematicin.LitematicaMixinMod;
-import it.unimi.dsi.fastutil.ints.IntArraySet;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.LootableContainerBlockEntity;
 import net.minecraft.client.MinecraftClient;
@@ -11,6 +12,7 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ToolItem;
 import net.minecraft.network.packet.c2s.play.PlayerActionC2SPacket;
+import net.minecraft.network.packet.c2s.play.UpdateSelectedSlotC2SPacket;
 import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
@@ -25,7 +27,7 @@ public class InventoryUtils {
 	public static Item handlingItem = null;
 	public static Item previousItem = null; //only used for checks
 	public static int trackedSelectedSlot = -1;
-	public static IntArraySet usedSlots = new IntArraySet(9);
+	public static BiMap<Integer, Item> usedSlots = HashBiMap.create();
 
 	public static void decrementCount() {
 		if (lastCount > 0) {
@@ -35,10 +37,9 @@ public class InventoryUtils {
 
 	public static int getAvailableSlot() {
 		for (int i = 0; i < 9; i++) {
-			if (usedSlots.contains(i)) {
+			if (usedSlots.containsKey(i)) {
 				continue;
 			}
-			usedSlots.add(i);
 			return i;
 		}
 		return -1;
@@ -109,11 +110,17 @@ public class InventoryUtils {
 			assert previousItem == stack.getItem() : "Handling item :  " + handlingItem + " was not equal to " + stack.getItem();
 			MessageHolder.sendOrderMessage("Didn't require swap for item " + stack.getItem() + " previous handling item : " + previousItem);
 			lastCount = player.getAbilities().creativeMode ? 65536 : getMainHandStack(player).getCount();
-			usedSlots.add(player.getInventory().selectedSlot);
+			usedSlots.put(player.getInventory().selectedSlot, getMainHandStack(player).getItem());
 			return true;
 		}
+		if (usedSlots.containsValue(stack.getItem())) {
+			player.getInventory().selectedSlot = usedSlots.inverse().get(stack.getItem());
+			trackedSelectedSlot = player.getInventory().selectedSlot;
+			client.getNetworkHandler().sendPacket(new UpdateSelectedSlotC2SPacket(player.getInventory().selectedSlot));
+			return !player.getInventory().getMainHandStack().isEmpty();
+		}
 		if (survivalSwap(client, player, stack)) {
-			usedSlots.add(player.getInventory().selectedSlot);
+			usedSlots.put(player.getInventory().selectedSlot, stack.getItem());
 			MessageHolder.sendOrderMessage("Swapped to item " + stack.getItem());
 			handlingItem = stack.getItem();
 			previousItem = handlingItem;
@@ -137,9 +144,10 @@ public class InventoryUtils {
 
 		int selectedSlot = getAvailableSlot();
 		player.getInventory().selectedSlot = selectedSlot;
+		trackedSelectedSlot = selectedSlot;
 		player.playerScreenHandler.getSlot(36 + selectedSlot).setStack(stack);
 		client.interactionManager.clickCreativeStack(getMainHandStack(player), 36 + selectedSlot);
-		usedSlots.add(player.getInventory().selectedSlot);
+		usedSlots.put(player.getInventory().selectedSlot, stack.getItem());
 		lastCount = 65536;
 		handlingItem = stack.getItem();
 		previousItem = handlingItem;
@@ -166,7 +174,7 @@ public class InventoryUtils {
 			trackedSelectedSlot = slot;
 			MessageHolder.sendOrderMessage("Selected Slot " + slot);
 			lastCount = client.player.getAbilities().creativeMode ? 65536 : client.player.getInventory().getStack(slot).getCount();
-			//client.getNetworkHandler().sendPacket(new UpdateSelectedSlotC2SPacket(slot));
+			client.getNetworkHandler().sendPacket(new UpdateSelectedSlotC2SPacket(slot));
 		} else {
 			int selectedSlot = getAvailableSlot();
 			if (selectedSlot == -1) {
@@ -177,6 +185,7 @@ public class InventoryUtils {
 			MessageHolder.sendOrderMessage("Slot at " + slot + " is swapped with " + selectedSlot);
 			client.interactionManager.clickSlot(player.playerScreenHandler.syncId, slot, selectedSlot, SlotActionType.SWAP, player);
 			player.getInventory().selectedSlot = selectedSlot;
+			trackedSelectedSlot = selectedSlot;
 
 		}
 		try {
