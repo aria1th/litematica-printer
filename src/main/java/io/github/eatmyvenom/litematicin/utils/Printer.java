@@ -19,8 +19,11 @@ import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.block.*;
+import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.block.entity.SignBlockEntity;
 import net.minecraft.block.enums.*;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.screen.ingame.SignEditScreen;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
@@ -29,6 +32,7 @@ import net.minecraft.item.BlockItem;
 import net.minecraft.item.ItemPlacementContext;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.network.packet.c2s.play.UpdateSignC2SPacket;
 import net.minecraft.state.property.Properties;
 import net.minecraft.tag.BlockTags;
 import net.minecraft.util.ActionResult;
@@ -41,6 +45,7 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import net.minecraft.world.dimension.AreaHelper;
 
+import javax.annotation.Nullable;
 import java.util.*;
 
 import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.*;
@@ -49,7 +54,7 @@ import static io.github.eatmyvenom.litematicin.utils.InventoryUtils.*;
 @SuppressWarnings("ConstantConditions")
 public class Printer {
 
-
+	private static final HashSet<Long> signCache = new HashSet<>();
 	private static final LinkedHashMap<Map.Entry<Long, Boolean>, PositionCache> positionCache = new LinkedHashMap<>();
 	// For printing delay
 	public static boolean isSleeping = false;
@@ -446,7 +451,7 @@ public class Printer {
 					BlockPos pos = new BlockPos(x, y, z);
 					BlockState stateSchematic;
 					BlockState stateClient;
-
+					updateSignText(mc, world, pos);
 					if (!breakBlocks && !ClearArea && !Flippincactus && !BEDROCK_BREAKING.getBooleanValue()) {
 						if (world.isAir(pos)) {
 							continue;
@@ -1522,7 +1527,7 @@ public class Printer {
 			}
 		}
 		if (facingSchematic.equals(Direction.UP)) {
-			return offsetBlock instanceof WallBlock || offsetBlock instanceof ComparatorBlock ||
+			return offsetBlock instanceof WallBlock || offsetBlock instanceof ComparatorBlock || offsetBlock instanceof DoorBlock ||
 				offsetBlock instanceof RepeaterBlock || offsetBlock instanceof FallingBlock ||
 				offsetBlock instanceof AbstractRailBlock || offsetBlock instanceof NoteBlock ||
 				offsetBlock instanceof BubbleColumnBlock || offsetBlock instanceof RedstoneWireBlock ||
@@ -1557,7 +1562,7 @@ public class Printer {
 		BlockState targetState = world.getBlockState(pos);
 		Block block = targetState.getBlock();
 		if (block instanceof ComparatorBlock || block instanceof RepeaterBlock || block instanceof FallingBlock ||
-			block instanceof AbstractRailBlock || block instanceof RedstoneWireBlock ||
+			block instanceof AbstractRailBlock || block instanceof RedstoneWireBlock || block instanceof DoorBlock ||
 			((block instanceof WallMountedBlock) && targetState.get(WallMountedBlock.FACE) == WallMountLocation.FLOOR)) {
 			//check downward
 			if (world.getBlockState(pos.down()).isOf(Blocks.OBSERVER) && world.getBlockState(pos.down()).get(ObserverBlock.FACING) == Direction.UP) {
@@ -2091,6 +2096,23 @@ public class Printer {
 			dz = -1;
 		}
 		return new Vec3d(x + dx, y + dy, z + dz);
+	}
+
+	private static void updateSignText(MinecraftClient mc, World schematicWorld, BlockPos pos) {
+		if (mc.currentScreen instanceof SignEditScreen || !schematicWorld.getBlockState(pos).isIn(BlockTags.SIGNS) || signCache.contains(pos.asLong())) {
+			return;
+		}
+		@Nullable BlockEntity entity = schematicWorld.getBlockEntity(pos);
+		if (entity == null) {
+			return;
+		}
+		@Nullable BlockEntity clientEntity = mc.world.getBlockEntity(pos);
+		if (clientEntity == null) {
+			return;
+		}
+		if (entity instanceof SignBlockEntity signBlockEntity) {
+			mc.getNetworkHandler().sendPacket(new UpdateSignC2SPacket(signBlockEntity.getPos(), signBlockEntity.getTextOnRow(0, false).getString(), signBlockEntity.getTextOnRow(1, false).getString(), signBlockEntity.getTextOnRow(2, false).getString(), signBlockEntity.getTextOnRow(3, false).getString()));
+		}
 	}
 
 	/*
