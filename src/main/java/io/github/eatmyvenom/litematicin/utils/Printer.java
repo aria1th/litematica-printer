@@ -44,6 +44,7 @@ import net.minecraft.world.dimension.AreaHelper;
 import java.util.*;
 
 import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.*;
+import static io.github.eatmyvenom.litematicin.utils.InventoryUtils.*;
 
 @SuppressWarnings("ConstantConditions")
 public class Printer {
@@ -254,7 +255,7 @@ public class Printer {
 	@Environment(EnvType.CLIENT)
 	synchronized public static ActionResult doPrinterAction(MinecraftClient mc) {
 		io.github.eatmyvenom.litematicin.utils.InventoryUtils.itemChangeCount = 0;
-		io.github.eatmyvenom.litematicin.utils.InventoryUtils.handlingItem = null;
+		handlingItem = null;
 		if (!DEBUG_MESSAGE.getBooleanValue()) {
 			causeMap.clear(); //reduce ram usage
 		}
@@ -272,6 +273,9 @@ public class Printer {
 			ItemInputs.clear();
 		}
 		if (new Date().getTime() < lastPlaced + 1000.0 * EASY_PLACE_MODE_DELAY.getDoubleValue()) {
+			trackedSelectedSlot = -1;
+			previousItem = null;
+			handlingItem = null;
 			return ActionResult.PASS;
 		} else {
 			isSleeping = false;
@@ -1141,7 +1145,7 @@ public class Printer {
 							if (!shouldCache.isEmpty()) {
 								shouldCache.forEach(a -> {
 									MessageHolder.sendDebugMessage("Caching position " + a.toShortString() + " because observer can't avoid ");
-									cacheEasyPlacePosition(a, true, 150);
+									cacheEasyPlacePosition(a, true, (int) Math.ceil(Math.sqrt(a.getSquaredDistance(pos)) * 100));
 								});
 							}
 						}
