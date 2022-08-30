@@ -729,6 +729,7 @@ public class Printer {
 							BlockHitResult hitResult = new BlockHitResult(hitPos, Direction.UP, pos, false);
 							mc.interactionManager.interactBlock(mc.player, hand, hitResult); //FLUID REMOVAL
 							io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount();
+							interact++;
 							cacheEasyPlacePosition(pos, false);
 							sleepWhenRequired(mc);
 							if (isReplaceableFluidSource(stateClient) || cBlock instanceof SnowBlock) {
@@ -1156,6 +1157,7 @@ public class Printer {
 						}
 						if (!FAKE_ROTATION_BETA.getBooleanValue() || ACCURATE_BLOCK_PLACEMENT.getBooleanValue()) { //Accurateblockplacement, or vanilla but no fake
 							if (doSchematicWorldPickBlock(mc, stateSchematic, pos)) {
+								MessageHolder.sendOrderMessage("Places block " + blockSchematic + " at " + pos.toShortString());
 								mc.interactionManager.interactBlock(mc.player, hand, hitResult); //PLACE BLOCK
 								io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount();
 								cacheEasyPlacePosition(pos, false);
@@ -2110,7 +2112,11 @@ public class Printer {
 		if (clientEntity == null) {
 			return;
 		}
-		if (entity instanceof SignBlockEntity signBlockEntity) {
+		if (entity instanceof SignBlockEntity signBlockEntity && clientEntity instanceof SignBlockEntity clientSignEntity) {
+			if (!clientSignEntity.isEditable()) {
+				return;
+			}
+			signCache.add(pos.asLong());
 			mc.getNetworkHandler().sendPacket(new UpdateSignC2SPacket(signBlockEntity.getPos(), signBlockEntity.getTextOnRow(0, false).getString(), signBlockEntity.getTextOnRow(1, false).getString(), signBlockEntity.getTextOnRow(2, false).getString(), signBlockEntity.getTextOnRow(3, false).getString()));
 		}
 	}

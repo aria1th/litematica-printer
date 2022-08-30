@@ -1,9 +1,6 @@
 package io.github.eatmyvenom.litematicin.mixin.Litematica;
 
-import io.github.eatmyvenom.litematicin.utils.BedrockBreaker;
-import io.github.eatmyvenom.litematicin.utils.FakeAccurateBlockPlacement;
-import io.github.eatmyvenom.litematicin.utils.ItemInputs;
-import io.github.eatmyvenom.litematicin.utils.Printer;
+import io.github.eatmyvenom.litematicin.utils.*;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.client.network.ClientPlayerEntity;
@@ -45,6 +42,7 @@ public abstract class MinecraftClientMixin {
 	@Inject(at = @At("HEAD"), method = "tick")
 	public void onPrinterTickCount(CallbackInfo info) {
 		BedrockBreaker.tick();
+		InventoryUtils.tick();
 		FakeAccurateBlockPlacement.tick(this.getNetworkHandler(), this.player);
 	}
 

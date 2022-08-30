@@ -2,6 +2,8 @@ package io.github.eatmyvenom.litematicin.utils;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
+import fi.dy.masa.litematica.config.Configs;
+import fi.dy.masa.litematica.config.Hotkeys;
 import io.github.eatmyvenom.litematicin.LitematicaMixinMod;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.LootableContainerBlockEntity;
@@ -29,6 +31,17 @@ public class InventoryUtils {
 	public static int trackedSelectedSlot = -1;
 	public static BiMap<Integer, Item> usedSlots = HashBiMap.create();
 
+	public static void tick() {
+		if (Configs.Generic.EASY_PLACE_MODE.getBooleanValue() && Configs.Generic.EASY_PLACE_HOLD_ENABLED.getBooleanValue() && Hotkeys.EASY_PLACE_ACTIVATION.getKeybind().isKeybindHeld()) {
+
+		} else {
+			trackedSelectedSlot = -1;
+			previousItem = null;
+			handlingItem = null;
+		}
+
+	}
+
 	public static void decrementCount() {
 		if (lastCount > 0) {
 			lastCount--;
@@ -50,7 +63,7 @@ public class InventoryUtils {
 	}
 
 	public static ItemStack getMainHandStack(ClientPlayerEntity player) {
-		return player.getInventory().main.get(player.getInventory().selectedSlot);
+		return player.getMainHandStack();
 	}
 
 	public static boolean areItemsExact(ItemStack a, ItemStack b) {
@@ -116,7 +129,10 @@ public class InventoryUtils {
 		if (usedSlots.containsValue(stack.getItem())) {
 			player.getInventory().selectedSlot = usedSlots.inverse().get(stack.getItem());
 			trackedSelectedSlot = player.getInventory().selectedSlot;
-			client.getNetworkHandler().sendPacket(new UpdateSelectedSlotC2SPacket(player.getInventory().selectedSlot));
+			previousItem = stack.getItem();
+			handlingItem = previousItem;
+			MessageHolder.sendOrderMessage("Selected slot " + player.getInventory().selectedSlot + " based on cache for " + stack.getItem());
+			//client.getNetworkHandler().sendPacket(new UpdateSelectedSlotC2SPacket(player.getInventory().selectedSlot));
 			return !player.getInventory().getMainHandStack().isEmpty();
 		}
 		if (survivalSwap(client, player, stack)) {
@@ -172,7 +188,7 @@ public class InventoryUtils {
 		if (PlayerInventory.isValidHotbarIndex(slot)) {
 			player.getInventory().selectedSlot = slot;
 			trackedSelectedSlot = slot;
-			MessageHolder.sendOrderMessage("Selected Slot " + slot);
+			MessageHolder.sendOrderMessage("Selected hotbar Slot " + slot);
 			lastCount = client.player.getAbilities().creativeMode ? 65536 : client.player.getInventory().getStack(slot).getCount();
 			client.getNetworkHandler().sendPacket(new UpdateSelectedSlotC2SPacket(slot));
 		} else {
