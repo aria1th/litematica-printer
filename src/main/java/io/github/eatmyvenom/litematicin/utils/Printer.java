@@ -784,7 +784,7 @@ public class Printer {
 									continue;
 								}
 							} else if (sBlock instanceof PistonBlock) {
-								if (!ShouldExtendQC(mc, world, pos)) {
+								if (!shouldExtendQC(mc, world, pos)) {
 									recordCause(pos, sBlock.getTranslationKey() + " at " + pos.toShortString() + " is QC");
 									MessageHolder.sendUniqueMessage(mc.player, getReason(pos.asLong()));
 									continue;
@@ -1261,11 +1261,20 @@ public class Printer {
 		for (BlockPos Position : OffsetIterable) {
 			BlockState stateClient = mc.world.getBlockState(Position);
 			BlockState stateSchematic = world.getBlockState(Position);
-			if (stateSchematic.getBlock() instanceof PistonBlock && (stateClient.isAir() && !stateSchematic.get(PistonBlock.EXTENDED) ||
-				!stateSchematic.get(PistonBlock.EXTENDED) && !hasNoUpdatableState(mc, world, Position) ||
-				(stateClient.getBlock() instanceof PistonBlock && stateSchematic.get(PistonBlock.FACING).equals(Direction.UP) &&
-					!world.getBlockState(Position.up()).getBlock().equals(mc.world.getBlockState(Position.up()).getBlock())))) {
+			if (!(stateSchematic.getBlock() instanceof PistonBlock)) {
+				continue;
+			}
+			if (stateSchematic.get(PistonBlock.EXTENDED)) {
+				continue;
+			}
+			if (stateClient.isAir()) { //very basic qc
 				return true;
+			} else if (!hasNoUpdatableState(mc, world, Position)) {
+				return true;
+			} else if (stateClient.getBlock() instanceof PistonBlock && stateSchematic.get(PistonBlock.FACING).equals(Direction.UP)) {
+				if (!world.getBlockState(Position.up()).getBlock().equals(mc.world.getBlockState(Position.up()).getBlock())) {
+					return true;
+				}
 			}
 		}
 		BlockState stateSchematic = world.getBlockState(posoffset.down());
@@ -1346,8 +1355,7 @@ public class Printer {
 			Objects.equals(SchematicState.get(RedstoneWireBlock.POWER) == 0, ClientState.get(RedstoneWireBlock.POWER) == 0);
 	}
 
-	private static boolean ShouldExtendQC(MinecraftClient mc, World world, BlockPos pos) {
-
+	private static boolean shouldExtendQC(MinecraftClient mc, World world, BlockPos pos) {
 		return willExtendInWorld(mc.world, pos, world.getBlockState(pos).get(PistonBlock.FACING)) == world.getBlockState(pos).get(PistonBlock.EXTENDED);
 	}
 
@@ -1376,6 +1384,19 @@ public class Printer {
 	private static boolean willExtendInWorld(World world, BlockPos pos, Direction pistonFace) {
 		for (Direction lv : Direction.values()) {
 			if (lv == pistonFace || !world.isEmittingRedstonePower(pos.offset(lv), lv)) {
+				continue;
+			}
+			//Observer client error wtf?
+			boolean hasObserver = false;
+			for (Direction dir : Direction.values()) {
+				BlockState observerState = world.getBlockState(pos.offset(lv).offset(dir));
+				if (observerState.isOf(Blocks.OBSERVER)) {
+					if (observerState.get(ObserverBlock.POWERED)) {
+						hasObserver = true;
+					}
+				}
+			}
+			if (hasObserver) {
 				continue;
 			}
 			return true;

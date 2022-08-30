@@ -132,7 +132,7 @@ public class InventoryUtils {
 			previousItem = stack.getItem();
 			handlingItem = previousItem;
 			MessageHolder.sendOrderMessage("Selected slot " + player.getInventory().selectedSlot + " based on cache for " + stack.getItem());
-			//client.getNetworkHandler().sendPacket(new UpdateSelectedSlotC2SPacket(player.getInventory().selectedSlot));
+			client.getNetworkHandler().sendPacket(new UpdateSelectedSlotC2SPacket(player.getInventory().selectedSlot));
 			return !player.getInventory().getMainHandStack().isEmpty();
 		}
 		if (survivalSwap(client, player, stack)) {
@@ -155,14 +155,17 @@ public class InventoryUtils {
 		if (!player.getAbilities().creativeMode) {
 			return false;
 		}
-		MessageHolder.sendOrderMessage("Clicked creative stack " + stack.getItem());
-		//player.getInventory().addPickBlock(stack);
-
 		int selectedSlot = getAvailableSlot();
+		if (selectedSlot == -1) {
+			return false;
+		}
+		MessageHolder.sendOrderMessage("Clicked creative stack " + stack.getItem() + " for slot " + selectedSlot);
+		//player.getInventory().addPickBlock(stack);
 		player.getInventory().selectedSlot = selectedSlot;
+		client.getNetworkHandler().sendPacket(new UpdateSelectedSlotC2SPacket(player.getInventory().selectedSlot));
 		trackedSelectedSlot = selectedSlot;
-		player.playerScreenHandler.getSlot(36 + selectedSlot).setStack(stack);
-		client.interactionManager.clickCreativeStack(getMainHandStack(player), 36 + selectedSlot);
+		player.getInventory().main.set(selectedSlot, stack);
+		client.interactionManager.clickCreativeStack(stack, 36 + selectedSlot);
 		usedSlots.put(player.getInventory().selectedSlot, stack.getItem());
 		lastCount = 65536;
 		handlingItem = stack.getItem();
