@@ -56,7 +56,10 @@ public class InventoryUtils {
 		return ptr;
 	}
 
-	public static int getAvailableSlot() {
+	public static int getAvailableSlot(Item item) {
+		if (usedSlots.inverse().containsKey(item)) {
+			return usedSlots.inverse().get(item);
+		}
 		if (usedSlots.size() == 9) { //full
 			return getPtr();
 		}
@@ -138,7 +141,12 @@ public class InventoryUtils {
 			assert previousItem == stack.getItem() : "Handling item :  " + handlingItem + " was not equal to " + stack.getItem();
 			MessageHolder.sendOrderMessage("Didn't require swap for item " + stack.getItem() + " previous handling item : " + previousItem);
 			lastCount = player.getAbilities().creativeMode ? 65536 : getMainHandStack(player).getCount();
-			usedSlots.put(player.getInventory().selectedSlot, getMainHandStack(player).getItem());
+			if (usedSlots.containsValue(stack.getItem())) {
+				if (usedSlots.inverse().get(stack.getItem()) != trackedSelectedSlot) {
+					MessageHolder.sendMessageUncheckedUnique("Hotbar has duplicate item references, which should not happen!");
+				}
+			}
+			usedSlots.forcePut(player.getInventory().selectedSlot, getMainHandStack(player).getItem());
 			return true;
 		}
 		if (usedSlots.containsValue(stack.getItem())) {
@@ -170,7 +178,7 @@ public class InventoryUtils {
 		if (!player.getAbilities().creativeMode) {
 			return false;
 		}
-		int selectedSlot = getAvailableSlot();
+		int selectedSlot = getAvailableSlot(stack.getItem());
 		if (selectedSlot == -1) {
 			return false;
 		}
@@ -215,7 +223,7 @@ public class InventoryUtils {
 			lastCount = player.getAbilities().creativeMode ? 65536 : player.getInventory().getStack(slot).getCount();
 			client.getNetworkHandler().sendPacket(new UpdateSelectedSlotC2SPacket(slot));
 		} else {
-			int selectedSlot = getAvailableSlot();
+			int selectedSlot = getAvailableSlot(stack.getItem());
 			if (selectedSlot == -1) {
 				MessageHolder.sendOrderMessage("All hotbar slots are used");
 				return false;
@@ -256,5 +264,23 @@ public class InventoryUtils {
 			}
 		}
 		return result;
+	}
+
+	public static boolean hasItemInSchematic(World schematicWorld, BlockPos pos) {
+		BlockEntity blockEntity = schematicWorld.getBlockEntity(pos);
+		if (blockEntity == null) {
+			return false;
+		}
+		if (blockEntity instanceof LootableContainerBlockEntity containerBlockEntity) {
+			if (containerBlockEntity.isEmpty()) {
+				return false;
+			}
+			for (int i = 0; i < (containerBlockEntity).size(); i++) {
+				if (!containerBlockEntity.getStack(i).isEmpty()) {
+					return false;
+				}
+			}
+		}
+		return false;
 	}
 }

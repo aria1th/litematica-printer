@@ -444,6 +444,9 @@ public class Printer {
 					}
 
 					BlockPos pos = new BlockPos(x, y, z);
+					if (io.github.eatmyvenom.litematicin.utils.InventoryUtils.hasItemInSchematic(world, pos)) {
+						MessageHolder.sendUniqueMessageAlways("Inventory in " + pos.toShortString() + " has Item inside!");
+					}
 					BlockState stateSchematic;
 					BlockState stateClient;
 					updateSignText(mc, world, pos);
@@ -1388,7 +1391,14 @@ public class Printer {
 				if (observerState.isOf(Blocks.OBSERVER)) {
 					if (observerState.get(ObserverBlock.POWERED)) {
 						hasObserver = true;
+						break;
 					}
+				}
+			}
+			BlockState adjState = world.getBlockState(pos.offset(lv));
+			if (adjState.isOf(Blocks.OBSERVER)) {
+				if (adjState.get(ObserverBlock.POWERED)) {
+					hasObserver = true;
 				}
 			}
 			if (hasObserver) {
@@ -1402,6 +1412,10 @@ public class Printer {
 		BlockPos lv2 = pos.up();
 		for (Direction lv3 : Direction.values()) {
 			if (lv3 == Direction.DOWN || !world.isEmittingRedstonePower(lv2.offset(lv3), lv3)) {
+				continue;
+			}
+			BlockState qcState = world.getBlockState(lv2.offset(lv3));
+			if (qcState.isOf(Blocks.OBSERVER) && qcState.get(ObserverBlock.FACING) == lv3 && qcState.get(ObserverBlock.POWERED)) {
 				continue;
 			}
 			return true;
@@ -1526,10 +1540,42 @@ public class Printer {
 				if (isNoteBlockInstrumentError(mc, schematicWorld, pos) || isDoorHingeError(mc, schematicWorld, pos)) {
 					return Map.entry(true, pos);
 				}
+				if (isClientPowerError(mc, schematicWorld, clientState, schematicState, pos)) {
+					return Map.entry(true, pos);
+				}
 				return Map.entry(false, pos);
 			}
 		}
 		return Map.entry(true, pos);
+	}
+
+	private static boolean isClientPowerError(MinecraftClient mc, World world, BlockState clientState, BlockState schematicState, BlockPos pos) {
+		//handles client error, mostly, dropper being powered directly, hopper being powered etc
+		if (clientState.getBlock() != schematicState.getBlock()) {
+			return false;
+		}
+		if (schematicState.isOf(Blocks.DROPPER) || schematicState.isOf(Blocks.DISPENSER)) {
+			if (schematicState.get(DropperBlock.TRIGGERED) != clientState.get(DropperBlock.TRIGGERED)) {
+				boolean isReceiving = mc.world.isReceivingRedstonePower(pos) || mc.world.isReceivingRedstonePower(pos.up());
+				if (isReceiving != clientState.get(DropperBlock.TRIGGERED)) {
+					mc.world.setBlockState(pos, clientState.with(DropperBlock.TRIGGERED, isReceiving));
+				}
+				return mc.world.getBlockState(pos) == schematicState;
+			}
+		} else if (schematicState.isOf(Blocks.NOTE_BLOCK)) { //special case
+			if (schematicState.get(NoteBlock.POWERED) != clientState.get(NoteBlock.POWERED)) {
+				boolean isReceiving = mc.world.isReceivingRedstonePower(pos);
+				mc.world.setBlockState(pos, clientState.with(NoteBlock.POWERED, isReceiving)); //lets fix
+				return isNoteBlockInstrumentError(mc, world, pos);
+			}
+		} else if (schematicState.isOf(Blocks.HOPPER)) {
+			if (schematicState.get(HopperBlock.ENABLED) != clientState.get(HopperBlock.ENABLED)) {
+				boolean isReceiving = mc.world.isReceivingRedstonePower(pos);
+				mc.world.setBlockState(pos, clientState.with(HopperBlock.ENABLED, !isReceiving));
+				return mc.world.getBlockState(pos) == schematicState;
+			}
+		}
+		return false;
 	}
 
 	private static boolean ObserverCantAvoid(MinecraftClient mc, World world, Direction facingSchematic, BlockPos pos) {
@@ -1857,6 +1903,9 @@ public class Printer {
 			if (OffsetStateSchematic.isOf(Blocks.BARRIER) || OffsetStateClient.isAir() && OffsetStateSchematic.isAir() || OffsetStateSchematic.isOf(Blocks.VOID_AIR)) {
 				return false;
 			} //cave air wtf
+			if (isClientPowerError(mc, world, OffsetStateClient, OffsetStateSchematic, posOffset)) {
+				return false;
+			}
 			return !OffsetStateSchematic.toString().equals(OffsetStateClient.toString());
 		}
 		return !OffsetStateClient.getBlock().equals(OffsetStateSchematic.getBlock());
@@ -1897,6 +1946,9 @@ public class Printer {
 				return null;
 			} //cave air wtf
 			if (!OffsetStateSchematic.toString().equals(OffsetStateClient.toString())) {
+				if (isClientPowerError(mc, world, OffsetStateClient, OffsetStateSchematic, posOffset)) {
+					return null;
+				}
 				return posOffset;
 			}
 		}

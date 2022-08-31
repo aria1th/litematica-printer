@@ -11,6 +11,7 @@ import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.*;
 
 public class MessageHolder {
 	private static final HashSet<String> uniqueStrings = new HashSet<>();
+	private static final HashSet<String> uniqueStringsAlways = new HashSet<>();
 	private static final HashSet<String> uniquePacketInfos = new HashSet<>();
 	private static final HashSet<String> errorLogger = new HashSet<>();
 	private static String orderPreviousMessage = "";
@@ -92,6 +93,14 @@ public class MessageHolder {
 		if (!uniqueStrings.contains(string)) {
 			player.sendMessage(Text.of(string));
 			uniqueStrings.add(string);
+		}
+	}
+
+	public static void sendUniqueMessageAlways(String string) {
+		final ClientPlayerEntity player = MinecraftClient.getInstance().player;
+		if (!uniqueStringsAlways.contains(string)) {
+			player.sendMessage(Text.of(string));
+			uniqueStringsAlways.add(string);
 		}
 	}
 
