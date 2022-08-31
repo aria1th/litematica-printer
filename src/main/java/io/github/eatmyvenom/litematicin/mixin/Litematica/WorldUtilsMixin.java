@@ -1,6 +1,7 @@
 package io.github.eatmyvenom.litematicin.mixin.Litematica;
 
 import fi.dy.masa.litematica.util.WorldUtils;
+import io.github.eatmyvenom.litematicin.LitematicaMixinMod;
 import io.github.eatmyvenom.litematicin.utils.MessageHolder;
 import io.github.eatmyvenom.litematicin.utils.Printer;
 import net.minecraft.client.MinecraftClient;
@@ -26,6 +27,9 @@ public class WorldUtilsMixin {
 	)
 	private static void onDoEasyPlaceAction(MinecraftClient mc, CallbackInfoReturnable<ActionResult> cir) {
 		if (mc.player == null) {
+			return;
+		}
+		if (LitematicaMixinMod.PRINTER_OFF.getBooleanValue()) {
 			return;
 		}
 		ActionResult defaultResult = ActionResult.SUCCESS;

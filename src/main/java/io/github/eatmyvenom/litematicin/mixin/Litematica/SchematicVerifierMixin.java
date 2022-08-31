@@ -4,6 +4,7 @@ import com.google.common.collect.ArrayListMultimap;
 import fi.dy.masa.litematica.schematic.verifier.SchematicVerifier;
 import fi.dy.masa.litematica.util.ItemUtils;
 import fi.dy.masa.litematica.world.WorldSchematic;
+import io.github.eatmyvenom.litematicin.LitematicaMixinMod;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.BlockWithEntity;
@@ -48,6 +49,9 @@ public class SchematicVerifierMixin {
 
 	@Inject(method = "checkBlockStates", at = @At("HEAD"), cancellable = true)
 	private void handleInventory(int x, int y, int z, BlockState stateSchematic, BlockState stateClient, CallbackInfo ci) {
+		if (!LitematicaMixinMod.VERIFY_INVENTORY.getBooleanValue()) {
+			return;
+		}
 		MUTABLE_PAIR.setLeft(stateSchematic);
 		MUTABLE_PAIR.setRight(stateClient);
 		if (!this.ignoredMismatches.contains(MUTABLE_PAIR)) {
