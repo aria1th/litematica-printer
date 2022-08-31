@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class InventoryUtils {
+	private static int ptr = -1;
 	public static int lastCount = 0;
 	public static int itemChangeCount = 0;
 	public static Item handlingItem = null;
@@ -38,9 +39,10 @@ public class InventoryUtils {
 			trackedSelectedSlot = -1;
 			previousItem = null;
 			handlingItem = null;
+			usedSlots.clear();
 		}
-
 	}
+
 
 	public static void decrementCount() {
 		if (lastCount > 0) {
@@ -48,7 +50,16 @@ public class InventoryUtils {
 		}
 	}
 
+	private static int getPtr() {
+		ptr++;
+		ptr = ptr % 9;
+		return ptr;
+	}
+
 	public static int getAvailableSlot() {
+		if (usedSlots.size() == 9) { //full
+			return getPtr();
+		}
 		for (int i = 0; i < 9; i++) {
 			if (usedSlots.containsKey(i)) {
 				continue;
@@ -95,6 +106,10 @@ public class InventoryUtils {
 	}
 
 	public static boolean requiresSwap(ClientPlayerEntity player, ItemStack stack) {
+		int selectedSlot = player.getInventory().selectedSlot;
+		if (usedSlots.get(selectedSlot) != null) {
+			return stack.getItem() != usedSlots.get(selectedSlot);
+		}
 		return previousItem == null || lastCount == 0 ? !areItemsExact(getMainHandStack(player), stack) : !areItemsExact(previousItem.getDefaultStack(), stack);
 	}
 
@@ -162,10 +177,10 @@ public class InventoryUtils {
 		MessageHolder.sendOrderMessage("Clicked creative stack " + stack.getItem() + " for slot " + selectedSlot);
 		//player.getInventory().addPickBlock(stack);
 		player.getInventory().selectedSlot = selectedSlot;
+		client.interactionManager.clickCreativeStack(stack, 36 + selectedSlot);
 		client.getNetworkHandler().sendPacket(new UpdateSelectedSlotC2SPacket(player.getInventory().selectedSlot));
 		trackedSelectedSlot = selectedSlot;
 		player.getInventory().main.set(selectedSlot, stack);
-		client.interactionManager.clickCreativeStack(stack, 36 + selectedSlot);
 		usedSlots.put(player.getInventory().selectedSlot, stack.getItem());
 		lastCount = 65536;
 		handlingItem = stack.getItem();
@@ -189,10 +204,15 @@ public class InventoryUtils {
 			return false;
 		}
 		if (PlayerInventory.isValidHotbarIndex(slot)) {
+			if (usedSlots.get(slot) != null) {
+				MessageHolder.sendOrderMessage("Hotbar slot should have been handled before, so it must be error!");
+				MessageHolder.sendOrderMessage("Expected : " + usedSlots.get(slot) + " but current client handles : " + stack.getItem());
+				return false;
+			}
 			player.getInventory().selectedSlot = slot;
 			trackedSelectedSlot = slot;
 			MessageHolder.sendOrderMessage("Selected hotbar Slot " + slot);
-			lastCount = client.player.getAbilities().creativeMode ? 65536 : client.player.getInventory().getStack(slot).getCount();
+			lastCount = player.getAbilities().creativeMode ? 65536 : player.getInventory().getStack(slot).getCount();
 			client.getNetworkHandler().sendPacket(new UpdateSelectedSlotC2SPacket(slot));
 		} else {
 			int selectedSlot = getAvailableSlot();
@@ -200,8 +220,9 @@ public class InventoryUtils {
 				MessageHolder.sendOrderMessage("All hotbar slots are used");
 				return false;
 			}
-			lastCount = client.player.getAbilities().creativeMode ? 65536 : client.player.getInventory().getStack(slot).getCount();
-			MessageHolder.sendOrderMessage("Slot at " + slot + " is swapped with " + selectedSlot);
+			lastCount = player.getAbilities().creativeMode ? 65536 : player.getInventory().getStack(slot).getCount();
+			MessageHolder.sendOrderMessage("Slot at " + slot + "(%s)".formatted(player.getInventory().getStack(slot).getItem()) + " is swapped with " + selectedSlot + "(%s)".formatted(player.getInventory().main.get(selectedSlot)));
+			usedSlots.put(selectedSlot, stack.getItem());
 			client.interactionManager.clickSlot(player.playerScreenHandler.syncId, slot, selectedSlot, SlotActionType.SWAP, player);
 			player.getInventory().selectedSlot = selectedSlot;
 			trackedSelectedSlot = selectedSlot;

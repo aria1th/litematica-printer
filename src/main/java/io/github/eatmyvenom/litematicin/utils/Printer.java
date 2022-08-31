@@ -35,6 +35,7 @@ import net.minecraft.item.Items;
 import net.minecraft.network.packet.c2s.play.UpdateSignC2SPacket;
 import net.minecraft.state.property.Properties;
 import net.minecraft.tag.BlockTags;
+import net.minecraft.text.TextContent;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
@@ -49,7 +50,6 @@ import javax.annotation.Nullable;
 import java.util.*;
 
 import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.*;
-import static io.github.eatmyvenom.litematicin.utils.InventoryUtils.*;
 
 @SuppressWarnings("ConstantConditions")
 public class Printer {
@@ -96,7 +96,7 @@ public class Printer {
 
 	public static boolean canPickBlock(MinecraftClient mc, BlockState preference, BlockPos pos) {
 		World world = SchematicWorldHandler.getSchematicWorld();
-		ItemStack stack = preference.isOf(Blocks.WATER) && PRINTER_PLACE_ICE.getBooleanValue() ? Items.ICE.getDefaultStack() : MaterialCache.getInstance().getRequiredBuildItemForState(preference, world, pos);
+		ItemStack stack = isReplaceableWaterFluidSource(preference) && PRINTER_PLACE_ICE.getBooleanValue() ? Items.ICE.getDefaultStack() : MaterialCache.getInstance().getRequiredBuildItemForState(preference, world, pos);
 		if (!stack.isEmpty() && stack.getItem() != Items.AIR) {
 			PlayerInventory inv = mc.player.getInventory();
 			if (!mc.player.getAbilities().creativeMode) {
@@ -137,7 +137,7 @@ public class Printer {
 	synchronized public static boolean doSchematicWorldPickBlock(MinecraftClient mc, BlockState preference,
 	                                                             BlockPos pos) {
 		World world = SchematicWorldHandler.getSchematicWorld();
-		ItemStack stack = preference.isOf(Blocks.WATER) && PRINTER_PLACE_ICE.getBooleanValue() ? Items.ICE.getDefaultStack() : MaterialCache.getInstance().getRequiredBuildItemForState(preference, world, pos);
+		ItemStack stack = isReplaceableWaterFluidSource(preference) && PRINTER_PLACE_ICE.getBooleanValue() ? Items.ICE.getDefaultStack() : MaterialCache.getInstance().getRequiredBuildItemForState(preference, world, pos);
 		if (!FakeAccurateBlockPlacement.canHandleOther(stack.getItem())) {
 			return false;
 		}
@@ -260,7 +260,6 @@ public class Printer {
 	@Environment(EnvType.CLIENT)
 	synchronized public static ActionResult doPrinterAction(MinecraftClient mc) {
 		io.github.eatmyvenom.litematicin.utils.InventoryUtils.itemChangeCount = 0;
-		handlingItem = null;
 		if (!DEBUG_MESSAGE.getBooleanValue()) {
 			causeMap.clear(); //reduce ram usage
 		}
@@ -278,13 +277,9 @@ public class Printer {
 			ItemInputs.clear();
 		}
 		if (new Date().getTime() < lastPlaced + 1000.0 * EASY_PLACE_MODE_DELAY.getDoubleValue()) {
-			trackedSelectedSlot = -1;
-			previousItem = null;
-			handlingItem = null;
 			return ActionResult.PASS;
 		} else {
 			isSleeping = false;
-			io.github.eatmyvenom.litematicin.utils.InventoryUtils.usedSlots.clear();
 		}
 		BlockPos tracePos = mc.player.getBlockPos();
 		int posX = tracePos.getX();
@@ -1419,7 +1414,7 @@ public class Printer {
 	If its true, then block should be placed after observer update is done
 	Case A : Observer is facing wall attached : observer - wall - output
 	Case B : Observer is facing Noteblock from horizontal : observer - block below noteblock - noteblock - output
-
+	Case C : Observer is facing wire connected to observer's up offset
 	 * * */
 	@SuppressWarnings({"ConstantConditions"})
 	private static BlockPos isObserverCantAvoidOutput(MinecraftClient mc, World schematicWorld, BlockPos pos) {
@@ -1464,7 +1459,6 @@ public class Printer {
 					}
 				}
 			}
-
 		}
 		return null;
 	}
@@ -1559,8 +1553,39 @@ public class Printer {
 			return offsetBlock instanceof WallBlock || offsetBlock instanceof WallMountedBlock && OffsetStateSchematic.get(WallMountedBlock.FACE) == WallMountLocation.CEILING;
 		} else {
 			return offsetBlock instanceof WallBlock || offsetBlock instanceof PaneBlock || offsetBlock instanceof FenceBlock || OffsetStateSchematic.isOf(Blocks.IRON_BARS) || offsetBlock instanceof WallMountedBlock &&
-				OffsetStateSchematic.get(WallMountedBlock.FACE) == WallMountLocation.WALL && OffsetStateSchematic.get(WallMountedBlock.FACING) == facingSchematic;
+				OffsetStateSchematic.get(WallMountedBlock.FACE) == WallMountLocation.WALL && OffsetStateSchematic.get(WallMountedBlock.FACING) == facingSchematic || hasDustOrAscendingRails(world, facingSchematic, pos);
 		}
+	}
+
+	private static boolean hasDustOrAscendingRails(World schematicWorld, Direction watching, BlockPos observerPos) {
+		BlockPos possible = observerPos.offset(watching);
+		BlockState state = schematicWorld.getBlockState(possible);
+		if (state.isOf(Blocks.REDSTONE_WIRE)) {
+			//ascending_'opposite' directions
+			//watching.getOpposite should have 'up'
+			WireConnection connection = state.get(RedstoneWireBlock.DIRECTION_TO_WIRE_CONNECTION_PROPERTY.get(watching.getOpposite()));
+			return connection == WireConnection.UP;
+
+		} else if (state.getBlock() instanceof PoweredRailBlock) {
+			switch (watching) {
+				case NORTH -> {
+					return state.get(PoweredRailBlock.SHAPE) == RailShape.ASCENDING_SOUTH;
+				}
+				case SOUTH -> {
+					return state.get(PoweredRailBlock.SHAPE) == RailShape.ASCENDING_NORTH;
+				}
+				case EAST -> {
+					return state.get(PoweredRailBlock.SHAPE) == RailShape.ASCENDING_WEST;
+				}
+				case WEST -> {
+					return state.get(PoweredRailBlock.SHAPE) == RailShape.ASCENDING_EAST;
+				}
+				default -> {
+					return false;
+				}
+			}
+		}
+		return false;
 	}
 
 	private static List<BlockPos> getNeighborsExcept(BlockPos pos, Direction except) {
@@ -1636,6 +1661,11 @@ public class Printer {
 						if (world.getBlockState(pos.offset(direction, 2).down()).getBlock() instanceof PistonBlock) {
 							relatedPos.add(pos.offset(direction, 2).down());
 						}
+					}
+				} else if (block instanceof PoweredRailBlock || block instanceof RedstoneWireBlock) {
+					if (hasDustOrAscendingRails(world, direction.getOpposite(), pos)) {
+						relatedPos.add(pos.offset(direction, 2));
+						relatedPos.addAll(getNeighborsExcept(pos, direction));
 					}
 				}
 			}
@@ -2122,6 +2152,9 @@ public class Printer {
 	}
 
 	private static void updateSignText(MinecraftClient mc, World schematicWorld, BlockPos pos) {
+		if (isPositionCached(pos, false)) {
+			return;
+		}
 		if (mc.currentScreen instanceof SignEditScreen || !schematicWorld.getBlockState(pos).isIn(BlockTags.SIGNS) || signCache.contains(pos.asLong())) {
 			return;
 		}
@@ -2134,9 +2167,14 @@ public class Printer {
 			return;
 		}
 		if (entity instanceof SignBlockEntity signBlockEntity && clientEntity instanceof SignBlockEntity clientSignEntity) {
-			if (!clientSignEntity.isEditable()) {
+			if (clientSignEntity.getTextOnRow(0, false).getContent() != TextContent.EMPTY || clientSignEntity.getTextOnRow(1, false).getContent() != TextContent.EMPTY ||
+				clientSignEntity.getTextOnRow(2, false).getContent() != TextContent.EMPTY ||
+				clientSignEntity.getTextOnRow(3, false).getContent() != TextContent.EMPTY) {
+				MessageHolder.sendDebugMessage("Text already exists in " + pos.toShortString());
+				signCache.add(pos.asLong());
 				return;
 			}
+			MessageHolder.sendDebugMessage("Tries to copy sign text in " + pos.toShortString());
 			signCache.add(pos.asLong());
 			mc.getNetworkHandler().sendPacket(new UpdateSignC2SPacket(signBlockEntity.getPos(), signBlockEntity.getTextOnRow(0, false).getString(), signBlockEntity.getTextOnRow(1, false).getString(), signBlockEntity.getTextOnRow(2, false).getString(), signBlockEntity.getTextOnRow(3, false).getString()));
 		}
