@@ -1,14 +1,14 @@
 package io.github.eatmyvenom.litematicin.utils;
 
 import com.google.common.collect.ImmutableMap;
+import fi.dy.masa.litematica.config.Configs;
 import fi.dy.masa.litematica.data.DataManager;
 import fi.dy.masa.litematica.materials.MaterialCache;
 import fi.dy.masa.litematica.schematic.placement.SchematicPlacementManager.PlacementPart;
 import fi.dy.masa.litematica.schematic.placement.SubRegionPlacement.RequiredEnabled;
 import fi.dy.masa.litematica.selection.Box;
-import fi.dy.masa.litematica.util.EntityUtils;
 import fi.dy.masa.litematica.util.InventoryUtils;
-import fi.dy.masa.litematica.util.RayTraceUtils;
+import fi.dy.masa.litematica.util.*;
 import fi.dy.masa.litematica.util.RayTraceUtils.RayTraceWrapper;
 import fi.dy.masa.litematica.world.SchematicWorldHandler;
 import fi.dy.masa.malilib.util.IntBoundingBox;
@@ -142,7 +142,12 @@ public class Printer {
 			return false;
 		}
 		if (!stack.isEmpty()) {
-			return io.github.eatmyvenom.litematicin.utils.InventoryUtils.swapToItem(mc, stack);
+			if (USE_INVENTORY_CACHE.getBooleanValue()) {
+				return io.github.eatmyvenom.litematicin.utils.InventoryUtils.swapToItem(mc, stack);
+			} else {
+				InventoryUtils.schematicWorldPickBlock(stack, pos, world, mc);
+				return mc.player.getMainHandStack().isItemEqual(stack);
+			}
 		}
 		return false;
 	}
@@ -153,7 +158,12 @@ public class Printer {
 			return false;
 		}
 		if (!stack.isEmpty()) {
-			return io.github.eatmyvenom.litematicin.utils.InventoryUtils.swapToItem(mc, stack);
+			if (USE_INVENTORY_CACHE.getBooleanValue()) {
+				return io.github.eatmyvenom.litematicin.utils.InventoryUtils.swapToItem(mc, stack);
+			} else {
+				fi.dy.masa.malilib.util.InventoryUtils.swapItemToMainHand(stack, mc);
+				return mc.player.getMainHandStack().isItemEqual(stack);
+			}
 		}
 		return false;
 	}
@@ -1478,6 +1488,9 @@ public class Printer {
 	}
 
 	private static boolean sleepWhenRequired(MinecraftClient mc) {
+		if (!USE_INVENTORY_CACHE.getBooleanValue()) {
+			return false;
+		}
 		if (SLEEP_AFTER_CONSUME.getIntegerValue() > 0 && io.github.eatmyvenom.litematicin.utils.InventoryUtils.lastCount <= 0) {
 			shouldSleepLonger = true;
 			lastPlaced = new Date().getTime() + SLEEP_AFTER_CONSUME.getIntegerValue();
@@ -2402,6 +2415,9 @@ public class Printer {
 	}
 
 	public static Vec3d applyCarpetProtocolHitVec(BlockPos pos, BlockState state) {
+		if (Configs.Generic.EASY_PLACE_PROTOCOL.getOptionListValue() == EasyPlaceProtocol.V3) {
+			return WorldUtils.applyPlacementProtocolV3(pos, state, new Vec3d(pos.getX(), pos.getY(), pos.getZ()));
+		}
 		double code = 0;
 		double y = pos.getY();
 		double z = pos.getZ();

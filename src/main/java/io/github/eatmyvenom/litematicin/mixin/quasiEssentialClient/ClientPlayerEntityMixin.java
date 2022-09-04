@@ -1,6 +1,7 @@
 package io.github.eatmyvenom.litematicin.mixin.quasiEssentialClient;
 
 import com.mojang.authlib.GameProfile;
+import io.github.eatmyvenom.litematicin.utils.FakeAccurateBlockPlacement;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -13,15 +14,15 @@ import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
-import io.github.eatmyvenom.litematicin.utils.FakeAccurateBlockPlacement;
 
 //see https://github.com/senseiwells/EssentialClient/blob/1.19.x/src/main/java/me/senseiwells/essentialclient/mixins/betterAccurateBlockPlacement/ClientPlayerEntityMixin.java for reference!!
 
-@Mixin(value = ClientPlayerEntity.class, priority = 900)
+@Mixin(value = ClientPlayerEntity.class, priority = 1200)
 public abstract class ClientPlayerEntityMixin extends PlayerEntity {
 	public ClientPlayerEntityMixin(World world, BlockPos pos, float yaw, GameProfile gameProfile, @Nullable PlayerPublicKey publicKey) {
 		super(world, pos, yaw, gameProfile, publicKey);
 	}
+
 	@Redirect(method = "sendMovementPackets", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/ClientPlayNetworkHandler;sendPacket(Lnet/minecraft/network/Packet;)V", ordinal = 2), require = 0)
 	private void onSendPacketVehicle(ClientPlayNetworkHandler clientPlayNetworkHandler, Packet<?> packet) {
 		if (FakeAccurateBlockPlacement.requestedTicks <= -3 || FakeAccurateBlockPlacement.fakeDirection == null) {

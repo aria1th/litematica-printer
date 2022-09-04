@@ -10,7 +10,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import static io.github.eatmyvenom.litematicin.utils.FakeAccurateBlockPlacement.getPlayerFacing;
 
-@Mixin(value = ItemUsageContext.class, priority = 900)
+@Mixin(value = ItemUsageContext.class, priority = 1200)
 public class ItemUsageContextMixin {
 	@Inject(method = "getPlayerFacing", at = @At("HEAD"), cancellable = true, require = 0)
 	private void onGetFacing(CallbackInfoReturnable<Direction> cir) {
@@ -19,9 +19,10 @@ public class ItemUsageContextMixin {
 			cir.setReturnValue(direction);
 		}
 	}
+
 	@Inject(method = "getPlayerYaw", at = @At("HEAD"), cancellable = true, require = 0)
-	private void onGetYaw(CallbackInfoReturnable<Float> cir){
-		if (FakeAccurateBlockPlacement.requestedTicks > -3 && FakeAccurateBlockPlacement.fakeDirection != null){
+	private void onGetYaw(CallbackInfoReturnable<Float> cir) {
+		if (FakeAccurateBlockPlacement.requestedTicks > -3 && FakeAccurateBlockPlacement.fakeDirection != null) {
 			cir.setReturnValue(FakeAccurateBlockPlacement.fakeYaw);
 		}
 	}

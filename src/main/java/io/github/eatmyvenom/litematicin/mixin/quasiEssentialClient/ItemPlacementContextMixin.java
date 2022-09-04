@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(value = ItemPlacementContext.class, priority = 900)
+@Mixin(value = ItemPlacementContext.class, priority = 1200)
 public class ItemPlacementContextMixin {
 
 	@Inject(method = "getPlayerLookDirection", at = @At("HEAD"), cancellable = true, require = 0)

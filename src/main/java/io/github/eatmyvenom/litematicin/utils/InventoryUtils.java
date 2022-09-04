@@ -1,7 +1,5 @@
 package io.github.eatmyvenom.litematicin.utils;
 
-import com.google.common.collect.BiMap;
-import com.google.common.collect.HashBiMap;
 import fi.dy.masa.litematica.config.Configs;
 import fi.dy.masa.litematica.config.Hotkeys;
 import io.github.eatmyvenom.litematicin.LitematicaMixinMod;
@@ -21,7 +19,11 @@ import net.minecraft.util.math.Direction;
 import net.minecraft.world.World;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+
+import static io.github.eatmyvenom.litematicin.utils.Printer.isSleeping;
 
 public class InventoryUtils {
 	private static int ptr = -1;
@@ -30,16 +32,26 @@ public class InventoryUtils {
 	public static Item handlingItem = null;
 	public static Item previousItem = null; //only used for checks
 	public static int trackedSelectedSlot = -1;
-	public static BiMap<Integer, Item> usedSlots = HashBiMap.create();
+	public static HashMap<Integer, Item> usedSlots = new LinkedHashMap<>();
+	public static HashMap<Integer, Integer> slotCounts = new LinkedHashMap<>();
 
 	public static void tick() {
-		if (Configs.Generic.EASY_PLACE_MODE.getBooleanValue() && Configs.Generic.EASY_PLACE_HOLD_ENABLED.getBooleanValue() && Hotkeys.EASY_PLACE_ACTIVATION.getKeybind().isKeybindHeld()) {
-
+		if (!isSleeping && Configs.Generic.EASY_PLACE_MODE.getBooleanValue() && Configs.Generic.EASY_PLACE_HOLD_ENABLED.getBooleanValue() && Hotkeys.EASY_PLACE_ACTIVATION.getKeybind().isKeybindHeld()) {
+			for (int i = 0; i < 9; i++) {
+				if (!usedSlots.containsKey(i)) {
+					continue;
+				}
+				if (slotCounts.get(i) <= 0) {
+					usedSlots.remove(i);
+					slotCounts.remove(i);
+				}
+			}
 		} else {
 			trackedSelectedSlot = -1;
 			previousItem = null;
 			handlingItem = null;
 			usedSlots.clear();
+			slotCounts.clear();
 		}
 	}
 
@@ -47,6 +59,7 @@ public class InventoryUtils {
 	public static void decrementCount() {
 		if (lastCount > 0) {
 			lastCount--;
+			slotCounts.computeIfPresent(trackedSelectedSlot, (key, value) -> value - 1);
 		}
 	}
 
@@ -57,8 +70,13 @@ public class InventoryUtils {
 	}
 
 	public static int getAvailableSlot(Item item) {
-		if (usedSlots.inverse().containsKey(item)) {
-			return usedSlots.inverse().get(item);
+		if (usedSlots.containsValue(item)) {
+			for (Integer i : usedSlots.keySet()) {
+				if (usedSlots.get(i) == item) {
+					return i;
+				}
+			}
+			return -1;
 		}
 		if (usedSlots.size() == 9) { //full
 			return getPtr();
@@ -68,6 +86,15 @@ public class InventoryUtils {
 				continue;
 			}
 			return i;
+		}
+		return -1;
+	}
+
+	private static int searchSlot(Item item) {
+		for (Integer i : usedSlots.keySet()) {
+			if (usedSlots.get(i) == item && slotCounts.getOrDefault(i, 0) > 0) {
+				return i;
+			}
 		}
 		return -1;
 	}
@@ -111,7 +138,7 @@ public class InventoryUtils {
 	public static boolean requiresSwap(ClientPlayerEntity player, ItemStack stack) {
 		int selectedSlot = player.getInventory().selectedSlot;
 		if (usedSlots.get(selectedSlot) != null) {
-			return stack.getItem() != usedSlots.get(selectedSlot);
+			return stack.getItem() != usedSlots.get(selectedSlot) || slotCounts.getOrDefault(selectedSlot, 0) <= 0;
 		}
 		return previousItem == null || lastCount == 0 ? !areItemsExact(getMainHandStack(player), stack) : !areItemsExact(previousItem.getDefaultStack(), stack);
 	}
@@ -125,6 +152,7 @@ public class InventoryUtils {
 	}
 
 	synchronized public static boolean swapToItem(MinecraftClient client, ItemStack stack) {
+		MessageHolder.sendOrderMessage("Trying to swap item into " + stack.getItem());
 		ClientPlayerEntity player = client.player;
 		int maxChange = LitematicaMixinMod.PRINTER_MAX_ITEM_CHANGES.getIntegerValue();
 		if (player == null || client.interactionManager == null) {
@@ -133,33 +161,44 @@ public class InventoryUtils {
 		//player.getInventory().updateItems();
 		if (stack.getItem() != handlingItem) {
 			if (maxChange != 0 && itemChangeCount > maxChange) {
+				MessageHolder.sendOrderMessage("Exceeded item change count");
 				return false;
 			}
 		}
 		if (!requiresSwap(player, stack)) {
 			assert trackedSelectedSlot == -1 || trackedSelectedSlot == player.getInventory().selectedSlot : "Selected slot changed for external reason! : expected %s, current %s".formatted(trackedSelectedSlot, player.getInventory().selectedSlot);
-			assert previousItem == stack.getItem() : "Handling item :  " + handlingItem + " was not equal to " + stack.getItem();
+			assert previousItem == null || previousItem == stack.getItem() : "Handling item :  " + handlingItem + " was not equal to " + stack.getItem();
 			MessageHolder.sendOrderMessage("Didn't require swap for item " + stack.getItem() + " previous handling item : " + previousItem);
 			lastCount = player.getAbilities().creativeMode ? 65536 : getMainHandStack(player).getCount();
 			if (usedSlots.containsValue(stack.getItem())) {
-				if (usedSlots.inverse().get(stack.getItem()) != trackedSelectedSlot) {
+				if (searchSlot(stack.getItem()) != trackedSelectedSlot) {
 					MessageHolder.sendMessageUncheckedUnique("Hotbar has duplicate item references, which should not happen!");
 				}
 			}
-			usedSlots.forcePut(player.getInventory().selectedSlot, getMainHandStack(player).getItem());
+			trackedSelectedSlot = player.getInventory().selectedSlot;
+			usedSlots.put(player.getInventory().selectedSlot, getMainHandStack(player).getItem());
+			slotCounts.put(player.getInventory().selectedSlot, lastCount);
+			previousItem = stack.getItem();
 			return true;
 		}
 		if (usedSlots.containsValue(stack.getItem())) {
-			player.getInventory().selectedSlot = usedSlots.inverse().get(stack.getItem());
-			trackedSelectedSlot = player.getInventory().selectedSlot;
-			previousItem = stack.getItem();
-			handlingItem = previousItem;
-			MessageHolder.sendOrderMessage("Selected slot " + player.getInventory().selectedSlot + " based on cache for " + stack.getItem());
-			client.getNetworkHandler().sendPacket(new UpdateSelectedSlotC2SPacket(player.getInventory().selectedSlot));
-			return !player.getInventory().getMainHandStack().isEmpty();
+			int slot = searchSlot(stack.getItem());
+			if (slot != -1) {
+				player.getInventory().selectedSlot = slot;
+				trackedSelectedSlot = player.getInventory().selectedSlot;
+				usedSlots.put(trackedSelectedSlot, stack.getItem());
+				slotCounts.put(trackedSelectedSlot, stack.getCount());
+				lastCount = stack.getCount();
+				previousItem = stack.getItem();
+				handlingItem = previousItem;
+				MessageHolder.sendOrderMessage("Selected slot " + player.getInventory().selectedSlot + " based on cache for " + stack.getItem());
+				client.getNetworkHandler().sendPacket(new UpdateSelectedSlotC2SPacket(player.getInventory().selectedSlot));
+				return !player.getInventory().getMainHandStack().isEmpty();
+			}
 		}
 		if (survivalSwap(client, player, stack)) {
 			usedSlots.put(player.getInventory().selectedSlot, stack.getItem());
+			slotCounts.put(trackedSelectedSlot, getMainHandStack(player).getCount());
 			MessageHolder.sendOrderMessage("Swapped to item " + stack.getItem());
 			handlingItem = stack.getItem();
 			previousItem = handlingItem;
@@ -190,6 +229,7 @@ public class InventoryUtils {
 		trackedSelectedSlot = selectedSlot;
 		player.getInventory().main.set(selectedSlot, stack);
 		usedSlots.put(player.getInventory().selectedSlot, stack.getItem());
+		slotCounts.put(trackedSelectedSlot, 65536);
 		lastCount = 65536;
 		handlingItem = stack.getItem();
 		previousItem = handlingItem;
