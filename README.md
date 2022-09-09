@@ -40,6 +40,14 @@ https://github.com/aleksilassila/litematica-printer
 Of course, I can't help other's mod, so check if its correct printer.
 
 ## Settings
+**Litematica Addition**:
+
+`verifierFindInventoryContents`    - Verifier will indicate blocks with items as 'wrong state' even if it has actually correct state. Useful for comparator-related stuff.
+
+`printerOff` - Turns off Printer and use Normal easyplace.
+
+`printerUseInventoryCache` - Uses Own inventory util that is little more stable for desync.
+
 
 ### Printer settings:
 Now Settings have names with printer.
