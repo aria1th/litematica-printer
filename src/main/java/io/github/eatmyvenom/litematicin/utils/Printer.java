@@ -35,6 +35,7 @@ import net.minecraft.item.Items;
 import net.minecraft.network.packet.c2s.play.UpdateSignC2SPacket;
 import net.minecraft.state.property.Properties;
 import net.minecraft.tag.BlockTags;
+import net.minecraft.text.Text;
 import net.minecraft.text.TextContent;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
@@ -278,15 +279,18 @@ public class Printer {
 		}
 		FakeAccurateBlockPlacement.requestedTicks = Math.max(-2, FakeAccurateBlockPlacement.requestedTicks);
 		if (breaker.isBreakingBlock()) {
+			mc.player.sendMessage(Text.of("Handling breakBlock!"), true);
 			return ActionResult.SUCCESS;
 		}
 		if (INVENTORY_OPERATIONS.getBooleanValue()) {
 			ItemInputs.execute(mc);
+			mc.player.sendMessage(Text.of("Handling inventory operation!"), true);
 			return ActionResult.PASS;
 		} else {
 			ItemInputs.clear();
 		}
 		if (new Date().getTime() < lastPlaced + 1000.0 * EASY_PLACE_MODE_DELAY.getDoubleValue()) {
+			mc.player.sendMessage(Text.of("Handling delay"), true);
 			return ActionResult.PASS;
 		} else {
 			isSleeping = false;
@@ -316,6 +320,9 @@ public class Printer {
 		List<PlacementPart> list = DataManager.getSchematicPlacementManager().getAllPlacementsTouchingSubChunk(cpos);
 		Box selectedBox = null;
 		if (list.isEmpty() && !ClearArea) {
+			if (BEDROCK_BREAKING.getBooleanValue()) {
+				BedrockBreaker.scheduledTickHandler(mc, null);
+			}
 			return ActionResult.PASS;
 		}
 		int maxX = 0;
@@ -505,9 +512,11 @@ public class Printer {
 										return ActionResult.SUCCESS;
 									}
 								} else if (BedrockBreaker.isBlockNotInstantBreakable(stateClient.getBlock()) && BEDROCK_BREAKING.getBooleanValue()) {
+									mc.player.sendMessage(Text.of("Handling printerBedrockBreaking!"), true);
 									interact += BedrockBreaker.scheduledTickHandler(mc, pos);
 									continue;
 								} else if (BEDROCK_BREAKING.getBooleanValue()) {
+									mc.player.sendMessage(Text.of("Handling printerBedrockBreaking!"), true);
 									interact += BedrockBreaker.scheduledTickHandler(mc, null);
 									continue;
 								} else if (!positionStorage.hasPos(pos)) { // For survival
@@ -706,6 +715,7 @@ public class Printer {
 						} //cancel normal placing
 					}
 					if (!ClearArea && MaxFlip) {
+						mc.player.sendMessage(Text.of("Handling printerFlippinCactus!"), true);
 						continue;
 					}
 					if (isPositionCached(pos, false) || BEDROCK_BREAKING.getBooleanValue() || (!(stateSchematic.getBlock() instanceof NetherPortalBlock) && stateSchematic.isAir() && !ClearArea)) {
@@ -715,6 +725,7 @@ public class Printer {
 					Block cBlock = stateClient.getBlock();
 					Block sBlock = stateSchematic.getBlock();
 					if (ClearArea) {
+						mc.player.sendMessage(Text.of("Handling printerClear*!"), true);
 						if (isReplaceableWaterFluidSource(stateClient)) {
 							if (!UseCobble) {
 								stack = Items.SPONGE.getDefaultStack();
