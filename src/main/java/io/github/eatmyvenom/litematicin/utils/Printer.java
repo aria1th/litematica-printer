@@ -376,6 +376,9 @@ public class Printer {
 		}
 
 		if (!foundBox) {
+			if (BEDROCK_BREAKING.getBooleanValue()) {
+				BedrockBreaker.scheduledTickHandler(mc, null);
+			}
 			return ActionResult.PASS;
 		}
 		LayerRange range = DataManager.getRenderLayerRange(); //add range following
@@ -788,6 +791,12 @@ public class Printer {
 							if (sBlock instanceof RedstoneBlock) {
 								if (isQCable(mc, world, pos)) {
 									recordCause(pos, sBlock.getTranslationKey() + " at " + pos.toShortString() + "will QC, waiting other block");
+									MessageHolder.sendUniqueMessage(mc.player, getReason(pos.asLong()));
+									continue;
+								}
+							} else if (sBlock instanceof TntBlock) {
+								if (mc.world.isReceivingRedstonePower(pos)) {
+									recordCause(pos, sBlock.getTranslationKey() + " at " + pos.toShortString() + " is now receiving power!");
 									MessageHolder.sendUniqueMessage(mc.player, getReason(pos.asLong()));
 									continue;
 								}
