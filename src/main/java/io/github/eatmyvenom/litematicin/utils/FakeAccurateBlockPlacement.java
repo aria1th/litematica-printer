@@ -299,7 +299,7 @@ public class FakeAccurateBlockPlacement {
 		if (blockState.isOf(Blocks.GRINDSTONE)) {
 			return requestGrindStone(blockState, blockPos);
 		}
-		if (blockState.isOf(Blocks.HOPPER) || blockState.isIn(BlockTags.SHULKER_BOXES)) {
+		if (blockState.isOf(Blocks.HOPPER) || blockState.isIn(BlockTags.SHULKER_BOXES) || blockState.isOf(Blocks.LIGHTNING_ROD) || blockState.isOf(Blocks.END_ROD)) {
 			placeBlock(blockPos, blockState);
 			return true;
 		}

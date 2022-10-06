@@ -2354,7 +2354,9 @@ public class Printer {
 			return Direction.UP;
 		} else if (blockSchematic instanceof HopperBlock) {
 			return stateSchematic.get(HopperBlock.FACING).getOpposite();
-		} else if (stateSchematic.isIn(BlockTags.SHULKER_BOXES)) {
+		} else if (blockSchematic instanceof LightningRodBlock) {
+			return stateSchematic.get(LightningRodBlock.FACING);
+		}  else if (stateSchematic.isIn(BlockTags.SHULKER_BOXES)) {
 			return stateSchematic.get(ShulkerBoxBlock.FACING);
 		} else if (blockSchematic instanceof TorchBlock) {
 			if (blockSchematic instanceof WallTorchBlock || blockSchematic instanceof WallRedstoneTorchBlock) {
