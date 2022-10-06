@@ -1,5 +1,7 @@
 # Litematica-Printer
 ![ezgif-4-f05ee71350](https://user-images.githubusercontent.com/35677394/194375066-0a636c33-a5fd-4cfc-abb1-e9c86c4cb21b.gif)
+
+## Redstone-Aware Fast Block Auto Placement
 ## Setup
 
 This mod requires **Fabric with Litematica, Malilib, Fabric API. Install MultiMC and Fabric API**, for previous versions, use **MultiConnect**.
