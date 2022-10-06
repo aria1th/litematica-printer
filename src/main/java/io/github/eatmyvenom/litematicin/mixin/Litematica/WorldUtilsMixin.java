@@ -12,6 +12,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.PRINTER_ONLY_FAKE_ROTATION_MODE;
+
 @Mixin(value = WorldUtils.class, remap = false, priority = 1010)
 public class WorldUtilsMixin {
 	private static boolean hasSent = false;
@@ -29,26 +31,31 @@ public class WorldUtilsMixin {
 		if (mc.player == null) {
 			return;
 		}
-		if (LitematicaMixinMod.PRINTER_OFF.getBooleanValue()) {
-			return;
+		if (PRINTER_ONLY_FAKE_ROTATION_MODE.getBooleanValue()) {
+			cir.setReturnValue(Printer.doEasyPlaceFakeRotation(mc));
 		}
-		ActionResult defaultResult = ActionResult.SUCCESS;
-		try {
-			defaultResult = Printer.doPrinterAction(mc);
-		} catch (NullPointerException e) {
-			//in case of NPE, print log instead
-			MessageHolder.sendMessageUncheckedUnique(mc.player, e.getMessage());
-			if (!hasSent && mc.player != null) {
-				mc.player.sendMessage(Text.of("Null pointer exception has occured, please upload log at https://github.com/aria1th/litematica-printer/issues"));
-				hasSent = true;
+		else {
+			if (LitematicaMixinMod.PRINTER_OFF.getBooleanValue()) {
+				return;
 			}
-		} catch (AssertionError e) {
-			MessageHolder.sendOrderMessage("Order error happened " + e.getMessage());
-			MessageHolder.sendMessageUncheckedUnique(mc.player, "Order Error Happened " + e.getMessage());
-			cir.setReturnValue(ActionResult.FAIL);
-			return;
+			ActionResult defaultResult = ActionResult.SUCCESS;
+			try {
+				defaultResult = Printer.doPrinterAction(mc);
+			} catch (NullPointerException e) {
+				//in case of NPE, print log instead
+				MessageHolder.sendMessageUncheckedUnique(mc.player, e.getMessage());
+				if (!hasSent && mc.player != null) {
+					mc.player.sendMessage(Text.of("Null pointer exception has occured, please upload log at https://github.com/aria1th/litematica-printer/issues"));
+					hasSent = true;
+				}
+			} catch (AssertionError e) {
+				MessageHolder.sendOrderMessage("Order error happened " + e.getMessage());
+				MessageHolder.sendMessageUncheckedUnique(mc.player, "Order Error Happened " + e.getMessage());
+				cir.setReturnValue(ActionResult.FAIL);
+				return;
+			}
+			cir.setReturnValue(defaultResult);
+			//return defaultResult;
 		}
-		cir.setReturnValue(defaultResult);
-		//return defaultResult;
 	}
 }

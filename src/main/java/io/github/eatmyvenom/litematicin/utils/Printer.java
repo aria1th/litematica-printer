@@ -168,7 +168,34 @@ public class Printer {
 		}
 		return false;
 	}
-
+	public static ActionResult doEasyPlaceFakeRotation(MinecraftClient mc) { //force normal easyplace action, ignore condition checks
+		RayTraceWrapper traceWrapper = RayTraceUtils.getGenericTrace(mc.world, mc.player, 6);
+		FakeAccurateBlockPlacement.requestedTicks = Math.max(-2, FakeAccurateBlockPlacement.requestedTicks);
+		if (traceWrapper == null) {
+			return ActionResult.PASS;
+		}
+		BlockHitResult trace = traceWrapper.getBlockHitResult();
+		if (trace == null) {
+			return ActionResult.PASS;
+		}
+		World world = SchematicWorldHandler.getSchematicWorld();
+		World clientWorld = mc.world;
+		BlockPos blockPos = trace.getBlockPos();
+		if (isPositionCached(blockPos, false)){
+			return ActionResult.PASS;
+		}
+		BlockState schematicState = world.getBlockState(blockPos);
+		BlockState clientState = clientWorld.getBlockState(blockPos);
+		if (schematicState.getBlock().getName().equals(clientState.getBlock().getName()) || schematicState.isAir()) {
+			return ActionResult.FAIL;
+		}
+		if (FakeAccurateBlockPlacement.canHandleOther(schematicState.getBlock().asItem()) && canPickBlock(mc, schematicState, blockPos)) {
+			MessageHolder.sendOrderMessage("Requested " + schematicState + " at " +blockPos.toShortString());
+			FakeAccurateBlockPlacement.request(schematicState, blockPos);
+			return ActionResult.SUCCESS;
+		}
+		return ActionResult.FAIL;
+	}
 	public static ActionResult doEasyPlaceNormally(MinecraftClient mc) { //force normal easyplace action, ignore condition checks
 		RayTraceWrapper traceWrapper = RayTraceUtils.getGenericTrace(mc.world, mc.player, 6);
 		if (traceWrapper == null) {

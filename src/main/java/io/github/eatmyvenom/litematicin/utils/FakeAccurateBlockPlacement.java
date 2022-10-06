@@ -101,10 +101,29 @@ public class FakeAccurateBlockPlacement {
 			previousFakePitch = playerEntity.getPitch();
 			previousFakeYaw = playerEntity.getYaw();
 		}
+		if (requestedTicks == 0 && PRINTER_ONLY_FAKE_ROTATION_MODE.getBooleanValue()){
+			placeFromQueue();
+		}
 		requestedTicks = requestedTicks - 1;
 		blockPlacedInTick = 0;
 	}
-
+	public static void placeFromQueue() {
+		if (requestedTicks != 0) {
+			return;
+		}
+		PosWithBlock obj = waitingQueue.poll();
+		if (obj != null) {
+			MessageHolder.sendOrderMessage("found block to place");
+			if (canPlace(obj.blockState, obj.pos)) {
+				placeBlock(obj.pos, obj.blockState);
+				return;
+			}
+			else {
+				MessageHolder.sendOrderMessage("found block to place but can't place");
+			}
+		}
+		waitingQueue.clear();
+	}
 	public static boolean emptyWaitingQueue() {
 		if (requestedTicks != 0) {
 			return false;
@@ -274,6 +293,7 @@ public class FakeAccurateBlockPlacement {
 	synchronized public static boolean request(BlockState blockState, BlockPos blockPos) {
 		// instant
 		if (!canPlace(blockState, blockPos) || blockState.isAir() || MaterialCache.getInstance().getRequiredBuildItemForState(blockState, SchematicWorldHandler.getSchematicWorld(), blockPos).getItem() == Items.AIR) {
+			MessageHolder.sendOrderMessage("Cannot place "+ blockState.toString() + " at " + blockPos.toShortString());
 			return false;
 		}
 		if (blockState.isOf(Blocks.GRINDSTONE)) {
@@ -368,6 +388,7 @@ public class FakeAccurateBlockPlacement {
 		} else {
 			//delay
 			if (isHandling() && (lookRefdir != fakeDirection || fp != fakePitch || fy != fakeYaw || !canPlaceWallMounted(blockState))) {
+				MessageHolder.sendOrderMessage("Cannot handle "+ blockState + " at " + blockPos.toShortString());
 				return false;
 			}
 			if (requestedTicks == 0 && fakeDirection == lookRefdir && fp == fakePitch && fy == fakeYaw) {
@@ -377,7 +398,13 @@ public class FakeAccurateBlockPlacement {
 			if (waitingQueue.isEmpty()) {
 				request(fy, fp, lookRefdir, LitematicaMixinMod.FAKE_ROTATION_TICKS.getIntegerValue(), false);
 				pickFirst(blockState, blockPos);
-				waitingQueue.offer(new PosWithBlock(blockPos, blockState));
+				boolean offered = waitingQueue.offer(new PosWithBlock(blockPos, blockState));
+				if (offered){
+					MessageHolder.sendOrderMessage("Offered "+ blockState + " at " + blockPos.toShortString());
+				}
+				else {
+					MessageHolder.sendOrderMessage("Cannot offer "+ blockState + " at " + blockPos.toShortString());
+				}
 				return false;
 			}
 		}
