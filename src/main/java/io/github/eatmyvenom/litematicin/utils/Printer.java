@@ -169,6 +169,9 @@ public class Printer {
 		return false;
 	}
 	public static ActionResult doEasyPlaceFakeRotation(MinecraftClient mc) { //force normal easyplace action, ignore condition checks
+		if (FakeAccurateBlockPlacement.isHandling()){
+			return ActionResult.PASS;
+		}
 		RayTraceWrapper traceWrapper = RayTraceUtils.getGenericTrace(mc.world, mc.player, 6);
 		FakeAccurateBlockPlacement.requestedTicks = Math.max(-2, FakeAccurateBlockPlacement.requestedTicks);
 		if (traceWrapper == null) {

@@ -26,11 +26,11 @@ public class LitematicaMixinMod implements ModInitializer {
 	public static final ConfigBoolean DISABLE_SINGLEPLAYER_HANDLE = new ConfigBoolean("disableSingleplayerPlacementHandling", true, "Disables handling for fake rotations block state adjustment");
 	public static final ConfigInteger SLEEP_AFTER_CONSUME = new ConfigInteger("printerSleepStackEmptied", 200, 0, 8000, "Sleeps after stack is emptied (ms)");
 	public static final ConfigInteger EASY_PLACE_CACHE_TIME = new ConfigInteger("easyPlaceCacheMs", 1000, 200, 5000, "Cache time for Easyplace");
-	public static final ConfigInteger EASY_PLACE_MODE_RANGE_X = new ConfigInteger("easyPlaceModePrinterRangeX", 3, 0, 1024, "X Range for EasyPlace");
-	public static final ConfigInteger EASY_PLACE_MODE_RANGE_Y = new ConfigInteger("easyPlaceModePrinterRangeY", 3, 0, 1024, "Y Range for EasyPlace");
-	public static final ConfigInteger EASY_PLACE_MODE_RANGE_Z = new ConfigInteger("easyPlaceModePrinterRangeZ", 3, 0, 1024, "Z Range for EasyPlace");
-	public static final ConfigInteger PRINTER_MAX_BLOCKS = new ConfigInteger("easyPlaceModePrinterMaxBlocks", 3, 1, 1000000, "Max block interactions per cycle");
-	public static final ConfigInteger PRINTER_MAX_ITEM_CHANGES = new ConfigInteger("easyPlaceModePrinterMaxItemChanges", 3, 0, 1000000, "Max item categories per cycle");
+	public static final ConfigInteger EASY_PLACE_MODE_RANGE_X = new ConfigInteger("easyPlaceModePrinterRangeX", 4, 0, 1024, "X Range for EasyPlace");
+	public static final ConfigInteger EASY_PLACE_MODE_RANGE_Y = new ConfigInteger("easyPlaceModePrinterRangeY", 4, 0, 1024, "Y Range for EasyPlace");
+	public static final ConfigInteger EASY_PLACE_MODE_RANGE_Z = new ConfigInteger("easyPlaceModePrinterRangeZ", 4, 0, 1024, "Z Range for EasyPlace");
+	public static final ConfigInteger PRINTER_MAX_BLOCKS = new ConfigInteger("easyPlaceModePrinterMaxBlocks", 6, 1, 1000000, "Max block interactions per cycle");
+	public static final ConfigInteger PRINTER_MAX_ITEM_CHANGES = new ConfigInteger("easyPlaceModePrinterMaxItemChanges", 0, 0, 1000000, "Max item categories per cycle");
 	public static final ConfigBoolean PRINTER_BREAK_BLOCKS = new ConfigBoolean("printerBreakBlocks", false, "Automatically breaks blocks.");
 	public static final ConfigBoolean PRINTER_BREAK_IGNORE_EXTRA = new ConfigBoolean("printerBreakIgnoresExtra", true, "Does not break extra blocks.");
 	public static final ConfigBoolean DISABLE_SYNC = new ConfigBoolean("disableInventorySync", false, "Disables sync with inventory.");
@@ -54,8 +54,8 @@ public class LitematicaMixinMod implements ModInitializer {
 	public static final ConfigInteger BEDROCK_BREAKING_CLEAR_WAIT = new ConfigInteger("bedrockBreakingClearTicks", 6, 0, 1024, "Waiting ticks after processing bedrock");
 	public static final ConfigBoolean PRINTER_PLACE_ICE = new ConfigBoolean("printerUseIceForWater", false, "Should printer place ice where water/waterlogged should be?");
 	public static final ConfigBoolean PRINTER_PLACE_MINECART = new ConfigBoolean("printerPlaceMinecart", true, "Should printer place minecart?(its smarter than average)");
-	public static final ConfigBoolean FAKE_ROTATION_BETA = new ConfigBoolean("printerFakeRotation", false, "Printer will use fake rotations to place block correctly, at least in vanilla.");
-	public static final ConfigInteger FAKE_ROTATION_TICKS = new ConfigInteger("printerFakeRotationTicks", 2, 0, 1000000, "Ticks between fake block packets");
+	public static final ConfigBoolean FAKE_ROTATION_BETA = new ConfigBoolean("printerFakeRotation", true, "Printer will use fake rotations to place block correctly, at least in vanilla.");
+	public static final ConfigInteger FAKE_ROTATION_TICKS = new ConfigInteger("printerFakeRotationTicks", 1, 0, 1000000, "Ticks between fake block packets");
 	public static final ConfigInteger FAKE_ROTATION_LIMIT = new ConfigInteger("printerFakeRotationLimitPerTicks", 1, 1, 1000000, "Maximum fake placement per tick, prone to cause error(require:FakeRotationTick = 0)");
 	public static final ImmutableList<IConfigBase> betterList = originalList.addAll(ImmutableList.of(
 		VERIFY_INVENTORY,

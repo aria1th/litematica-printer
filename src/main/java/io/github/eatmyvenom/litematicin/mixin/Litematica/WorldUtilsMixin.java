@@ -32,6 +32,7 @@ public class WorldUtilsMixin {
 			return;
 		}
 		if (PRINTER_ONLY_FAKE_ROTATION_MODE.getBooleanValue()) {
+			LitematicaMixinMod.USE_INVENTORY_CACHE.setBooleanValue(false);
 			cir.setReturnValue(Printer.doEasyPlaceFakeRotation(mc));
 		}
 		else {
