@@ -155,4 +155,4 @@ This template is available under the CC0 license. Feel free to learn from it and
 
 ## TODO List (most possible to least possible)
 
-Done!
+Enable Fake rotations at default, and buff options for faster placing
