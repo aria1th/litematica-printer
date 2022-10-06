@@ -146,8 +146,12 @@ If you have any issues with this mod **DO NOT** contact and bother masa with it.
 
 ## Credits
 Masa is the writer of the actual litematica mod and allowed all of this to be possible.
+
 Andrews is the one who made the litematica printer implimentation, EatMyVenom converted it to mixin.
-AngelBottomless, completed AccurateBlockPlacement and Redstone Orders / Fake rotations.
+
+Jensvh first ported printer to 1.17.
+
+AngelBottomless, continued work and completed AccurateBlockPlacement and Redstone Orders / Fake rotations.
 
 ## License
 
