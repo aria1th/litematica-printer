@@ -24,16 +24,8 @@ dependencies {
 	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabricapi_version}"
 	modCompileOnly files("external/essential-client-1.19-1.2.3.jar")
-	//modImplementation "fi.dy.masa.malilib:malilib-fabric-${project.minecraft_version_out}:${project.malilib_version}"
-	//this is unofficial 1.19 version for malilib
-	//modImplementation "curse.maven:malilib-303119:${project.minecraft_version}"
-	modImplementation files("external/malilib-fabric-1.19.1-0.13.0.jar")
-	// we can't use litematica from maven now, use community edition instead
-	modImplementation files("external/litematica-fabric-1.19.1-0.12.1.jar")
-	//modImplementation "curse.maven:litematica-${project.litematica_projectid}:${project.litematica_fileid}"
-	//if api is not available then use following
-	//modImplementation files("external/fabric-api-0.56.3+1.19.jar")
-	
+	modImplementation "fi.dy.masa.malilib:malilib-fabric-${project.malilib_version}"
+	modImplementation "curse.maven:litematica-${project.litematica_projectid}:${project.litematica_fileid}"
 }
 
 processResources {
