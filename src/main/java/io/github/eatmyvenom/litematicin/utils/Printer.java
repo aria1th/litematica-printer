@@ -1153,8 +1153,8 @@ public class Printer {
 								if (blockSchematic instanceof EndRodBlock) {
 									if (doSchematicWorldPickBlock(mc, stateSchematic, pos)) {
 										cacheEasyPlacePosition(pos, false);
-										mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, new BlockHitResult(Vec3d.of(pos),
-											stateSchematic.get(EndRodBlock.FACING).getOpposite(), pos, false)); //place block
+										mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, new BlockHitResult(Vec3d.ofCenter(pos),
+											stateSchematic.get(EndRodBlock.FACING), pos, false)); //place block
 										io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount();
 										interact++;
 										sleepWhenRequired(mc);
