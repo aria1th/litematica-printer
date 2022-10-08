@@ -431,6 +431,7 @@ public class BedrockBreaker {
 
 	synchronized public static int scheduledTickHandler(MinecraftClient mc, @Nullable BlockPos pos) {
 		if (!isItemPrePared(mc)) {
+			MessageHolder.sendUniqueMessage(mc.player, "[BedrockBreaking]Items is not prepared, requires Redstone torch, Piston block + haste2 + eff 5 diamond+ pickaxe.");
 			return 0;
 		}
 		rangeX = EASY_PLACE_MODE_RANGE_X.getIntegerValue();
