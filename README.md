@@ -116,6 +116,8 @@ Now Settings have names with printer.
 
 `easyPlaceModePrinterMaxItemChanges` - Printer will limit changing items actions, per cycle. **recommended value : 2**
 
+`printerBreakIgnoresExtra` - Printer won't break extra-marked blocks. Applies to bedrock breaking and breaking.
+
 
 **Redstone**:
 
