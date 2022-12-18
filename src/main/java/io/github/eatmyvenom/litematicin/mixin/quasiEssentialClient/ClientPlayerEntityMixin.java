@@ -19,8 +19,8 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(value = ClientPlayerEntity.class, priority = 1200)
 public abstract class ClientPlayerEntityMixin extends PlayerEntity {
-	public ClientPlayerEntityMixin(World world, BlockPos pos, float yaw, GameProfile gameProfile, @Nullable PlayerPublicKey publicKey) {
-		super(world, pos, yaw, gameProfile, publicKey);
+	public ClientPlayerEntityMixin(World world, BlockPos pos, float yaw, GameProfile gameProfile) {
+		super(world, pos, yaw, gameProfile);
 	}
 
 	@Redirect(method = "sendMovementPackets", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/ClientPlayNetworkHandler;sendPacket(Lnet/minecraft/network/Packet;)V", ordinal = 2), require = 0)

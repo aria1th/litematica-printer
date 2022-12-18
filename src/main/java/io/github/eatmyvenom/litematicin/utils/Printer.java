@@ -33,8 +33,8 @@ import net.minecraft.item.ItemPlacementContext;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.network.packet.c2s.play.UpdateSignC2SPacket;
+import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.state.property.Properties;
-import net.minecraft.tag.BlockTags;
 import net.minecraft.text.Text;
 import net.minecraft.text.TextContent;
 import net.minecraft.util.ActionResult;
@@ -44,8 +44,9 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.PortalForcer;
 import net.minecraft.world.World;
-import net.minecraft.world.dimension.AreaHelper;
+import net.minecraft.world.dimension.NetherPortal;
 
 import javax.annotation.Nullable;
 import java.util.*;
@@ -60,6 +61,7 @@ public class Printer {
 	// For printing delay
 	public static boolean isSleeping = false;
 	public static long lastPlaced = new Date().getTime();
+	private static final HashMap<World, PortalForcer> portalForcerHashMap = new LinkedHashMap<>();
 	private static boolean shouldSleepLonger = false;
 	public static Breaker breaker = new Breaker();
 	public static int worldBottomY = 0;
@@ -901,7 +903,7 @@ public class Printer {
 								}
 							}
 						}
-						if (sBlock instanceof NetherPortalBlock && !sBlock.getName().equals(cBlock.getName()) && AreaHelper.getNewPortal(mc.world, pos, Direction.Axis.X).isPresent()) {
+						if (sBlock instanceof NetherPortalBlock && !sBlock.getName().equals(cBlock.getName()) && NetherPortal.getNewPortal(mc.world, pos, Direction.Axis.X).isPresent()) {
 							ItemStack lightStack = Items.FIRE_CHARGE.getDefaultStack();
 							if (mc.player.getInventory().getSlotWithStack(lightStack) == -1) {
 								lightStack = Items.FLINT_AND_STEEL.getDefaultStack();
@@ -1019,7 +1021,7 @@ public class Printer {
 							 * directionality to work Basically, the block pos sent must be a "clicked"
 							 * block.
 							 */
-							if (blockSchematic instanceof AbstractButtonBlock || blockSchematic instanceof LeverBlock) {
+							if (blockSchematic instanceof ButtonBlock || blockSchematic instanceof LeverBlock) {
 								WallMountLocation wallMountLocation = stateSchematic.get(WallMountedBlock.FACE);
 								if (wallMountLocation == WallMountLocation.FLOOR) {
 									npos = pos.down();
@@ -2198,7 +2200,7 @@ public class Printer {
 
 	private static boolean hasGui(Block checkGui) {
 		return checkGui instanceof CraftingTableBlock || checkGui instanceof GrindstoneBlock || checkGui instanceof LeverBlock || checkGui instanceof TrapdoorBlock ||
-			checkGui instanceof AbstractButtonBlock || checkGui instanceof DoorBlock || checkGui instanceof FenceGateBlock ||
+			checkGui instanceof ButtonBlock || checkGui instanceof DoorBlock || checkGui instanceof FenceGateBlock ||
 			checkGui instanceof BedBlock || checkGui instanceof NoteBlock || checkGui instanceof BlockWithEntity;
 	}
 
