@@ -23,7 +23,7 @@ public abstract class ClientPlayerEntityMixin extends PlayerEntity {
 		super(world, pos, yaw, gameProfile);
 	}
 
-	@Redirect(method = "sendMovementPackets", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/ClientPlayNetworkHandler;sendPacket(Lnet/minecraft/network/Packet;)V", ordinal = 2), require = 0)
+	@Redirect(method = "sendMovementPackets", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/ClientPlayNetworkHandler;sendPacket(Lnet/minecraft/network/Packet;)V", ordinal = 1), require = 0)
 	private void onSendPacketVehicle(ClientPlayNetworkHandler clientPlayNetworkHandler, Packet<?> packet) {
 		if (FakeAccurateBlockPlacement.requestedTicks <= -3 || FakeAccurateBlockPlacement.fakeDirection == null) {
 			clientPlayNetworkHandler.sendPacket(packet);
@@ -37,7 +37,7 @@ public abstract class ClientPlayerEntityMixin extends PlayerEntity {
 		));
 	}
 
-	@Redirect(method = "sendMovementPackets", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/ClientPlayNetworkHandler;sendPacket(Lnet/minecraft/network/Packet;)V", ordinal = 3), require = 0)
+	@Redirect(method = "sendMovementPackets", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/ClientPlayNetworkHandler;sendPacket(Lnet/minecraft/network/Packet;)V", ordinal = 2), require = 0)
 	private void onSendPacketAll(ClientPlayNetworkHandler clientPlayNetworkHandler, Packet<?> packet) {
 		if (FakeAccurateBlockPlacement.requestedTicks <= -3 || FakeAccurateBlockPlacement.fakeDirection == null) {
 			clientPlayNetworkHandler.sendPacket(packet);
@@ -51,8 +51,8 @@ public abstract class ClientPlayerEntityMixin extends PlayerEntity {
 		));
 	}
 
-	@Redirect(method = "sendMovementPackets", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/ClientPlayNetworkHandler;sendPacket(Lnet/minecraft/network/Packet;)V", ordinal = 5), require = 0)
-	private void onSendPacketLook(ClientPlayNetworkHandler clientPlayNetworkHandler, Packet<?> packet) {
+	@Redirect(method = "sendMovementPackets", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/ClientPlayNetworkHandler;sendPacket(Lnet/minecraft/network/Packet;)V", ordinal = 3), require = 0)
+	private void onSendPacketPositionAndOnGround(ClientPlayNetworkHandler clientPlayNetworkHandler, Packet<?> packet) {
 		if (FakeAccurateBlockPlacement.requestedTicks <= -3 || FakeAccurateBlockPlacement.fakeDirection == null) {
 			clientPlayNetworkHandler.sendPacket(packet);
 			return;
@@ -66,4 +66,32 @@ public abstract class ClientPlayerEntityMixin extends PlayerEntity {
 		);
 	}
 
+	@Redirect(method = "sendMovementPackets", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/ClientPlayNetworkHandler;sendPacket(Lnet/minecraft/network/Packet;)V", ordinal = 4), require = 0)
+	private void onSendPacketLookAndOnGround(ClientPlayNetworkHandler clientPlayNetworkHandler, Packet<?> packet) {
+		if (FakeAccurateBlockPlacement.requestedTicks <= -3 || FakeAccurateBlockPlacement.fakeDirection == null) {
+			clientPlayNetworkHandler.sendPacket(packet);
+			return;
+		}
+		clientPlayNetworkHandler.sendPacket(
+			new PlayerMoveC2SPacket.LookAndOnGround(
+				FakeAccurateBlockPlacement.fakeYaw,
+				FakeAccurateBlockPlacement.fakePitch,
+				this.isOnGround()
+			)
+		);
+	}
+	@Redirect(method = "sendMovementPackets", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/ClientPlayNetworkHandler;sendPacket(Lnet/minecraft/network/Packet;)V", ordinal = 5), require = 0)
+	private void onSendPacketOnGroundOnly(ClientPlayNetworkHandler clientPlayNetworkHandler, Packet<?> packet) {
+		if (FakeAccurateBlockPlacement.requestedTicks <= -3 || FakeAccurateBlockPlacement.fakeDirection == null) {
+			clientPlayNetworkHandler.sendPacket(packet);
+			return;
+		}
+		clientPlayNetworkHandler.sendPacket(
+			new PlayerMoveC2SPacket.LookAndOnGround(
+				FakeAccurateBlockPlacement.fakeYaw,
+				FakeAccurateBlockPlacement.fakePitch,
+				this.isOnGround()
+			)
+		);
+	}
 }
