@@ -346,10 +346,9 @@ public class Printer {
 		boolean CanUseProtocol = ACCURATE_BLOCK_PLACEMENT.getBooleanValue();
 		boolean FillInventory = PRINTER_PUMPKIN_PIE_FOR_COMPOSTER.getBooleanValue();
 		ItemStack composableItem = Items.PUMPKIN_PIE.getDefaultStack();
-		SubChunkPos cpos = new SubChunkPos(tracePos);
-		List<PlacementPart> list = DataManager.getSchematicPlacementManager().getAllPlacementsTouchingSubChunk(cpos);
+		List<PlacementPart> allPlacementsTouchingSubChunk = DataManager.getSchematicPlacementManager().getAllPlacementsTouchingChunk(tracePos);
 		Box selectedBox = null;
-		if (list.isEmpty() && !ClearArea) {
+		if (allPlacementsTouchingSubChunk.isEmpty() && !ClearArea) {
 			if (BEDROCK_BREAKING.getBooleanValue()) {
 				BedrockBreaker.scheduledTickHandler(mc, null);
 			}
@@ -377,7 +376,7 @@ public class Printer {
 			minY = posY - rangeY;
 			minZ = posZ - rangeZ;
 		} else {
-			for (PlacementPart part : list) {
+			for (PlacementPart part : allPlacementsTouchingSubChunk) {
 				IntBoundingBox pbox = part.getBox();
 				if (pbox.containsPos(tracePos)) {
 
