@@ -47,6 +47,7 @@ public class LitematicaMixinMod implements ModInitializer {
 	public static final ConfigBoolean PRINTER_WATERLOGGED_WATER_FIRST = new ConfigBoolean("printerCheckWaterFirstForWaterlogged", true, "Watterlogged blocks won't be placed before water in place(except leaves in 1.19)");
 	public static final ConfigBoolean PRINTER_SMART_REDSTONE_AVOID = new ConfigBoolean("printerSmartRedstoneAvoid", true, "Pistons / Observers will avoid and respect its order");
 	public static final ConfigBoolean PRINTER_SUPPRESS_PUSH_LIMIT = new ConfigBoolean("printerSuppressPushLimitPistons", true, "Pistons that is suppressed with push limit won't be placed.");
+	public static final ConfigBoolean PRINTER_SKIP_UNKNOWN_BLOCKSTATE = new ConfigBoolean("printerSkipsUnknownBlockstates", true, "Printer will skip some directional blocks");
 	public static final ConfigBoolean ADVANCED_ACCURATE_BLOCK_PLACEMENT = new ConfigBoolean("CarpetExtraFixedVersion", false, "If carpet extra is updated, turn on to allow all facingblock rotation");
 	public static final ConfigBoolean BEDROCK_BREAKING = new ConfigBoolean("printerBedrockBreaking", false, "Clear Bedrock mismatch with Bedrock Breaker");
 	public static final ConfigBoolean BEDROCK_BREAKING_FORCE_TORCH = new ConfigBoolean("printerBedrockBreakingUseSlimeblock", false, "BecrockBreaker uses slime block to force torch location");
@@ -77,6 +78,7 @@ public class LitematicaMixinMod implements ModInitializer {
 		PRINTER_MAX_ITEM_CHANGES,
 		PRINTER_BREAK_BLOCKS,
 		PRINTER_BREAK_IGNORE_EXTRA,
+		PRINTER_SKIP_UNKNOWN_BLOCKSTATE,
 		EASY_PLACE_MODE_DELAY,
 		EASY_PLACE_MODE_HOTBAR_ONLY,
 		FLIPPIN_CACTUS,

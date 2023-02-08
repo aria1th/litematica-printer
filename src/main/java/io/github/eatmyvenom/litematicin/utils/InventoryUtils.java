@@ -62,7 +62,13 @@ public class InventoryUtils {
 			slotCounts.computeIfPresent(trackedSelectedSlot, (key, value) -> value - 1);
 		}
 	}
-
+	public static void decrementCount(boolean isCreative) {
+		if (isCreative) lastCount = 65536;
+		if (lastCount > 0) {
+			lastCount--;
+			slotCounts.computeIfPresent(trackedSelectedSlot, (key, value) -> value - 1);
+		}
+	}
 	private static int getPtr() {
 		ptr++;
 		ptr = ptr % 9;

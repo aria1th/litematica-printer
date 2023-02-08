@@ -54,7 +54,7 @@ public class FakeAccurateBlockPlacement {
 
 	// Cancel when handling
 	public static boolean isHandling() {
-		return requestedTicks >= 0;
+		return requestedTicks > 0;
 	}
 
 	public static boolean canHandleOther() {
@@ -108,7 +108,8 @@ public class FakeAccurateBlockPlacement {
 		blockPlacedInTick = 0;
 	}
 	public static void placeFromQueue() {
-		if (requestedTicks != 0) {
+		if (requestedTicks > 0) {
+			MessageHolder.sendOrderMessage("Requested tick was " + requestedTicks);
 			return;
 		}
 		PosWithBlock obj = waitingQueue.poll();
@@ -125,7 +126,7 @@ public class FakeAccurateBlockPlacement {
 		waitingQueue.clear();
 	}
 	public static boolean emptyWaitingQueue() {
-		if (requestedTicks != 0) {
+		if (requestedTicks > 0) {
 			return false;
 		}
 		PosWithBlock obj = waitingQueue.poll();
@@ -223,7 +224,7 @@ public class FakeAccurateBlockPlacement {
 			fy = 3;
 		}
 		if (isHandling()) {
-			if (requestedTicks == 0 && stateGrindStone != null && canPlace(state, blockPos)) {
+			if (requestedTicks <= 0 && stateGrindStone != null && canPlace(state, blockPos)) {
 				//instant place
 				placeBlock(blockPos, state);
 				return true;
@@ -351,7 +352,7 @@ public class FakeAccurateBlockPlacement {
 		} else if (order == 3) {
 			direction1 = facing.rotateYCounterclockwise();
 		}
-		if (order != 2 && (direction1 == null || (requestedTicks == 0 && fakeDirection == direction1 && fy == fakeYaw && fp == fakePitch)) && canPlaceWallMounted(blockState)) {
+		if (order != 2 && (direction1 == null || (requestedTicks <= 0 && fakeDirection == direction1 && fy == fakeYaw && fp == fakePitch)) && canPlaceWallMounted(blockState)) {
 			placeBlock(blockPos, blockState);
 			return true;
 		}
@@ -376,6 +377,7 @@ public class FakeAccurateBlockPlacement {
 			//instant place
 			if (lookRefdir != fakeDirection) {
 				if (tickElapsed > LitematicaMixinMod.FAKE_ROTATION_LIMIT.getIntegerValue()) {
+					MessageHolder.sendDebugMessage("Failure because limited fake rotation per tick " + blockPos.toShortString());
 					return false;
 				}
 				tickElapsed += 1;
@@ -391,7 +393,7 @@ public class FakeAccurateBlockPlacement {
 				MessageHolder.sendOrderMessage("Cannot handle "+ blockState + " at " + blockPos.toShortString());
 				return false;
 			}
-			if (requestedTicks == 0 && fakeDirection == lookRefdir && fp == fakePitch && fy == fakeYaw) {
+			if (requestedTicks <= 0 && fakeDirection == lookRefdir && fp == fakePitch && fy == fakeYaw) {
 				placeBlock(blockPos, blockState);
 				return true;
 			}
@@ -407,8 +409,21 @@ public class FakeAccurateBlockPlacement {
 				}
 				return false;
 			}
+			else {
+				PosWithBlock queued = waitingQueue.peek();
+				MessageHolder.sendOrderMessage("Queue is holding "+ queued.blockState + " at " + queued.pos.toShortString());
+				placeFromQueue();
+				queued = waitingQueue.peek();
+				if (queued != null){
+					MessageHolder.sendOrderMessage("Tried emptying queue but still holding "+ queued.blockState + " at " + queued.pos.toShortString());
+					return false;
+				}
+				placeBlock(blockPos, blockState);
+				return true;
+			}
+			// waiting other block?
+
 		}
-		return false;
 	}
 
 	/***
@@ -438,6 +453,7 @@ public class FakeAccurateBlockPlacement {
 
 	synchronized private static boolean placeBlock(BlockPos pos, BlockState blockState) {
 		if (!pickFirst(blockState, pos)) {
+			MessageHolder.sendDebugMessage("Cannot pick block for " + pos.toShortString());
 			return false;
 		}
 		MessageHolder.sendDebugMessage("Handling placeBlock for " + pos.toShortString() + " and state " + blockState.toString());
@@ -477,9 +493,9 @@ public class FakeAccurateBlockPlacement {
 			MessageHolder.sendDebugMessage(player, "Placing " + blockState.getBlock().getTranslationKey() + " at " + pos.toShortString() + " facing : " + fi.dy.masa.malilib.util.BlockUtils.getFirstPropertyFacingValue(blockState));
 			MessageHolder.sendDebugMessage(player, "Player facing is set to : " + fakeDirection + " Yaw : " + fakeYaw + " Pitch : " + fakePitch + " ticks : " + requestedTicks + " for pos " + pos.toShortString());
 			interactionManager.interactBlock(player, Hand.MAIN_HAND, blockHitResult);
-			InventoryUtils.decrementCount();
+			InventoryUtils.decrementCount(player.getAbilities().creativeMode);
 			blockPlacedInTick++;
-			if (InventoryUtils.lastCount <= 0 && SLEEP_AFTER_CONSUME.getIntegerValue() > 0) {
+			if ( !player.getAbilities().creativeMode && InventoryUtils.lastCount <= 0 && SLEEP_AFTER_CONSUME.getIntegerValue() > 0) {
 				shouldReturnValue = true;
 				Printer.lastPlaced = new Date().getTime() + SLEEP_AFTER_CONSUME.getIntegerValue();
 			}

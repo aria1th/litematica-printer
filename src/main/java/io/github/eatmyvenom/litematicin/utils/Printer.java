@@ -69,6 +69,7 @@ public class Printer {
 
 
 	// TODO: This must be moved to another class and not be static.
+	// Simulates and returns if player can place block as wanted.
 	private static boolean simulateFacingData(BlockState state, BlockPos blockPos, Vec3d hitVec) {
 		if (!state.getProperties().contains(Properties.FACING) && !state.getProperties().contains(Properties.HORIZONTAL_FACING)) {
 			return true;
@@ -78,7 +79,7 @@ public class Printer {
 			return true;
 		}
 		// int 0 : none, 1 : clockwise, 2 : counterclockwise, 3 : reverse
-		PlayerEntity player = MinecraftClient.getInstance().player;
+		ClientPlayerEntity player = MinecraftClient.getInstance().player;
 		BlockHitResult hitResult = new BlockHitResult(hitVec, Direction.NORTH, blockPos, false);
 		Block block = state.getBlock();
 		ItemPlacementContext ctx = new ItemPlacementContext(player, Hand.MAIN_HAND, state.getBlock().asItem().getDefaultStack(), hitResult);
@@ -86,10 +87,13 @@ public class Printer {
 		try {
 			testState = block.getPlacementState(ctx);
 		} catch (Exception e) { //doors wtf
-			return false;
+			MessageHolder.sendMessageUncheckedUnique("Cannot get tested orientation of given block "+ state.getBlock().getName());
+			//fallback to player horizontal facing...
+			return player.getHorizontalFacing() == fi.dy.masa.malilib.util.BlockUtils.getFirstPropertyFacingValue(state);
 		}
 		if (testState == null) {
-			return true;
+			MessageHolder.sendMessageUncheckedUnique("Cannot get tested orientation of given block "+ state.getBlock().getName());
+			return player.getHorizontalFacing() == fi.dy.masa.malilib.util.BlockUtils.getFirstPropertyFacingValue(state);
 		}
 		Direction testFacing = fi.dy.masa.malilib.util.BlockUtils.getFirstPropertyFacingValue(testState);
 		return testFacing == fi.dy.masa.malilib.util.BlockUtils.getFirstPropertyFacingValue(state);
@@ -170,6 +174,7 @@ public class Printer {
 	}
 	public static ActionResult doEasyPlaceFakeRotation(MinecraftClient mc) { //force normal easyplace action, ignore condition checks
 		if (FakeAccurateBlockPlacement.isHandling()){
+			MessageHolder.sendDebugMessage(mc.player, "Passed because already handling something");
 			return ActionResult.PASS;
 		}
 		RayTraceWrapper traceWrapper = RayTraceUtils.getGenericTrace(mc.world, mc.player, 6);
@@ -185,11 +190,13 @@ public class Printer {
 		World clientWorld = mc.world;
 		BlockPos blockPos = trace.getBlockPos();
 		if (isPositionCached(blockPos, false)){
+			MessageHolder.sendDebugMessage(mc.player, "Passed because position "+ blockPos.toShortString() + " is cached");
 			return ActionResult.PASS;
 		}
 		BlockState schematicState = world.getBlockState(blockPos);
 		BlockState clientState = clientWorld.getBlockState(blockPos);
 		if (schematicState.getBlock().getName().equals(clientState.getBlock().getName()) || schematicState.isAir()) {
+			MessageHolder.sendDebugMessage(mc.player, "Passed because position "+ blockPos.toShortString() + " is satisfied");
 			return ActionResult.FAIL;
 		}
 		if (FakeAccurateBlockPlacement.canHandleOther(schematicState.getBlock().asItem()) && canPickBlock(mc, schematicState, blockPos)) {
@@ -197,6 +204,7 @@ public class Printer {
 			FakeAccurateBlockPlacement.request(schematicState, blockPos);
 			return ActionResult.SUCCESS;
 		}
+		MessageHolder.sendDebugMessage(mc.player, "Passed because position "+ blockPos.toShortString() + " cannot pick block or cannot handle other, handling "+ FakeAccurateBlockPlacement.currentHandling);
 		return ActionResult.FAIL;
 	}
 	public static ActionResult doEasyPlaceNormally(MinecraftClient mc) { //force normal easyplace action, ignore condition checks
@@ -325,6 +333,7 @@ public class Printer {
 		} else {
 			isSleeping = false;
 		}
+		boolean isCreative = mc.player.isCreative();
 		BlockPos tracePos = mc.player.getBlockPos();
 		int posX = tracePos.getX();
 		int posY = tracePos.getY();
@@ -660,7 +669,7 @@ public class Printer {
 													Vec3d hitPos = new Vec3d(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5);
 													BlockHitResult hitResult = new BlockHitResult(hitPos, side, pos, false);
 													mc.interactionManager.interactBlock(mc.player, hand, hitResult); //COMPOSTER
-													io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount();
+													io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount(isCreative);
 													cacheEasyPlacePosition(pos, false);
 													if (shouldSleepLonger) {
 														shouldSleepLonger = false;
@@ -779,7 +788,7 @@ public class Printer {
 							Vec3d hitPos = Vec3d.ofCenter(pos).add(0, 0.5, 0);
 							BlockHitResult hitResult = new BlockHitResult(hitPos, Direction.UP, pos, false);
 							mc.interactionManager.interactBlock(mc.player, hand, hitResult); //FLUID REMOVAL
-							io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount();
+							io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount(isCreative);
 							interact++;
 							cacheEasyPlacePosition(pos, false);
 							sleepWhenRequired(mc);
@@ -936,9 +945,10 @@ public class Printer {
 						}
 						if (facing != null) {
 							FacingData facedata = FacingData.getFacingData(stateSchematic);
-							if (facedata == null && !simulateFacingData(stateSchematic, pos, Vec3d.ofCenter(pos)) && !(stateSchematic.getBlock() instanceof AbstractRailBlock)) {
+							if (facedata == null && !(stateSchematic.getBlock() instanceof AbstractRailBlock) && !simulateFacingData(stateSchematic, pos, Vec3d.ofCenter(pos)) ) {
 								MessageHolder.sendMessageUncheckedUnique(mc.player, stateSchematic.getBlock() + " does not have facing data, please add this!");
-								//continue;
+								if (PRINTER_SKIP_UNKNOWN_BLOCKSTATE.getBooleanValue()) continue;
+
 							}
 							if (!(CanUseProtocol && IsBlockSupportedCarpet(stateSchematic.getBlock())) && !FAKE_ROTATION_BETA.getBooleanValue() && !canPlaceFace(facedata, stateSchematic, primaryFacing, horizontalFacing)) {
 								continue;
@@ -976,7 +986,7 @@ public class Printer {
 							}
 							if (io.github.eatmyvenom.litematicin.utils.InventoryUtils.swapToItem(mc, iceStack)) {
 								mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, new BlockHitResult(new Vec3d(pos.getX(), pos.getY(), pos.getZ()), Direction.DOWN, pos, false));
-								io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount();
+								io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount(isCreative);
 								cacheEasyPlacePosition(pos, false);
 								sleepWhenRequired(mc);
 								interact++;
@@ -1088,7 +1098,7 @@ public class Printer {
 												cacheEasyPlacePosition(pos.up(), false, miliseconds);
 											}
 											mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, new BlockHitResult(hitVec, required, npos, false)); //place block
-											io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount();
+											io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount(isCreative);
 											sleepWhenRequired(mc);
 										}
 										continue;
@@ -1105,7 +1115,7 @@ public class Printer {
 											cacheEasyPlacePosition(pos.up(), false, miliseconds);
 										}
 										mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, new BlockHitResult(hitVec, Direction.UP, npos, false)); //place block
-										io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount();
+										io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount(isCreative);
 										sleepWhenRequired(mc);
 									}
 									continue;
@@ -1120,7 +1130,7 @@ public class Printer {
 											cacheEasyPlacePosition(pos.up(), false, 700);
 										}
 										mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, new BlockHitResult(hitVec, required, npos, false)); //place block
-										io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount();
+										io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount(isCreative);
 										sleepWhenRequired(mc);
 									}
 									continue;
@@ -1132,7 +1142,7 @@ public class Printer {
 										cacheEasyPlacePosition(pos, false);
 										mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, new BlockHitResult(Vec3d.of(pos),
 											stateSchematic.get(TrapdoorBlock.FACING).getOpposite(), pos, false)); //place block
-										io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount();
+										io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount(isCreative);
 										sleepWhenRequired(mc);
 										interact++;
 									}
@@ -1145,7 +1155,7 @@ public class Printer {
 										cacheEasyPlacePosition(pos, false);
 										mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, new BlockHitResult(Vec3d.of(pos),
 											stateSchematic.get(GrindstoneBlock.FACING).getOpposite(), pos, false)); //place block
-										io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount();
+										io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount(isCreative);
 										sleepWhenRequired(mc);
 										interact++;
 									}
@@ -1157,7 +1167,7 @@ public class Printer {
 										cacheEasyPlacePosition(pos, false);
 										mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, new BlockHitResult(Vec3d.ofCenter(pos),
 											stateSchematic.get(EndRodBlock.FACING), pos, false)); //place block
-										io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount();
+										io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount(isCreative);
 										interact++;
 										sleepWhenRequired(mc);
 									}
@@ -1193,7 +1203,7 @@ public class Printer {
 									cacheEasyPlacePosition(pos, false);
 									interact++;
 									mc.interactionManager.interactBlock(mc.player, hand, hitResult); //SNOW LAYERS
-									io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount();
+									io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount(isCreative);
 									sleepWhenRequired(mc);
 								}
 							}
@@ -1216,7 +1226,7 @@ public class Printer {
 							if (doSchematicWorldPickBlock(mc, stateSchematic, pos)) {
 								MessageHolder.sendOrderMessage("Places block " + blockSchematic + " at " + pos.toShortString());
 								mc.interactionManager.interactBlock(mc.player, hand, hitResult); //PLACE BLOCK
-								io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount();
+								io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount(isCreative);
 								cacheEasyPlacePosition(pos, false);
 								sleepWhenRequired(mc);
 								interact++;
@@ -1239,7 +1249,7 @@ public class Printer {
 								hitResult = new BlockHitResult(hitPos, side, npos, false);
 								if (doSchematicWorldPickBlock(mc, stateSchematic, pos)) {
 									mc.interactionManager.interactBlock(mc.player, hand, hitResult); //double slab
-									io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount();
+									io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount(isCreative);
 									cacheEasyPlacePosition(pos, false);
 									sleepWhenRequired(mc);
 									interact++;
@@ -1256,7 +1266,7 @@ public class Printer {
 								hitResult = new BlockHitResult(hitPos, side, npos, false);
 								if (doSchematicWorldPickBlock(mc, stateSchematic, pos)) {
 									mc.interactionManager.interactBlock(mc.player, hand, hitResult); //double slab
-									io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount();
+									io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount(isCreative);
 									cacheEasyPlacePosition(pos, false);
 									sleepWhenRequired(mc);
 									interact++;

@@ -118,4 +118,11 @@ public class MessageHolder {
 			uniqueStrings.add(string);
 		}
 	}
+	public static void sendDebugMessageActionBar(ClientPlayerEntity player, String string) {
+		if (!DEBUG_MESSAGE.getBooleanValue()) {
+			return;
+		}
+		player.sendMessage(Text.of(string), true);
+		uniqueStrings.add(string);
+	}
 }
