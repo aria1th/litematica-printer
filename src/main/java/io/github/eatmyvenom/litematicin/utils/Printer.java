@@ -25,7 +25,6 @@ import net.minecraft.block.enums.*;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.SignEditScreen;
 import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.fluid.LavaFluid;
 import net.minecraft.item.BlockItem;
@@ -35,8 +34,8 @@ import net.minecraft.item.Items;
 import net.minecraft.network.packet.c2s.play.UpdateSignC2SPacket;
 import net.minecraft.state.property.Properties;
 import net.minecraft.tag.BlockTags;
+import net.minecraft.text.LiteralText;
 import net.minecraft.text.Text;
-import net.minecraft.text.TextContent;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
@@ -66,7 +65,6 @@ public class Printer {
 	public static int worldTopY = 256;
 	private static final LinkedHashMap<Long, String> causeMap = new LinkedHashMap<>();
 	private static final Long2LongOpenHashMap referenceSet = new Long2LongOpenHashMap();
-
 
 	// TODO: This must be moved to another class and not be static.
 	// Simulates and returns if player can place block as wanted.
@@ -242,7 +240,7 @@ public class Printer {
 			BlockHitResult hitResult = new BlockHitResult(hitPos, side, blockPos, false);
 			boolean canContinue;
 			if (!FAKE_ROTATION_BETA.getBooleanValue() || ACCURATE_BLOCK_PLACEMENT.getBooleanValue()) { //Accurateblockplacement, or vanilla but no fake
-				canContinue = mc.interactionManager.interactBlock(mc.player, hand, hitResult).isAccepted(); //PLACE block
+				canContinue = mc.interactionManager.interactBlock(mc.player, mc.world, hand, hitResult).isAccepted(); //PLACE block
 				cacheEasyPlacePosition(blockPos, false);
 			} else {
 				canContinue = FakeAccurateBlockPlacement.request(schematicState, blockPos);
@@ -355,7 +353,7 @@ public class Printer {
 		boolean CanUseProtocol = ACCURATE_BLOCK_PLACEMENT.getBooleanValue();
 		boolean FillInventory = PRINTER_PUMPKIN_PIE_FOR_COMPOSTER.getBooleanValue();
 		ItemStack composableItem = Items.PUMPKIN_PIE.getDefaultStack();
-		List<PlacementPart> allPlacementsTouchingSubChunk = DataManager.getSchematicPlacementManager().getAllPlacementsTouchingChunk(tracePos);
+		List<PlacementPart> allPlacementsTouchingSubChunk = DataManager.getSchematicPlacementManager().getAllPlacementsTouchingSubChunk(new SubChunkPos(tracePos));
 		Box selectedBox = null;
 		if (allPlacementsTouchingSubChunk.isEmpty() && !ClearArea) {
 			if (BEDROCK_BREAKING.getBooleanValue()) {
@@ -473,7 +471,6 @@ public class Printer {
 		toX = Math.min(toX, (int) mc.player.getX() + rangeX);
 		toY = Math.min(toY, (int) mc.player.getY() + rangeY);
 		toZ = Math.min(toZ, (int) mc.player.getZ() + rangeZ);
-		long startTime = new Date().getTime();
 		for (int y = fromY; y <= toY; y++) {
 			for (int x = fromX; x <= toX; x++) {
 				for (int z = fromZ; z <= toZ; z++) {
@@ -668,7 +665,7 @@ public class Printer {
 												if (io.github.eatmyvenom.litematicin.utils.InventoryUtils.swapToItem(mc, composableItem)) {
 													Vec3d hitPos = new Vec3d(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5);
 													BlockHitResult hitResult = new BlockHitResult(hitPos, side, pos, false);
-													mc.interactionManager.interactBlock(mc.player, hand, hitResult); //COMPOSTER
+													mc.interactionManager.interactBlock(mc.player, mc.world, hand, hitResult); //COMPOSTER
 													io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount(isCreative);
 													cacheEasyPlacePosition(pos, false);
 													if (shouldSleepLonger) {
@@ -695,7 +692,7 @@ public class Printer {
 
 											BlockHitResult hitResult = new BlockHitResult(hitPos, side, pos, false);
 
-											mc.interactionManager.interactBlock(mc.player, hand, hitResult); //NOTEBLOCK, REPEATER...
+											mc.interactionManager.interactBlock(mc.player, mc.world, hand, hitResult); //NOTEBLOCK, REPEATER...
 											interact++;
 										}
 
@@ -738,7 +735,7 @@ public class Printer {
 										Hand hand = Hand.MAIN_HAND;
 										Vec3d hitPos = Vec3d.ofCenter(pos);
 										BlockHitResult hitResult = new BlockHitResult(hitPos, side, pos, false);
-										mc.interactionManager.interactBlock(mc.player, hand, hitResult); //CACTUS
+										mc.interactionManager.interactBlock(mc.player, mc.world, hand, hitResult); //CACTUS
 										cacheEasyPlacePosition(pos, true);
 										interact++;
 									} else if (breakBlocks && ShouldFix) { //cannot fix via flippincactus
@@ -787,7 +784,7 @@ public class Printer {
 						if (ClearArea && io.github.eatmyvenom.litematicin.utils.InventoryUtils.swapToItem(mc, stack)) {
 							Vec3d hitPos = Vec3d.ofCenter(pos).add(0, 0.5, 0);
 							BlockHitResult hitResult = new BlockHitResult(hitPos, Direction.UP, pos, false);
-							mc.interactionManager.interactBlock(mc.player, hand, hitResult); //FLUID REMOVAL
+							mc.interactionManager.interactBlock(mc.player, mc.world, hand, hitResult); //FLUID REMOVAL
 							io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount(isCreative);
 							interact++;
 							cacheEasyPlacePosition(pos, false);
@@ -924,7 +921,7 @@ public class Printer {
 							if (doSchematicWorldPickBlock(mc, lightStack)) {
 								Vec3d hitPos = Vec3d.ofCenter(new BlockPos(x, y - 1, z)).add(0, 0.5, 0);
 								BlockHitResult hitResult = new BlockHitResult(hitPos, Direction.UP, new BlockPos(x, y - 1, z), false);
-								mc.interactionManager.interactBlock(mc.player, hand, hitResult); //LIGHT
+								mc.interactionManager.interactBlock(mc.player, mc.world, hand, hitResult); //LIGHT
 								cacheEasyPlacePosition(pos, false);
 								sleepWhenRequired(mc);
 								if (shouldSleepLonger) {
@@ -985,7 +982,7 @@ public class Printer {
 								continue;
 							}
 							if (io.github.eatmyvenom.litematicin.utils.InventoryUtils.swapToItem(mc, iceStack)) {
-								mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, new BlockHitResult(new Vec3d(pos.getX(), pos.getY(), pos.getZ()), Direction.DOWN, pos, false));
+								mc.interactionManager.interactBlock(mc.player, mc.world, Hand.MAIN_HAND, new BlockHitResult(new Vec3d(pos.getX(), pos.getY(), pos.getZ()), Direction.DOWN, pos, false));
 								io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount(isCreative);
 								cacheEasyPlacePosition(pos, false);
 								sleepWhenRequired(mc);
@@ -1097,7 +1094,7 @@ public class Printer {
 											if (stateSchematic.contains(RedstoneTorchBlock.LIT) && !stateSchematic.get(RedstoneTorchBlock.LIT)) {
 												cacheEasyPlacePosition(pos.up(), false, miliseconds);
 											}
-											mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, new BlockHitResult(hitVec, required, npos, false)); //place block
+											mc.interactionManager.interactBlock(mc.player, mc.world, Hand.MAIN_HAND, new BlockHitResult(hitVec, required, npos, false)); //place block
 											io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount(isCreative);
 											sleepWhenRequired(mc);
 										}
@@ -1114,7 +1111,7 @@ public class Printer {
 										if (stateSchematic.contains(RedstoneTorchBlock.LIT) && !stateSchematic.get(RedstoneTorchBlock.LIT)) {
 											cacheEasyPlacePosition(pos.up(), false, miliseconds);
 										}
-										mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, new BlockHitResult(hitVec, Direction.UP, npos, false)); //place block
+										mc.interactionManager.interactBlock(mc.player, mc.world, Hand.MAIN_HAND, new BlockHitResult(hitVec, Direction.UP, npos, false)); //place block
 										io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount(isCreative);
 										sleepWhenRequired(mc);
 									}
@@ -1129,7 +1126,7 @@ public class Printer {
 										if (stateSchematic.contains(RedstoneTorchBlock.LIT) && !stateSchematic.get(RedstoneTorchBlock.LIT)) {
 											cacheEasyPlacePosition(pos.up(), false, 700);
 										}
-										mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, new BlockHitResult(hitVec, required, npos, false)); //place block
+										mc.interactionManager.interactBlock(mc.player, mc.world, Hand.MAIN_HAND, new BlockHitResult(hitVec, required, npos, false)); //place block
 										io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount(isCreative);
 										sleepWhenRequired(mc);
 									}
@@ -1140,7 +1137,7 @@ public class Printer {
 								if (horizontalFacing.getOpposite() == trapdoor) {
 									if (doSchematicWorldPickBlock(mc, stateSchematic, pos)) {
 										cacheEasyPlacePosition(pos, false);
-										mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, new BlockHitResult(Vec3d.of(pos),
+										mc.interactionManager.interactBlock(mc.player, mc.world, Hand.MAIN_HAND, new BlockHitResult(Vec3d.of(pos),
 											stateSchematic.get(TrapdoorBlock.FACING).getOpposite(), pos, false)); //place block
 										io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount(isCreative);
 										sleepWhenRequired(mc);
@@ -1153,7 +1150,7 @@ public class Printer {
 								if ((primaryFacing.getAxis() == Direction.Axis.Y && horizontalFacing == direction) || (primaryFacing.getAxis() != Direction.Axis.Y && horizontalFacing == direction.getOpposite())) {
 									if (doSchematicWorldPickBlock(mc, stateSchematic, pos)) {
 										cacheEasyPlacePosition(pos, false);
-										mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, new BlockHitResult(Vec3d.of(pos),
+										mc.interactionManager.interactBlock(mc.player, mc.world, Hand.MAIN_HAND, new BlockHitResult(Vec3d.of(pos),
 											stateSchematic.get(GrindstoneBlock.FACING).getOpposite(), pos, false)); //place block
 										io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount(isCreative);
 										sleepWhenRequired(mc);
@@ -1165,7 +1162,7 @@ public class Printer {
 								if (blockSchematic instanceof EndRodBlock) {
 									if (doSchematicWorldPickBlock(mc, stateSchematic, pos)) {
 										cacheEasyPlacePosition(pos, false);
-										mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, new BlockHitResult(Vec3d.ofCenter(pos),
+										mc.interactionManager.interactBlock(mc.player, mc.world, Hand.MAIN_HAND, new BlockHitResult(Vec3d.ofCenter(pos),
 											stateSchematic.get(EndRodBlock.FACING), pos, false)); //place block
 										io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount(isCreative);
 										interact++;
@@ -1202,7 +1199,7 @@ public class Printer {
 								if (doSchematicWorldPickBlock(mc, stateSchematic, pos)) {
 									cacheEasyPlacePosition(pos, false);
 									interact++;
-									mc.interactionManager.interactBlock(mc.player, hand, hitResult); //SNOW LAYERS
+									mc.interactionManager.interactBlock(mc.player, mc.world, hand, hitResult); //SNOW LAYERS
 									io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount(isCreative);
 									sleepWhenRequired(mc);
 								}
@@ -1225,7 +1222,7 @@ public class Printer {
 						if (!FAKE_ROTATION_BETA.getBooleanValue() || ACCURATE_BLOCK_PLACEMENT.getBooleanValue()) { //Accurateblockplacement, or vanilla but no fake
 							if (doSchematicWorldPickBlock(mc, stateSchematic, pos)) {
 								MessageHolder.sendOrderMessage("Places block " + blockSchematic + " at " + pos.toShortString());
-								mc.interactionManager.interactBlock(mc.player, hand, hitResult); //PLACE BLOCK
+								mc.interactionManager.interactBlock(mc.player, mc.world, hand, hitResult); //PLACE BLOCK
 								io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount(isCreative);
 								cacheEasyPlacePosition(pos, false);
 								sleepWhenRequired(mc);
@@ -1248,7 +1245,7 @@ public class Printer {
 								side = applyPlacementFacing(stateSchematic, sideOrig, stateClient);
 								hitResult = new BlockHitResult(hitPos, side, npos, false);
 								if (doSchematicWorldPickBlock(mc, stateSchematic, pos)) {
-									mc.interactionManager.interactBlock(mc.player, hand, hitResult); //double slab
+									mc.interactionManager.interactBlock(mc.player, mc.world, hand, hitResult); //double slab
 									io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount(isCreative);
 									cacheEasyPlacePosition(pos, false);
 									sleepWhenRequired(mc);
@@ -1265,7 +1262,7 @@ public class Printer {
 								side = applyPlacementFacing(stateSchematic, sideOrig, stateClient);
 								hitResult = new BlockHitResult(hitPos, side, npos, false);
 								if (doSchematicWorldPickBlock(mc, stateSchematic, pos)) {
-									mc.interactionManager.interactBlock(mc.player, hand, hitResult); //double slab
+									mc.interactionManager.interactBlock(mc.player, mc.world, hand, hitResult); //double slab
 									io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount(isCreative);
 									cacheEasyPlacePosition(pos, false);
 									sleepWhenRequired(mc);
@@ -1811,7 +1808,7 @@ public class Printer {
 				return false;
 			}
 			if (io.github.eatmyvenom.litematicin.utils.InventoryUtils.swapToItem(client, Items.MINECART.getDefaultStack())) {
-				ActionResult actionResult = client.interactionManager.interactBlock(client.player, Hand.MAIN_HAND, new BlockHitResult(clickPos, Direction.UP, pos, false)); //place block
+				ActionResult actionResult = client.interactionManager.interactBlock(client.player, client.world, Hand.MAIN_HAND, new BlockHitResult(clickPos, Direction.UP, pos, false)); //place block
 				if (actionResult.isAccepted()) {
 					cacheEasyPlacePosition(pos, false, 600);
 					return true;
@@ -1848,7 +1845,7 @@ public class Printer {
 			hitVec = Vec3d.ofCenter(clickPos).add(Vec3d.of(side.getVector()).multiply(0.5));
 			if (doSchematicWorldPickBlock(client, state, pos)) {
 				cacheEasyPlacePosition(pos, false);
-				client.interactionManager.interactBlock(client.player, Hand.MAIN_HAND, new BlockHitResult(hitVec, side, clickPos, false)); //place block
+				client.interactionManager.interactBlock(client.player, client.world, Hand.MAIN_HAND, new BlockHitResult(hitVec, side, clickPos, false)); //place block
 			}
 		} else {
 			if (isFacingCorrectly(state, client.player)) {
@@ -1856,7 +1853,7 @@ public class Printer {
 				clickPos = pos;
 				if (doSchematicWorldPickBlock(client, state, pos)) {
 					cacheEasyPlacePosition(pos, false);
-					client.interactionManager.interactBlock(client.player, Hand.MAIN_HAND, new BlockHitResult(hitVec, side, clickPos, false)); //place block
+					client.interactionManager.interactBlock(client.player, client.world, Hand.MAIN_HAND, new BlockHitResult(hitVec, side, clickPos, false)); //place block
 				}
 			}
 		}
@@ -1916,7 +1913,7 @@ public class Printer {
 		}
 		if (doSchematicWorldPickBlock(client, state, pos)) {
 			cacheEasyPlacePosition(pos, false);
-			client.interactionManager.interactBlock(client.player, Hand.MAIN_HAND, new BlockHitResult(hitVec, side, clickPos, false)); //place block
+			client.interactionManager.interactBlock(client.player, client.world, Hand.MAIN_HAND, new BlockHitResult(hitVec, side, clickPos, false)); //place block
 		}
 	}
 
@@ -2291,9 +2288,9 @@ public class Printer {
 			return;
 		}
 		if (entity instanceof SignBlockEntity signBlockEntity && clientEntity instanceof SignBlockEntity clientSignEntity) {
-			if (clientSignEntity.getTextOnRow(0, false).getContent() != TextContent.EMPTY || clientSignEntity.getTextOnRow(1, false).getContent() != TextContent.EMPTY ||
-				clientSignEntity.getTextOnRow(2, false).getContent() != TextContent.EMPTY ||
-				clientSignEntity.getTextOnRow(3, false).getContent() != TextContent.EMPTY) {
+			if (clientSignEntity.getTextOnRow(0, false) != LiteralText.EMPTY || clientSignEntity.getTextOnRow(1, false) != LiteralText.EMPTY ||
+				clientSignEntity.getTextOnRow(2, false) != LiteralText.EMPTY ||
+				clientSignEntity.getTextOnRow(3, false) != LiteralText.EMPTY ){
 				MessageHolder.sendDebugMessage("Text already exists in " + pos.toShortString());
 				signCache.add(pos.asLong());
 				return;

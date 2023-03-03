@@ -319,7 +319,7 @@ public class BedrockBreaker {
 
 	public static void handleTweakPlacementPacket(MinecraftClient mc, BlockHitResult hitResult) {
 		//mc.getNetworkHandler().sendPacket(new PlayerInteractBlockC2SPacket(Hand.MAIN_HAND, hitResult, 64));
-		mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, hitResult);
+		mc.interactionManager.interactBlock(mc.player, mc.world, Hand.MAIN_HAND, hitResult);
 	}
 
 	public static void placeTorch(MinecraftClient mc, BlockPos pos, Direction torchFacing) {
@@ -336,7 +336,7 @@ public class BedrockBreaker {
 		Vec3d hitVec = Vec3d.ofCenter(npos).add(Vec3d.of(torchFacing.getVector()).multiply(0.5));
 		BlockHitResult hitResult = new BlockHitResult(hitVec, torchFacing, npos, false);
 		MessageHolder.sendDebugMessage("Hitresult is %s %s".formatted(hitVec, npos.toShortString()));
-		mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, hitResult);
+		mc.interactionManager.interactBlock(mc.player, mc.world, Hand.MAIN_HAND, hitResult);
 		positionStorage.registerPos(pos, true);
 	}
 
@@ -395,7 +395,7 @@ public class BedrockBreaker {
 		if (mc.world.getBlockState(pos).isAir()) {
 			return;
 		}
-		mc.getNetworkHandler().sendPacket(new PlayerActionC2SPacket(PlayerActionC2SPacket.Action.START_DESTROY_BLOCK, pos, direction, 64));
+		mc.getNetworkHandler().sendPacket(new PlayerActionC2SPacket(PlayerActionC2SPacket.Action.START_DESTROY_BLOCK, pos, direction));
 		//positionStorage.registerPos(pos, false);
 	}
 

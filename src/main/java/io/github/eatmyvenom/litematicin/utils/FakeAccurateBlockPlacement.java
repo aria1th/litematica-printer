@@ -492,7 +492,7 @@ public class FakeAccurateBlockPlacement {
 
 			MessageHolder.sendDebugMessage(player, "Placing " + blockState.getBlock().getTranslationKey() + " at " + pos.toShortString() + " facing : " + fi.dy.masa.malilib.util.BlockUtils.getFirstPropertyFacingValue(blockState));
 			MessageHolder.sendDebugMessage(player, "Player facing is set to : " + fakeDirection + " Yaw : " + fakeYaw + " Pitch : " + fakePitch + " ticks : " + requestedTicks + " for pos " + pos.toShortString());
-			interactionManager.interactBlock(player, Hand.MAIN_HAND, blockHitResult);
+			interactionManager.interactBlock(player, player.clientWorld, Hand.MAIN_HAND, blockHitResult);
 			InventoryUtils.decrementCount(player.getAbilities().creativeMode);
 			blockPlacedInTick++;
 			if ( !player.getAbilities().creativeMode && InventoryUtils.lastCount <= 0 && SLEEP_AFTER_CONSUME.getIntegerValue() > 0) {

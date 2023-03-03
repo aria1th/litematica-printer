@@ -2,6 +2,7 @@ package io.github.eatmyvenom.litematicin.utils;
 
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.text.LiteralText;
 import net.minecraft.text.Text;
 
 import java.util.HashSet;
@@ -22,19 +23,19 @@ public class MessageHolder {
 			return;
 		}
 		uniquePacketInfos.add(string);
-		player.sendMessage(Text.of(string));
+		player.sendMessage(new LiteralText(string), false);
 	}
 
 	public static void sendDebugMessage(ClientPlayerEntity player, String string) {
 		if (DEBUG_EXTRA_MESSAGE.getBooleanValue()) {
-			player.sendMessage(Text.of(string));
+			player.sendMessage(new LiteralText(string), false);
 		}
 	}
 
 	public static void sendDebugMessage(String string) {
 		final ClientPlayerEntity player = MinecraftClient.getInstance().player;
 		if (DEBUG_EXTRA_MESSAGE.getBooleanValue()) {
-			player.sendMessage(Text.of(string));
+			player.sendMessage(new LiteralText(string), false);
 		}
 	}
 
@@ -42,14 +43,14 @@ public class MessageHolder {
 		final ClientPlayerEntity player = MinecraftClient.getInstance().player;
 		if (DEBUG_ORDER_PLACEMENTS.getBooleanValue() && !Objects.equals(orderPreviousMessage, string)) {
 			orderPreviousMessage = string;
-			player.sendMessage(Text.of(string));
+			player.sendMessage(new LiteralText(string), false);
 		}
 	}
 
 	public static void sendUniqueDebugMessage(ClientPlayerEntity player, String string) {
 		if (DEBUG_EXTRA_MESSAGE.getBooleanValue()) {
 			if (!uniqueStrings.contains(string)) {
-				player.sendMessage(Text.of(string));
+				player.sendMessage(new LiteralText(string), false);
 				uniqueStrings.add(string);
 			}
 		}
@@ -59,7 +60,7 @@ public class MessageHolder {
 		final ClientPlayerEntity player = MinecraftClient.getInstance().player;
 		if (DEBUG_EXTRA_MESSAGE.getBooleanValue()) {
 			if (!uniqueStrings.contains(string)) {
-				player.sendMessage(Text.of(string));
+				player.sendMessage(new LiteralText(string), false);
 				uniqueStrings.add(string);
 			}
 		}
@@ -67,7 +68,7 @@ public class MessageHolder {
 
 	public static void sendMessageUncheckedUnique(ClientPlayerEntity player, String string) {
 		if (!errorLogger.contains(string)) {
-			player.sendMessage(Text.of(string));
+			player.sendMessage(new LiteralText(string), false);
 			errorLogger.add(string);
 		}
 	}
@@ -75,14 +76,14 @@ public class MessageHolder {
 	public static void sendMessageUncheckedUnique(String string) {
 		final ClientPlayerEntity player = MinecraftClient.getInstance().player;
 		if (!errorLogger.contains(string)) {
-			player.sendMessage(Text.of(string));
+			player.sendMessage(new LiteralText(string), false);
 			errorLogger.add(string);
 		}
 	}
 
 	public static void sendMessageUnchecked(String string) {
 		final ClientPlayerEntity player = MinecraftClient.getInstance().player;
-		player.sendMessage(Text.of(string));
+		player.sendMessage(new LiteralText(string), false);
 	}
 
 	public static void sendUniqueMessage(ClientPlayerEntity player, String string) {
@@ -91,7 +92,7 @@ public class MessageHolder {
 			return;
 		}
 		if (!uniqueStrings.contains(string)) {
-			player.sendMessage(Text.of(string));
+			player.sendMessage(new LiteralText(string), false);
 			uniqueStrings.add(string);
 		}
 	}
@@ -99,7 +100,7 @@ public class MessageHolder {
 	public static void sendUniqueMessageAlways(String string) {
 		final ClientPlayerEntity player = MinecraftClient.getInstance().player;
 		if (!uniqueStringsAlways.contains(string)) {
-			player.sendMessage(Text.of(string));
+			player.sendMessage(new LiteralText(string), false);
 			uniqueStringsAlways.add(string);
 		}
 	}

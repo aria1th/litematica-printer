@@ -4,8 +4,8 @@ plugins {
 }
 
 
-sourceCompatibility = JavaVersion.VERSION_17
-targetCompatibility = JavaVersion.VERSION_17
+sourceCompatibility = JavaVersion.VERSION_16
+targetCompatibility = JavaVersion.VERSION_16
 
 
 archivesBaseName = "${project.archives_base_name}-mc${project.minecraft_version}"
@@ -19,6 +19,15 @@ repositories {
     maven { url "https://pkgs.dev.azure.com/djtheredstoner/DevAuth/_packaging/public/maven/v1" }
     maven { url 'https://masa.dy.fi/maven' }
     maven { url = "https://www.cursemaven.com" }
+	maven {
+		url "https://maven.terraformersmc.com/releases/"
+	}
+	maven {
+		url "https://jitpack.io"
+	}
+	maven {
+		url "https://pkgs.dev.azure.com/djtheredstoner/DevAuth/_packaging/public/maven/v1"
+	}
 }
 
 dependencies {
@@ -27,8 +36,8 @@ dependencies {
 	mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
 	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabricapi_version}"
-	modCompileOnly files("external/essential-client-1.19.2-1.3.2.jar")
-	modImplementation "fi.dy.masa.malilib:malilib-fabric-${project.malilib_version}"
+	modCompileOnly files("external/essential-client-1.17.1-1.3.0.jar")
+	modImplementation "curse.maven:malilib-${project.malilib_projectid}:${project.malilib_fileid}"
 	modImplementation "curse.maven:litematica-${project.litematica_projectid}:${project.litematica_fileid}"
 	annotationProcessor "com.github.LlamaLad7:MixinExtras:0.1.1"
 }
@@ -49,7 +58,7 @@ tasks.withType(JavaCompile).configureEach {
 	it.options.encoding = "UTF-8"
 
 	// Minecraft 1.17 (21w19a) upwards uses Java 16.
-	it.options.release = 17
+	it.options.release = 16
 }
 
 java {
