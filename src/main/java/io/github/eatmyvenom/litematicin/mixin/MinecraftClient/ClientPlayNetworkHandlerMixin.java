@@ -82,7 +82,7 @@ public class ClientPlayNetworkHandlerMixin {
 		isSynced = false;
 	}
 
-	@Inject(method = "onHeldItemChange", at = @At("HEAD"), cancellable = true, require = 0)
+	@Inject(method = "onUpdateSelectedSlot", at = @At("HEAD"), cancellable = true, require = 0)
 	private void onUpdateSelectSlots(UpdateSelectedSlotS2CPacket packet, CallbackInfo ci) {
 		if (Printer.isSleeping) {
 			return;

@@ -114,14 +114,14 @@ public class InventoryUtils {
 	}
 
 	public static boolean areItemsExact(ItemStack a, ItemStack b) {
-		return ItemStack.areItemsEqual(a, b) && ItemStack.areTagsEqual(a, b);
+		return ItemStack.areItemsEqual(a, b) && ItemStack.areNbtEqual(a, b);
 	}
 
 	public static boolean areItemsExact(ItemStack a, ItemStack b, boolean allowNamed) {
 		if (allowNamed) {
 			return areItemsExactAllowNamed(a, b);
 		}
-		return ItemStack.areItemsEqual(a, b) && ItemStack.areTagsEqual(a, b);
+		return ItemStack.areItemsEqual(a, b) && ItemStack.areNbtEqual(a, b);
 	}
 
 	public static boolean areItemsExactCount(ItemStack a, ItemStack b, boolean allowNamed) {
@@ -131,7 +131,7 @@ public class InventoryUtils {
 		if (allowNamed) {
 			return areItemsExactAllowNamed(a, b);
 		}
-		return ItemStack.areItemsEqual(a, b) && ItemStack.areTagsEqual(a, b);
+		return ItemStack.areItemsEqual(a, b) && ItemStack.areNbtEqual(a, b);
 	}
 
 	public static boolean areItemsExactAllowNamed(ItemStack a, ItemStack b) {
