@@ -30,7 +30,7 @@ in singleplayer, ping is 0 so whatever.
 (WON'T FIX) paper, spigot or other types can have their own anti cheat to prevent 'not-looking' placement, which means you can't do anything with this. There's some option to nerf printing action at https://github.com/jensvh/litematica-printer/releases/tag/v1.0.4, but still we can't assure if it would work or not. Use this if you are sure about it.
 
 # Issue tracker
-Mainly 1.19 is supported. You can use Multiconnect to connect previous versions, which works properly.
+Mainly 1.19.x is supported. You can use Multiconnect to connect previous versions, which works properly.
 
 **If you see ANY error related to wrong block placement / fake rotation failure (in vanilla or vanilla-like servers), please report it. If available, attach Litematic file together for further investigation.**
 
