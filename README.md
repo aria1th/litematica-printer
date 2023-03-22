@@ -34,6 +34,7 @@ in singleplayer, ping is 0 so whatever.
 
 # Issue tracker
 Mainly 1.19 is supported. You can use Multiconnect to connect previous versions, which works properly.
+1.16.5, 1.17.1, 1.18.2, 1.19.2-4 is now available.
 
 **If you see ANY error related to wrong block placement / fake rotation failure (in vanilla or vanilla-like servers), please report it. If available, attach Litematic file together for further investigation.**
 
