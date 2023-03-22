@@ -12,7 +12,6 @@ import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.network.packet.s2c.play.DisconnectS2CPacket;
 import net.minecraft.network.packet.s2c.play.ScreenHandlerSlotUpdateS2CPacket;
-import net.minecraft.network.packet.s2c.play.UpdateSelectedSlotS2CPacket;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -35,46 +34,7 @@ public class ClientPlayNetworkHandlerMixin {
 		 */
 	@Inject(method = "onScreenHandlerSlotUpdate", at = @At("HEAD"), cancellable = true, require = 0)
 	private void onUpdateSlots(ScreenHandlerSlotUpdateS2CPacket packet, CallbackInfo ci) {
-		final ClientPlayerEntity player = this.client.player;
-		if (!isSynced && player != null) {
-			isSynced = true;
-			while (packet.getRevision() != player.currentScreenHandler.getRevision()) {
-				player.currentScreenHandler.nextRevision();
-			}
-			//player.sendMessage(Text.of("Matched rev on start : "+ packet.getRevision()));
-			return;
-		}
-		if (player != null && LitematicaMixinMod.DEBUG_PACKET_SYNC.getBooleanValue()) {
-			int rev = player.currentScreenHandler.getRevision();
-			//MessageHolder.sendPacketOrders("Recieved packet of revision " + packet.getRevision() + " current revision is " + rev);
-			if (LitematicaMixinMod.DISABLE_SYNC.getBooleanValue()) {
-				if (!(this.client.currentScreen instanceof CreativeInventoryScreen) && shouldCancel(rev, packet.getRevision())) {
-					ci.cancel();
-				} else {
-					while (packet.getRevision() != player.currentScreenHandler.getRevision()) {
-						player.currentScreenHandler.nextRevision();
-					}
-					if (packet.getSlot() == -1) {
-						//okay wtf? server is actually trying to disconnect client.
-						if (packet.getSyncId() == -1 && !(this.client.currentScreen instanceof CreativeInventoryScreen)) {
-							this.client.execute(() -> player.currentScreenHandler.setCursorStack(packet.getItemStack()));
-						}
-						return;
-					}
-					this.client.execute(() -> player.currentScreenHandler.setStackInSlot(packet.getSlot(), packet.getRevision(), packet.getItemStack()));
-				}
-				//MessageHolder.sendMessageUnchecked("Cancelled ");
-			}
-			return;
-		}
-		if (Printer.isSleeping) {
-			return;
-		}
-		if (DataManager.getToolMode() != ToolMode.REBUILD && Configs.Generic.EASY_PLACE_MODE.getBooleanValue() && Configs.Generic.EASY_PLACE_HOLD_ENABLED.getBooleanValue() && Hotkeys.EASY_PLACE_ACTIVATION.getKeybind().isKeybindHeld()) {
-			if (LitematicaMixinMod.DISABLE_SYNC.getBooleanValue()) {
-				ci.cancel();
-			}
-		}
+
 	}
 
 	@Inject(method = "onDisconnect", at = @At("HEAD"))
@@ -82,17 +42,6 @@ public class ClientPlayNetworkHandlerMixin {
 		isSynced = false;
 	}
 
-	@Inject(method = "onHeldItemChange", at = @At("HEAD"), cancellable = true, require = 0)
-	private void onUpdateSelectSlots(UpdateSelectedSlotS2CPacket packet, CallbackInfo ci) {
-		if (Printer.isSleeping) {
-			return;
-		}
-		if (DataManager.getToolMode() != ToolMode.REBUILD && Configs.Generic.EASY_PLACE_MODE.getBooleanValue() && Configs.Generic.EASY_PLACE_HOLD_ENABLED.getBooleanValue() && Hotkeys.EASY_PLACE_ACTIVATION.getKeybind().isKeybindHeld()) {
-			if (LitematicaMixinMod.DISABLE_SYNC.getBooleanValue()) {
-				ci.cancel();
-			}
-		}
-	}
 
 	private static boolean shouldCancel(int current, int packet) {
 		if (current == packet) {

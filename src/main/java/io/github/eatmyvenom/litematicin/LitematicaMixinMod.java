@@ -22,7 +22,7 @@ public class LitematicaMixinMod implements ModInitializer {
 	public static final ConfigBoolean DEBUG_MESSAGE = new ConfigBoolean("ShowDebugMessages", false, "Show Debugs and Reasons for block place failure");
 	public static final ConfigBoolean DEBUG_EXTRA_MESSAGE = new ConfigBoolean("ShowDebugExtraMessages", false, "Show Debugs for block placement and fake rotations");
 	public static final ConfigBoolean DEBUG_ORDER_PLACEMENTS = new ConfigBoolean("ShowDebugAndOrders", false, "Show Debugs for block picking / orders");
-	public static final ConfigBoolean DEBUG_PACKET_SYNC = new ConfigBoolean("BetaPacketDesyncPrevention", false, "Prevents desync from previous revisions");
+	//public static final ConfigBoolean DEBUG_PACKET_SYNC = new ConfigBoolean("BetaPacketDesyncPrevention", false, "Prevents desync from previous revisions");
 	public static final ConfigBoolean DISABLE_SINGLEPLAYER_HANDLE = new ConfigBoolean("disableSingleplayerPlacementHandling", true, "Disables handling for fake rotations block state adjustment");
 	public static final ConfigInteger SLEEP_AFTER_CONSUME = new ConfigInteger("printerSleepStackEmptied", 200, 0, 8000, "Sleeps after stack is emptied (ms)");
 	public static final ConfigInteger EASY_PLACE_CACHE_TIME = new ConfigInteger("easyPlaceCacheMs", 1000, 200, 5000, "Cache time for Easyplace");
@@ -33,7 +33,7 @@ public class LitematicaMixinMod implements ModInitializer {
 	public static final ConfigInteger PRINTER_MAX_ITEM_CHANGES = new ConfigInteger("easyPlaceModePrinterMaxItemChanges", 0, 0, 1000000, "Max item categories per cycle");
 	public static final ConfigBoolean PRINTER_BREAK_BLOCKS = new ConfigBoolean("printerBreakBlocks", false, "Automatically breaks blocks.");
 	public static final ConfigBoolean PRINTER_BREAK_IGNORE_EXTRA = new ConfigBoolean("printerBreakIgnoresExtra", true, "Does not break extra blocks.");
-	public static final ConfigBoolean DISABLE_SYNC = new ConfigBoolean("disableInventorySync", false, "Disables sync with inventory.");
+	//public static final ConfigBoolean DISABLE_SYNC = new ConfigBoolean("disableInventorySync", false, "Disables sync with inventory.");
 	public static final ConfigDouble EASY_PLACE_MODE_DELAY = new ConfigDouble("easyPlaceModeDelay", 0.2, 0.0, 1.0, "Delay between printing blocks.\n Recommended to set value over 0.05(50ms).");
 	public static final ConfigBoolean EASY_PLACE_MODE_HOTBAR_ONLY = new ConfigBoolean("easyPlaceModeHotbarOnly", false, "Only place blocks from your hotbar.");
 	public static final ConfigBoolean FLIPPIN_CACTUS = new ConfigBoolean("printerFlippincactus", false, "If FlippinCactus is enabled and cactus is on mainhand, will not place block and do rotations only.");
@@ -63,11 +63,11 @@ public class LitematicaMixinMod implements ModInitializer {
 		USE_INVENTORY_CACHE,
 		PRINTER_OFF,
 		PRINTER_ONLY_FAKE_ROTATION_MODE,
-		DISABLE_SYNC,
+		//DISABLE_SYNC,
 		DEBUG_MESSAGE,
 		DEBUG_EXTRA_MESSAGE,
 		DEBUG_ORDER_PLACEMENTS,
-		DEBUG_PACKET_SYNC,
+		//DEBUG_PACKET_SYNC,
 		DISABLE_SINGLEPLAYER_HANDLE,
 		SLEEP_AFTER_CONSUME,
 		EASY_PLACE_MODE_RANGE_X,
