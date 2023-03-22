@@ -176,7 +176,7 @@ public class Printer {
 			MessageHolder.sendDebugMessage(mc.player, "Passed because already handling something");
 			return ActionResult.PASS;
 		}
-		RayTraceWrapper traceWrapper = RayTraceUtils.getGenericTrace(mc.world, mc.player, 6, true);
+		RayTraceWrapper traceWrapper = RayTraceUtils.getGenericTrace(mc.world, mc.player, 6);
 		FakeAccurateBlockPlacement.requestedTicks = Math.max(-2, FakeAccurateBlockPlacement.requestedTicks);
 		if (traceWrapper == null) {
 			return ActionResult.PASS;
@@ -207,7 +207,7 @@ public class Printer {
 		return ActionResult.FAIL;
 	}
 	public static ActionResult doEasyPlaceNormally(MinecraftClient mc) { //force normal easyplace action, ignore condition checks
-		RayTraceWrapper traceWrapper = RayTraceUtils.getGenericTrace(mc.world, mc.player, 6, true);
+		RayTraceWrapper traceWrapper = RayTraceUtils.getGenericTrace(mc.world, mc.player, 6);
 		if (traceWrapper == null) {
 			return ActionResult.PASS;
 		}
@@ -338,7 +338,7 @@ public class Printer {
 		int posY = tracePos.getY();
 		int posZ = tracePos.getZ();
 
-		RayTraceWrapper traceWrapper = RayTraceUtils.getGenericTrace(mc.world, mc.player, 6, true);
+		RayTraceWrapper traceWrapper = RayTraceUtils.getGenericTrace(mc.world, mc.player, 6);
 		//RayTraceWrapper traceWrapper = RayTraceUtils.getGenericTrace(mc.world, mc.player, 6, true); previous litematica code
 		if (traceWrapper != null) {
 			BlockHitResult trace = traceWrapper.getBlockHitResult();
