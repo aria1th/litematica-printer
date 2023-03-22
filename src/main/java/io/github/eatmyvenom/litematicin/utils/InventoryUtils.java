@@ -142,7 +142,7 @@ public class InventoryUtils {
 	}
 
 	public static boolean requiresSwap(ClientPlayerEntity player, ItemStack stack) {
-		int selectedSlot = player.getInventory().selectedSlot;
+		int selectedSlot = player.inventory.selectedSlot;
 		if (usedSlots.get(selectedSlot) != null) {
 			return stack.getItem() != usedSlots.get(selectedSlot) || slotCounts.getOrDefault(selectedSlot, 0) <= 0;
 		}
@@ -150,11 +150,11 @@ public class InventoryUtils {
 	}
 
 	public static boolean canSwap(ClientPlayerEntity player, ItemStack stack) {
-		if (player.getAbilities().creativeMode) {
+		if (player.abilities.creativeMode) {
 			return true;
 		}
-		int slotNum = player.getInventory().getSlotWithStack(stack);
-		return slotNum != -1 && areItemsExact(player.getInventory().getStack(slotNum), stack);
+		int slotNum = player.inventory.getSlotWithStack(stack);
+		return slotNum != -1 && areItemsExact(player.inventory.getStack(slotNum), stack);
 	}
 
 	synchronized public static boolean swapToItem(MinecraftClient client, ItemStack stack) {
@@ -164,7 +164,7 @@ public class InventoryUtils {
 		if (player == null || client.interactionManager == null) {
 			return false;
 		}
-		//player.getInventory().updateItems();
+		//player.inventory.updateItems();
 		if (stack.getItem() != handlingItem) {
 			if (maxChange != 0 && itemChangeCount > maxChange) {
 				MessageHolder.sendOrderMessage("Exceeded item change count");
@@ -172,38 +172,38 @@ public class InventoryUtils {
 			}
 		}
 		if (!requiresSwap(player, stack)) {
-			assert trackedSelectedSlot == -1 || trackedSelectedSlot == player.getInventory().selectedSlot : "Selected slot changed for external reason! : expected %s, current %s".formatted(trackedSelectedSlot, player.getInventory().selectedSlot);
+			assert trackedSelectedSlot == -1 || trackedSelectedSlot == player.inventory.selectedSlot : "Selected slot changed for external reason! : expected / current : " + trackedSelectedSlot + player.inventory.selectedSlot;
 			assert previousItem == null || previousItem == stack.getItem() : "Handling item :  " + handlingItem + " was not equal to " + stack.getItem();
 			MessageHolder.sendOrderMessage("Didn't require swap for item " + stack.getItem() + " previous handling item : " + previousItem);
-			lastCount = player.getAbilities().creativeMode ? 65536 : getMainHandStack(player).getCount();
+			lastCount = player.abilities.creativeMode ? 65536 : getMainHandStack(player).getCount();
 			if (usedSlots.containsValue(stack.getItem())) {
 				if (searchSlot(stack.getItem()) != trackedSelectedSlot) {
 					MessageHolder.sendMessageUncheckedUnique("Hotbar has duplicate item references, which should not happen!");
 				}
 			}
-			trackedSelectedSlot = player.getInventory().selectedSlot;
-			usedSlots.put(player.getInventory().selectedSlot, getMainHandStack(player).getItem());
-			slotCounts.put(player.getInventory().selectedSlot, lastCount);
+			trackedSelectedSlot = player.inventory.selectedSlot;
+			usedSlots.put(player.inventory.selectedSlot, getMainHandStack(player).getItem());
+			slotCounts.put(player.inventory.selectedSlot, lastCount);
 			previousItem = stack.getItem();
 			return true;
 		}
 		if (usedSlots.containsValue(stack.getItem())) {
 			int slot = searchSlot(stack.getItem());
 			if (slot != -1) {
-				player.getInventory().selectedSlot = slot;
-				trackedSelectedSlot = player.getInventory().selectedSlot;
+				player.inventory.selectedSlot = slot;
+				trackedSelectedSlot = player.inventory.selectedSlot;
 				usedSlots.put(trackedSelectedSlot, stack.getItem());
 				slotCounts.put(trackedSelectedSlot, stack.getCount());
 				lastCount = stack.getCount();
 				previousItem = stack.getItem();
 				handlingItem = previousItem;
-				MessageHolder.sendOrderMessage("Selected slot " + player.getInventory().selectedSlot + " based on cache for " + stack.getItem());
-				client.getNetworkHandler().sendPacket(new UpdateSelectedSlotC2SPacket(player.getInventory().selectedSlot));
-				return !player.getInventory().getMainHandStack().isEmpty();
+				MessageHolder.sendOrderMessage("Selected slot " + player.inventory.selectedSlot + " based on cache for " + stack.getItem());
+				client.getNetworkHandler().sendPacket(new UpdateSelectedSlotC2SPacket(player.inventory.selectedSlot));
+				return !player.inventory.getMainHandStack().isEmpty();
 			}
 		}
 		if (survivalSwap(client, player, stack)) {
-			usedSlots.put(player.getInventory().selectedSlot, stack.getItem());
+			usedSlots.put(player.inventory.selectedSlot, stack.getItem());
 			slotCounts.put(trackedSelectedSlot, getMainHandStack(player).getCount());
 			MessageHolder.sendOrderMessage("Swapped to item " + stack.getItem());
 			handlingItem = stack.getItem();
@@ -215,12 +215,12 @@ public class InventoryUtils {
 	}
 
 	public static int getSlotWithStack(ClientPlayerEntity player, ItemStack stack) {
-		return player.getInventory().getSlotWithStack(stack);
+		return player.inventory.getSlotWithStack(stack);
 	}
 
 	@SuppressWarnings("ConstantConditions")
 	private static boolean creativeSwap(MinecraftClient client, ClientPlayerEntity player, ItemStack stack) {
-		if (!player.getAbilities().creativeMode) {
+		if (!player.abilities.creativeMode) {
 			return false;
 		}
 		int selectedSlot = getAvailableSlot(stack.getItem());
@@ -228,13 +228,13 @@ public class InventoryUtils {
 			return false;
 		}
 		MessageHolder.sendOrderMessage("Clicked creative stack " + stack.getItem() + " for slot " + selectedSlot);
-		//player.getInventory().addPickBlock(stack);
-		player.getInventory().selectedSlot = selectedSlot;
+		//player.inventory.addPickBlock(stack);
+		player.inventory.selectedSlot = selectedSlot;
 		client.interactionManager.clickCreativeStack(stack, 36 + selectedSlot);
-		client.getNetworkHandler().sendPacket(new UpdateSelectedSlotC2SPacket(player.getInventory().selectedSlot));
+		client.getNetworkHandler().sendPacket(new UpdateSelectedSlotC2SPacket(player.inventory.selectedSlot));
 		trackedSelectedSlot = selectedSlot;
-		player.getInventory().main.set(selectedSlot, stack);
-		usedSlots.put(player.getInventory().selectedSlot, stack.getItem());
+		player.inventory.main.set(selectedSlot, stack);
+		usedSlots.put(player.inventory.selectedSlot, stack.getItem());
 		slotCounts.put(trackedSelectedSlot, 65536);
 		lastCount = 65536;
 		handlingItem = stack.getItem();
@@ -249,7 +249,7 @@ public class InventoryUtils {
 			return false;
 		}
 		if (areItemsExact(player.getOffHandStack(), stack) && !areItemsExact(getMainHandStack(player), stack)) {
-			lastCount = client.player.getAbilities().creativeMode ? 65536 : client.player.getOffHandStack().getCount();
+			lastCount = client.player.abilities.creativeMode ? 65536 : client.player.getOffHandStack().getCount();
 			client.getNetworkHandler().sendPacket(new PlayerActionC2SPacket(net.minecraft.network.packet.c2s.play.PlayerActionC2SPacket.Action.SWAP_ITEM_WITH_OFFHAND, BlockPos.ORIGIN, Direction.DOWN));
 			return true;
 		}
@@ -263,10 +263,10 @@ public class InventoryUtils {
 				MessageHolder.sendOrderMessage("Expected : " + usedSlots.get(slot) + " but current client handles : " + stack.getItem());
 				return false;
 			}
-			player.getInventory().selectedSlot = slot;
+			player.inventory.selectedSlot = slot;
 			trackedSelectedSlot = slot;
 			MessageHolder.sendOrderMessage("Selected hotbar Slot " + slot);
-			lastCount = player.getAbilities().creativeMode ? 65536 : player.getInventory().getStack(slot).getCount();
+			lastCount = player.abilities.creativeMode ? 65536 : player.inventory.getStack(slot).getCount();
 			client.getNetworkHandler().sendPacket(new UpdateSelectedSlotC2SPacket(slot));
 		} else {
 			int selectedSlot = getAvailableSlot(stack.getItem());
@@ -274,11 +274,11 @@ public class InventoryUtils {
 				MessageHolder.sendOrderMessage("All hotbar slots are used");
 				return false;
 			}
-			lastCount = player.getAbilities().creativeMode ? 65536 : player.getInventory().getStack(slot).getCount();
-			MessageHolder.sendOrderMessage("Slot at " + slot + "(%s)".formatted(player.getInventory().getStack(slot).getItem()) + " is swapped with " + selectedSlot + "(%s)".formatted(player.getInventory().main.get(selectedSlot)));
+			lastCount = player.abilities.creativeMode ? 65536 : player.inventory.getStack(slot).getCount();
+			MessageHolder.sendOrderMessage("Slot at " + slot + (player.inventory.getStack(slot).getItem()) + " is swapped with " + selectedSlot + (player.inventory.main.get(selectedSlot)));
 			usedSlots.put(selectedSlot, stack.getItem());
 			client.interactionManager.clickSlot(player.playerScreenHandler.syncId, slot, selectedSlot, SlotActionType.SWAP, player);
-			player.getInventory().selectedSlot = selectedSlot;
+			player.inventory.selectedSlot = selectedSlot;
 			trackedSelectedSlot = selectedSlot;
 
 		}
@@ -297,7 +297,8 @@ public class InventoryUtils {
 		if (blockEntity == null) {
 			return result;
 		}
-		if (blockEntity instanceof LootableContainerBlockEntity containerBlockEntity) {
+		if (blockEntity instanceof LootableContainerBlockEntity) {
+			LootableContainerBlockEntity containerBlockEntity = (LootableContainerBlockEntity) blockEntity;
 			if (containerBlockEntity.isEmpty()) {
 				return result;
 			}
@@ -317,7 +318,8 @@ public class InventoryUtils {
 		if (blockEntity == null) {
 			return false;
 		}
-		if (blockEntity instanceof LootableContainerBlockEntity containerBlockEntity) {
+		if (blockEntity instanceof LootableContainerBlockEntity) {
+			LootableContainerBlockEntity containerBlockEntity = (LootableContainerBlockEntity) blockEntity;
 			if (containerBlockEntity.isEmpty()) {
 				return false;
 			}

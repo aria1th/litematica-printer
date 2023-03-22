@@ -27,7 +27,7 @@ public abstract class ClientPlayerEntityMixin extends PlayerEntity {
 			clientPlayNetworkHandler.sendPacket(packet);
 			return;
 		}
-		clientPlayNetworkHandler.sendPacket(new PlayerMoveC2SPacket.Full(
+		clientPlayNetworkHandler.sendPacket(new PlayerMoveC2SPacket.Both(
 			this.getX(), -999.0D, this.getZ(),
 			FakeAccurateBlockPlacement.fakeYaw,
 			FakeAccurateBlockPlacement.fakePitch,
@@ -41,7 +41,7 @@ public abstract class ClientPlayerEntityMixin extends PlayerEntity {
 			clientPlayNetworkHandler.sendPacket(packet);
 			return;
 		}
-		clientPlayNetworkHandler.sendPacket(new PlayerMoveC2SPacket.Full(
+		clientPlayNetworkHandler.sendPacket(new PlayerMoveC2SPacket.Both(
 			this.getX(), this.getY(), this.getZ(),
 			FakeAccurateBlockPlacement.fakeYaw,
 			FakeAccurateBlockPlacement.fakePitch,
@@ -56,7 +56,7 @@ public abstract class ClientPlayerEntityMixin extends PlayerEntity {
 			return;
 		}
 		clientPlayNetworkHandler.sendPacket(
-			new PlayerMoveC2SPacket.LookAndOnGround(
+			new PlayerMoveC2SPacket.LookOnly(
 				FakeAccurateBlockPlacement.fakeYaw,
 				FakeAccurateBlockPlacement.fakePitch,
 				this.isOnGround()

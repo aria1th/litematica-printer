@@ -12,7 +12,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 public class positionStorage {
-	private final static Map<Long, Boolean> positionMap = new LinkedHashMap<Long, Boolean>();
+	private final static Map<Long, Boolean> positionMap = new LinkedHashMap<>();
 
 	public static void clear() {
 		positionMap.clear();

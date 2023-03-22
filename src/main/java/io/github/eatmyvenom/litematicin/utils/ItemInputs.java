@@ -15,6 +15,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
+import net.minecraft.util.Pair;
 import net.minecraft.util.math.BlockPos;
 
 import java.util.*;
@@ -25,7 +26,7 @@ class ItemInputs {
 
 	private static long handling = new Date().getTime();
 	private static final HashSet<Long> handledPos = new HashSet<>();
-	private static Map.Entry<Long, Long> entry;
+	private static Pair<Long, Long> entry;
 	public static BlockPos clickedPos = null;
 
 	public static void clear() {
@@ -55,7 +56,7 @@ class ItemInputs {
 			copiedStack.decrement(current.get(i).getStack().getCount());
 			copy.add(copiedStack);
 		}
-		int[] countArray = player.getInventory().main.stream().mapToInt(ItemStack::getCount).toArray();
+		int[] countArray = player.inventory.main.stream().mapToInt(ItemStack::getCount).toArray();
 		for (ItemStack itemStack : copy) {
 			if (itemStack.isEmpty()) {
 				continue;
@@ -63,7 +64,7 @@ class ItemInputs {
 			//MessageHolder.sendUniqueDebugMessage("Checking for stack " + itemStack);
 			int requiredAmount = itemStack.getCount();
 			int i = 0;
-			for (ItemStack playerStacks : player.getInventory().main) {
+			for (ItemStack playerStacks : player.inventory.main) {
 				if (countArray[i] <= 0) {
 					i++;
 					continue;
@@ -120,11 +121,11 @@ class ItemInputs {
 
 	private static void clearCursor(MinecraftClient client) {
 		final ClientPlayerEntity player = client.player;
-		if (player.currentScreenHandler != null && !player.currentScreenHandler.getCursorStack().isEmpty()) {
-			ItemStack cursorStack = player.currentScreenHandler.getCursorStack();
+		if (player.currentScreenHandler != null && !player.inventory.getCursorStack().isEmpty()) {
+			ItemStack cursorStack = player.inventory.getCursorStack();
 			ScreenHandler handler = player.currentScreenHandler;
 			for (int i = 0; i < handler.slots.size(); i++) {
-				if (ItemStack.canCombine(cursorStack, handler.getSlot(i).getStack())) {
+				if (cursorStack.isItemEqual(handler.getSlot(i).getStack()) && ItemStack.areTagsEqual(cursorStack, handler.getSlot(i).getStack())){
 					client.interactionManager.clickSlot(handler.syncId, handler.getSlot(i).id, 0, SlotActionType.PICKUP, player);
 					return;
 				}
@@ -156,8 +157,6 @@ class ItemInputs {
 			MessageHolder.sendUniqueMessageActionBar(client.player, "Screen is not extra screen");
 			return;
 		}
-		client.player.currentScreenHandler.enableSyncing();
-		client.player.currentScreenHandler.syncState();
 		List<ItemStack> requiredStacks = getRaycastRequiredItemStacks(client);
 		if (requiredStacks.isEmpty()) {
 			MessageHolder.sendUniqueDebugMessage("required stacks were empty for " + where.toShortString());
@@ -174,10 +173,10 @@ class ItemInputs {
 				MessageHolder.sendMessageUncheckedUnique(client.player, "Sizes differ as " + requiredStacks.size() + " but non-player slot size : " + nonPlayerSlot.size());
 				return;
 			}
-			if (entry == null || entry.getKey() != where.asLong()) {
-				entry = Map.entry(where.asLong(), new Date().getTime() + LitematicaMixinMod.INVENTORY_OPERATIONS_WAIT.getIntegerValue());
+			if (entry == null || entry.getLeft() != where.asLong()) {
+				entry = new Pair<>(where.asLong(), new Date().getTime() + LitematicaMixinMod.INVENTORY_OPERATIONS_WAIT.getIntegerValue());
 				return;
-			} else if (entry.getValue() > new Date().getTime()) {
+			} else if (entry.getRight() > new Date().getTime()) {
 				return;
 			} else {
 				entry = null;

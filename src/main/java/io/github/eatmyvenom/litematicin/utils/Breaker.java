@@ -36,7 +36,7 @@ public class Breaker implements IClientTickHandler {
 		int bestSlotId = getBestItemSlotIdToMineBlock(mc, pos);
 		// If slot isn't selected, change
 		if (bestSlotId != -1) {
-			ItemStack stack = mc.player.getInventory().getStack(bestSlotId);
+			ItemStack stack = mc.player.inventory.getStack(bestSlotId);
 			InventoryUtils.swapToItem(mc, stack);
 		}
 		// Start breaking
@@ -63,10 +63,14 @@ public class Breaker implements IClientTickHandler {
 		int bestSlot = -1;
 		float bestSpeed = 0;
 		BlockState state = mc.world.getBlockState(blockToMine);
-		for (int i = mc.player.getInventory().size(); i >= 0; i--) {
+		return findBestSlotForState(mc, bestSlot, bestSpeed, state);
+	}
+
+	private static int findBestSlotForState(MinecraftClient mc, int bestSlot, float bestSpeed, BlockState state) {
+		for (int i = mc.player.inventory.size(); i >= 0; i--) {
 			float speed = getBlockBreakingSpeed(state, mc, i);
 			if ((speed > bestSpeed && speed > 1.0F)
-				|| (speed >= bestSpeed && !mc.player.getInventory().getStack(i).isDamageable())) {
+				|| (speed >= bestSpeed && !mc.player.inventory.getStack(i).isDamageable())) {
 				bestSlot = i;
 				bestSpeed = speed;
 			}
@@ -77,25 +81,17 @@ public class Breaker implements IClientTickHandler {
 	public static int getBestItemSlotIdToMineState(MinecraftClient mc, BlockState state) {
 		int bestSlot = -1;
 		float bestSpeed = 0;
-		for (int i = mc.player.getInventory().size(); i >= 0; i--) {
-			float speed = getBlockBreakingSpeed(state, mc, i);
-			if ((speed > bestSpeed && speed > 1.0F)
-				|| (speed >= bestSpeed && !mc.player.getInventory().getStack(i).isDamageable())) {
-				bestSlot = i;
-				bestSpeed = speed;
-			}
-		}
-		return bestSlot;
+		return findBestSlotForState(mc, bestSlot, bestSpeed, state);
 	}
 
 	public static float getBlockBreakingSpeed(BlockState block, MinecraftClient mc, int slotId) {
 		if (slotId < -1 || slotId >= 36) {
 			return 0;
 		}
-		float f = ((ItemStack) mc.player.getInventory().main.get(slotId)).getMiningSpeedMultiplier(block);
+		float f = ((ItemStack) mc.player.inventory.main.get(slotId)).getMiningSpeedMultiplier(block);
 		if (f > 1.0F) {
 			int i = EnchantmentHelper.getEfficiency(mc.player);
-			ItemStack itemStack = mc.player.getInventory().getMainHandStack();
+			ItemStack itemStack = mc.player.inventory.getMainHandStack();
 			if (i > 0 && !itemStack.isEmpty()) {
 				f += (float) (i * i + 1);
 			}

@@ -35,8 +35,8 @@ public abstract class MinecraftClientMixin {
 	// On join a new world/server
 	@Inject(at = @At("HEAD"), method = "joinWorld")
 	public void joinWorld(ClientWorld world, CallbackInfo ci) {
-		Printer.worldBottomY = world.getBottomY();
-		Printer.worldTopY = world.getTopY();
+		Printer.worldBottomY = 0;
+		Printer.worldTopY = 255;
 	}
 
 	@Inject(at = @At("HEAD"), method = "tick")

@@ -48,7 +48,7 @@ public class FakeAccurateBlockPlacement {
 	private static int blockPlacedInTick = 0;
 	private static BlockState handlingState = null;
 	public static Item currentHandling = Items.AIR;
-	private static final Queue<PosWithBlock> waitingQueue = new ArrayBlockingQueue<>(1) {
+	private static final Queue<PosWithBlock> waitingQueue = new ArrayBlockingQueue<PosWithBlock>(1) {
 	};
 	private static final HashSet<Block> warningSet = new HashSet<>();
 
@@ -98,8 +98,8 @@ public class FakeAccurateBlockPlacement {
 		if (requestedTicks <= -3) {
 			requestedTicks = -3;
 			fakeDirection = null;
-			previousFakePitch = playerEntity.getPitch();
-			previousFakeYaw = playerEntity.getYaw();
+			previousFakePitch = playerEntity.pitch;
+			previousFakeYaw = playerEntity.yaw;
 		}
 		if (requestedTicks == 0 && PRINTER_ONLY_FAKE_ROTATION_MODE.getBooleanValue()){
 			placeFromQueue();
@@ -141,7 +141,7 @@ public class FakeAccurateBlockPlacement {
 
 	public static void sendLookPacket(ClientPlayNetworkHandler networkHandler, ClientPlayerEntity playerEntity) {
 		networkHandler.sendPacket(
-			new PlayerMoveC2SPacket.LookAndOnGround(
+			new PlayerMoveC2SPacket.LookOnly(
 				fakeYaw,
 				fakePitch,
 				playerEntity.isOnGround()
@@ -200,7 +200,7 @@ public class FakeAccurateBlockPlacement {
 		Direction facing = state.get(WallMountedBlock.FACING);
 		WallMountLocation location = state.get(WallMountedBlock.FACE);
 		float fy = 0;
-		float fp = 0;
+		float fp;
 		Direction lookRefdir;
 		if (location == WallMountLocation.CEILING) {
 			//primary should be UP
@@ -300,7 +300,7 @@ public class FakeAccurateBlockPlacement {
 		if (blockState.isOf(Blocks.GRINDSTONE)) {
 			return requestGrindStone(blockState, blockPos);
 		}
-		if (blockState.isOf(Blocks.HOPPER) || blockState.isIn(BlockTags.SHULKER_BOXES) || blockState.isOf(Blocks.LIGHTNING_ROD) || blockState.isOf(Blocks.END_ROD)) {
+		if (blockState.isOf(Blocks.HOPPER) || blockState.isIn(BlockTags.SHULKER_BOXES) || blockState.isOf(Blocks.END_ROD)) {
 			placeBlock(blockPos, blockState);
 			return true;
 		}
@@ -346,8 +346,6 @@ public class FakeAccurateBlockPlacement {
 				fp = -90;
 			} else if (blockState.get(WallMountedBlock.FACE) == WallMountLocation.FLOOR) {
 				fp = 90;
-			} else {
-				fp = 12;
 			}
 		} else if (order == 3) {
 			direction1 = facing.rotateYCounterclockwise();
@@ -493,9 +491,9 @@ public class FakeAccurateBlockPlacement {
 			MessageHolder.sendDebugMessage(player, "Placing " + blockState.getBlock().getTranslationKey() + " at " + pos.toShortString() + " facing : " + fi.dy.masa.malilib.util.BlockUtils.getFirstPropertyFacingValue(blockState));
 			MessageHolder.sendDebugMessage(player, "Player facing is set to : " + fakeDirection + " Yaw : " + fakeYaw + " Pitch : " + fakePitch + " ticks : " + requestedTicks + " for pos " + pos.toShortString());
 			interactionManager.interactBlock(player, player.clientWorld, Hand.MAIN_HAND, blockHitResult);
-			InventoryUtils.decrementCount(player.getAbilities().creativeMode);
+			InventoryUtils.decrementCount(player.abilities.creativeMode);
 			blockPlacedInTick++;
-			if ( !player.getAbilities().creativeMode && InventoryUtils.lastCount <= 0 && SLEEP_AFTER_CONSUME.getIntegerValue() > 0) {
+			if ( !player.abilities.creativeMode && InventoryUtils.lastCount <= 0 && SLEEP_AFTER_CONSUME.getIntegerValue() > 0) {
 				shouldReturnValue = true;
 				Printer.lastPlaced = new Date().getTime() + SLEEP_AFTER_CONSUME.getIntegerValue();
 			}
@@ -518,7 +516,12 @@ public class FakeAccurateBlockPlacement {
 	}
 
 	// we just record pos + block and put in queue.
-	private record PosWithBlock(BlockPos pos, BlockState blockState) {
+	private static class PosWithBlock {
+		public BlockPos pos;
+		public BlockState blockState;
+		PosWithBlock(BlockPos pos, BlockState blockState) {
+			this.pos = pos;
+			this.blockState = blockState;
+		}
 	}
-
 }

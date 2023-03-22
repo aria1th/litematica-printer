@@ -60,7 +60,8 @@ public class SchematicVerifierMixin {
 					WorldSchematic schematic = this.worldSchematic;
 					BlockPos pos = new BlockPos(x, y, z);
 					BlockEntity entity = schematic.getBlockEntity(pos);
-					if (entity instanceof LootableContainerBlockEntity containerBlockEntity) {
+					if (entity instanceof LootableContainerBlockEntity) {
+						LootableContainerBlockEntity containerBlockEntity = (LootableContainerBlockEntity) entity;
 						if (!containerBlockEntity.isEmpty()) {
 							SchematicVerifier.BlockMismatch mismatch = new SchematicVerifier.BlockMismatch(SchematicVerifier.MismatchType.WRONG_STATE, stateSchematic, stateClient, 1);
 							this.wrongStatesPositions.put(Pair.of(stateSchematic, stateClient), new BlockPos(x, y, z));

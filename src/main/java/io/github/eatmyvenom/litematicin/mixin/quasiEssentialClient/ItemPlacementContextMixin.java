@@ -21,13 +21,6 @@ public class ItemPlacementContextMixin {
 		}
 	}
 
-	@Inject(method = "getVerticalPlayerLookDirection", at = @At("HEAD"), cancellable = true, require = 0)
-	private void onGetVerticalDirection(CallbackInfoReturnable<Direction> cir) {
-		if (FakeAccurateBlockPlacement.fakeDirection != null && FakeAccurateBlockPlacement.requestedTicks > -3 && FakeAccurateBlockPlacement.fakeDirection.getAxis() == Direction.Axis.Y) {
-			cir.setReturnValue(FakeAccurateBlockPlacement.fakeDirection);
-		}
-	}
-
 	@Redirect(method = "getPlacementDirections", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/math/Direction;getEntityFacingOrder(Lnet/minecraft/entity/Entity;)[Lnet/minecraft/util/math/Direction;"), require = 0)
 	private Direction[] onGetArrayDirections(Entity entity) {
 		if (!LitematicaMixinMod.DISABLE_SINGLEPLAYER_HANDLE.getBooleanValue() && FakeAccurateBlockPlacement.fakeDirection != null && FakeAccurateBlockPlacement.requestedTicks > -3) {
