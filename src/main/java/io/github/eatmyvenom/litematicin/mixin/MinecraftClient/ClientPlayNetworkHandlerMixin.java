@@ -67,14 +67,7 @@ public class ClientPlayNetworkHandlerMixin {
 			}
 			return;
 		}
-		if (Printer.isSleeping) {
-			return;
-		}
-		if (DataManager.getToolMode() != ToolMode.REBUILD && Configs.Generic.EASY_PLACE_MODE.getBooleanValue() && Configs.Generic.EASY_PLACE_HOLD_ENABLED.getBooleanValue() && Hotkeys.EASY_PLACE_ACTIVATION.getKeybind().isKeybindHeld()) {
-			if (LitematicaMixinMod.DISABLE_SYNC.getBooleanValue()) {
-				ci.cancel();
-			}
-		}
+		cancelIfRequired(ci);
 	}
 
 	@Inject(method = "onDisconnect", at = @At("HEAD"))
@@ -84,6 +77,10 @@ public class ClientPlayNetworkHandlerMixin {
 
 	@Inject(method = "onUpdateSelectedSlot", at = @At("HEAD"), cancellable = true, require = 0)
 	private void onUpdateSelectSlots(UpdateSelectedSlotS2CPacket packet, CallbackInfo ci) {
+		cancelIfRequired(ci);
+	}
+
+	private void cancelIfRequired(CallbackInfo ci) {
 		if (Printer.isSleeping) {
 			return;
 		}

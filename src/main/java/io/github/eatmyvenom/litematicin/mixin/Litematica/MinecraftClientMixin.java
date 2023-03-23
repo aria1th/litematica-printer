@@ -48,7 +48,7 @@ public abstract class MinecraftClientMixin {
 
 	@Inject(at = @At("HEAD"), method = "doItemUse")
 	public void getIfBlockEntity(CallbackInfo info) {
-		if (crosshairTarget != null && crosshairTarget.getType() == HitResult.Type.BLOCK && this.world.getBlockEntity(((BlockHitResult) crosshairTarget).getBlockPos()) != null) {
+		if (crosshairTarget != null && crosshairTarget.getType() == HitResult.Type.BLOCK && (this.world != null ? this.world.getBlockEntity(((BlockHitResult) crosshairTarget).getBlockPos()) : null) != null) {
 			ItemInputs.clickedPos = ((BlockHitResult) crosshairTarget).getBlockPos();
 		} else {
 			ItemInputs.clickedPos = null;
