@@ -21,7 +21,6 @@ import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.*;
 
@@ -109,13 +108,7 @@ public class BedrockBreaker {
 		boolean forceSlimeBlock = BEDROCK_BREAKING_FORCE_TORCH.getBooleanValue();
 		for (Direction hd : HORIZONTAL) { //normal 4 dir
 			BlockPos torchCheck = pistonPos.offset(hd);
-			if (!isBlockPosinYRange(torchCheck)) {
-				continue;
-			}
-			if (torchCheck.equals(pos1) || torchCheck.equals(pos2)) {
-				continue;
-			}
-			if (!world.getBlockState(torchCheck).isAir() && !world.getBlockState(torchCheck).getMaterial().isReplaceable()) {
+			if (checkTorchPosition(pos1, pos2, world, torchCheck)) {
 				continue;
 			}
 			// check torch can be placed
@@ -145,13 +138,7 @@ public class BedrockBreaker {
 		}
 		for (Direction hd : HORIZONTAL) { //qc
 			BlockPos torchCheck = pistonPos.up().offset(hd);
-			if (!isBlockPosinYRange(torchCheck)) {
-				continue;
-			}
-			if (torchCheck.equals(pos1) || torchCheck.equals(pos2)) {
-				continue;
-			}
-			if (!world.getBlockState(torchCheck).isAir() && !world.getBlockState(torchCheck).getMaterial().isReplaceable()) {
+			if (checkTorchPosition(pos1, pos2, world, torchCheck)) {
 				continue;
 			}
 			// check torch can be placed
@@ -207,13 +194,23 @@ public class BedrockBreaker {
 		return null;
 	}
 
+	private static boolean checkTorchPosition(BlockPos pos1, BlockPos pos2, World world, BlockPos torchCheck) {
+		if (!isBlockPosinYRange(torchCheck)) {
+			return true;
+		}
+		if (torchCheck.equals(pos1) || torchCheck.equals(pos2)) {
+			return true;
+		}
+		return !world.getBlockState(torchCheck).isAir() && !world.getBlockState(torchCheck).getMaterial().isReplaceable();
+	}
+
 	public static void removeScheduledPos(MinecraftClient mc) {
 		for (Long position : targetPosMap.keySet().stream().filter(position ->
-			targetPosMap.get(position) != null && CurrentTick - targetPosMap.get(position).SysTime > 200L && targetPosMap.get(position).isIdle()).collect(Collectors.toList())) {
+			targetPosMap.get(position) != null && CurrentTick - targetPosMap.get(position).SysTime > 200L && targetPosMap.get(position).isIdle()).toList()) {
 			targetPosMap.remove(position);
 		}
 		for (Long position : targetPosMap.keySet().stream().filter(position ->
-			targetPosMap.get(position).canSafeRemove(mc.world)).collect(Collectors.toList())) {
+			targetPosMap.get(position).canSafeRemove(mc.world)).toList()) {
 			targetPosMap.remove(position);
 		}
 	}

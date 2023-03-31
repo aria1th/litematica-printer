@@ -13,6 +13,8 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
+import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.PRINTER_SUPPRESS_PACKETS;
+
 //see https://github.com/senseiwells/EssentialClient/blob/1.19.x/src/main/java/me/senseiwells/essentialclient/mixins/betterAccurateBlockPlacement/ClientPlayerEntityMixin.java for reference!!
 
 @Mixin(value = ClientPlayerEntity.class, priority = 1200)
@@ -21,9 +23,11 @@ public abstract class ClientPlayerEntityMixin extends PlayerEntity {
 		super(world, pos, yaw, gameProfile);
 	}
 
+
 	@Redirect(method = "sendMovementPackets", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/ClientPlayNetworkHandler;sendPacket(Lnet/minecraft/network/packet/Packet;)V", ordinal = 1), require = 0)
 	private void onSendPacketVehicle(ClientPlayNetworkHandler clientPlayNetworkHandler, Packet<?> packet) {
-		if (FakeAccurateBlockPlacement.requestedTicks <= -3 || FakeAccurateBlockPlacement.fakeDirection == null) {
+		// replaces all packets with a fake packet if PRINTER_SUPPRESS_PACKETS is true
+		if (!PRINTER_SUPPRESS_PACKETS.getBooleanValue() && (FakeAccurateBlockPlacement.requestedTicks <= -3 || FakeAccurateBlockPlacement.fakeDirection == null)) {
 			clientPlayNetworkHandler.sendPacket(packet);
 			return;
 		}
@@ -37,7 +41,7 @@ public abstract class ClientPlayerEntityMixin extends PlayerEntity {
 
 	@Redirect(method = "sendMovementPackets", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/ClientPlayNetworkHandler;sendPacket(Lnet/minecraft/network/packet/Packet;)V", ordinal = 2), require = 0)
 	private void onSendPacketAll(ClientPlayNetworkHandler clientPlayNetworkHandler, Packet<?> packet) {
-		if (FakeAccurateBlockPlacement.requestedTicks <= -3 || FakeAccurateBlockPlacement.fakeDirection == null) {
+		if (!PRINTER_SUPPRESS_PACKETS.getBooleanValue() && (FakeAccurateBlockPlacement.requestedTicks <= -3 || FakeAccurateBlockPlacement.fakeDirection == null)) {
 			clientPlayNetworkHandler.sendPacket(packet);
 			return;
 		}
@@ -51,7 +55,7 @@ public abstract class ClientPlayerEntityMixin extends PlayerEntity {
 
 	@Redirect(method = "sendMovementPackets", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/ClientPlayNetworkHandler;sendPacket(Lnet/minecraft/network/packet/Packet;)V", ordinal = 3), require = 0)
 	private void onSendPacketPositionAndOnGround(ClientPlayNetworkHandler clientPlayNetworkHandler, Packet<?> packet) {
-		if (FakeAccurateBlockPlacement.requestedTicks <= -3 || FakeAccurateBlockPlacement.fakeDirection == null) {
+		if (!PRINTER_SUPPRESS_PACKETS.getBooleanValue() && (FakeAccurateBlockPlacement.requestedTicks <= -3 || FakeAccurateBlockPlacement.fakeDirection == null)) {
 			clientPlayNetworkHandler.sendPacket(packet);
 			return;
 		}
@@ -66,7 +70,7 @@ public abstract class ClientPlayerEntityMixin extends PlayerEntity {
 
 	@Redirect(method = "sendMovementPackets", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/ClientPlayNetworkHandler;sendPacket(Lnet/minecraft/network/packet/Packet;)V", ordinal = 4), require = 0)
 	private void onSendPacketLookAndOnGround(ClientPlayNetworkHandler clientPlayNetworkHandler, Packet<?> packet) {
-		if (FakeAccurateBlockPlacement.requestedTicks <= -3 || FakeAccurateBlockPlacement.fakeDirection == null) {
+		if (!PRINTER_SUPPRESS_PACKETS.getBooleanValue() && (FakeAccurateBlockPlacement.requestedTicks <= -3 || FakeAccurateBlockPlacement.fakeDirection == null)) {
 			clientPlayNetworkHandler.sendPacket(packet);
 			return;
 		}
@@ -80,7 +84,7 @@ public abstract class ClientPlayerEntityMixin extends PlayerEntity {
 	}
 	@Redirect(method = "sendMovementPackets", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/ClientPlayNetworkHandler;sendPacket(Lnet/minecraft/network/packet/Packet;)V", ordinal = 5), require = 0)
 	private void onSendPacketOnGroundOnly(ClientPlayNetworkHandler clientPlayNetworkHandler, Packet<?> packet) {
-		if (FakeAccurateBlockPlacement.requestedTicks <= -3 || FakeAccurateBlockPlacement.fakeDirection == null) {
+		if (!PRINTER_SUPPRESS_PACKETS.getBooleanValue() && (FakeAccurateBlockPlacement.requestedTicks <= -3 || FakeAccurateBlockPlacement.fakeDirection == null)) {
 			clientPlayNetworkHandler.sendPacket(packet);
 			return;
 		}

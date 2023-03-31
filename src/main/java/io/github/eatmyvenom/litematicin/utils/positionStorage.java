@@ -9,10 +9,9 @@ import net.minecraft.world.World;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 public class positionStorage {
-	private final static Map<Long, Boolean> positionMap = new LinkedHashMap<Long, Boolean>();
+	private final static Map<Long, Boolean> positionMap = new LinkedHashMap<>();
 
 	public static void clear() {
 		positionMap.clear();
@@ -31,7 +30,7 @@ public class positionStorage {
 	}
 
 	public static void refresh(World world) {
-		for (Long longPos : positionMap.keySet().stream().filter(longPos -> !positionMap.get(longPos) && !match(world.getBlockState(BlockPos.fromLong(longPos)).getBlock())).collect(Collectors.toList())) {
+		for (Long longPos : positionMap.keySet().stream().filter(longPos -> !positionMap.get(longPos) && !match(world.getBlockState(BlockPos.fromLong(longPos)).getBlock())).toList()) {
 			positionMap.remove(longPos);
 		}
 	}

@@ -13,7 +13,6 @@ import fi.dy.masa.litematica.util.RayTraceUtils.RayTraceWrapper;
 import fi.dy.masa.litematica.world.SchematicWorldHandler;
 import fi.dy.masa.malilib.util.IntBoundingBox;
 import fi.dy.masa.malilib.util.LayerRange;
-import fi.dy.masa.malilib.util.SubChunkPos;
 import it.unimi.dsi.fastutil.longs.Long2LongOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import net.fabricmc.api.EnvType;
@@ -25,7 +24,6 @@ import net.minecraft.block.enums.*;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.SignEditScreen;
 import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.fluid.LavaFluid;
 import net.minecraft.item.BlockItem;
@@ -44,7 +42,6 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.PortalForcer;
 import net.minecraft.world.World;
 import net.minecraft.world.dimension.NetherPortal;
 
@@ -61,7 +58,6 @@ public class Printer {
 	// For printing delay
 	public static boolean isSleeping = false;
 	public static long lastPlaced = new Date().getTime();
-	private static final HashMap<World, PortalForcer> portalForcerHashMap = new LinkedHashMap<>();
 	private static boolean shouldSleepLonger = false;
 	public static Breaker breaker = new Breaker();
 	public static int worldBottomY = 0;
@@ -351,13 +347,13 @@ public class Printer {
 			posZ = tracePos.getZ();
 		}
 
-		boolean ClearArea = CLEAR_AREA_MODE.getBooleanValue(); // if its true, will ignore everything and remove fluids.
+		boolean ClearArea = CLEAR_AREA_MODE.getBooleanValue(); // if it's true, will ignore everything and remove fluids.
 		boolean UseCobble = CLEAR_AREA_MODE_COBBLESTONE.getBooleanValue() && ClearArea;
 		boolean ClearSnow = CLEAR_AREA_MODE_SNOWPREVENT.getBooleanValue() && ClearArea;
 		boolean CanUseProtocol = ACCURATE_BLOCK_PLACEMENT.getBooleanValue();
 		boolean FillInventory = PRINTER_PUMPKIN_PIE_FOR_COMPOSTER.getBooleanValue();
 		ItemStack composableItem = Items.PUMPKIN_PIE.getDefaultStack();
-		SubChunkPos cpos = new SubChunkPos(tracePos);
+		//SubChunkPos cpos = new SubChunkPos(tracePos);
 		List<PlacementPart> allPlacementsTouchingSubChunk = DataManager.getSchematicPlacementManager().getAllPlacementsTouchingChunk(tracePos);
 		Box selectedBox = null;
 		if (allPlacementsTouchingSubChunk.isEmpty() && !ClearArea) {
@@ -573,7 +569,7 @@ public class Printer {
 										if (breaker.startBreakingBlock(pos, mc)) {
 											return ActionResult.SUCCESS;
 										}
-									} // it need to avoid unbreakable blocks and just added and lava, but its not block so somehow made it work
+									} // it needs to avoid unbreakable blocks and just added and lava, but its not block so somehow made it work
 									continue;
 								}
 							}
@@ -623,7 +619,7 @@ public class Printer {
 											}
 
 											/*
-											 * I dont know if this direction code is needed. I am just doing it anyway to
+											 * I don't know if this direction code is needed. I am just doing it anyway to
 											 * make it "make sense" to the server (I am emulating what the client does so
 											 * the server isn't confused)
 											 */
@@ -1430,7 +1426,7 @@ public class Printer {
 	}
 
 	/*
-		returns if piston is powered + but its not extended in schematic, can be BUD or direct power
+		returns if piston is powered + but it's not extended in schematic, can be BUD or direct power
 	 */
 	private static boolean shouldSuppressExtend(World world, BlockPos pos) {
 		return willExtendInWorld(world, pos, world.getBlockState(pos).get(PistonBlock.FACING)) && !world.getBlockState(pos).get(PistonBlock.EXTENDED);
@@ -1549,18 +1545,16 @@ public class Printer {
 		return null;
 	}
 
-	private static boolean sleepWhenRequired(MinecraftClient mc) {
+	private static void sleepWhenRequired(MinecraftClient mc) {
 		if (!USE_INVENTORY_CACHE.getBooleanValue()) {
-			return false;
+			return;
 		}
 		if (SLEEP_AFTER_CONSUME.getIntegerValue() > 0 && io.github.eatmyvenom.litematicin.utils.InventoryUtils.lastCount <= 0) {
 			shouldSleepLonger = true;
 			lastPlaced = new Date().getTime() + SLEEP_AFTER_CONSUME.getIntegerValue();
 			MessageHolder.sendUniqueMessageActionBar(mc.player, "Sleeping because stack is emptied!");
 			isSleeping = true;
-			return true;
 		}
-		return false;
 	}
 
 	private static boolean isQCableBlock(World world, BlockPos pos) {
@@ -1579,7 +1573,7 @@ public class Printer {
 	 * @param schematicWorld : schematic world
 	 * @param pos : BlockPos
 	 * @param recursive : Sets of position checked
-	 * @param allowFirst : direct search of wallmount / walls / etc at first
+	 * @param allowFirst : direct search of wallmount / walls / etc. at first
 	 * @return Entry : correct / position caused
 	 */
 	@SuppressWarnings({"ConstantConditions"})
@@ -2036,7 +2030,7 @@ public class Printer {
 
 	/*
 	 * Checks if the block can be placed in the correct orientation if player is
-	 * facing a certain direction Dont place block if orientation will be wrong
+	 * facing a certain direction Don't place block if orientation will be wrong
 	 */
 	private static boolean canPlaceFace(FacingData facedata, BlockState stateSchematic,
 	                                    Direction primaryFacing, Direction horizontalFacing) {
@@ -2048,7 +2042,7 @@ public class Printer {
 			facing = convertRailShapetoFace(stateSchematic);
 		}
 		if (facing != null && facedata != null) {
-
+			// backward compatibility, JAVA_8 can't use enhanced switch
 			switch (facedata.type) {
 				case 0: // All directions (ie, observers and pistons)
 					if (facedata.isReversed) {
@@ -2150,7 +2144,7 @@ public class Printer {
 		Block block = state.getBlock();
 
 		/*
-		 * I dont know if this is needed, just doing to mimick client According to the
+		 * I don't know if this is needed, just doing to mimic client According to the
 		 * MC protocol wiki, the protocol expects a 1 on a side that is clicked
 		 */
 		Vec3d clickPos = Vec3d.of(pos);
