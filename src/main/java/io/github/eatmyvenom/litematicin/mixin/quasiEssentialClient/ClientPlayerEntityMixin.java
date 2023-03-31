@@ -1,6 +1,7 @@
 package io.github.eatmyvenom.litematicin.mixin.quasiEssentialClient;
 
 import com.mojang.authlib.GameProfile;
+import fi.dy.masa.litematica.config.Hotkeys;
 import io.github.eatmyvenom.litematicin.utils.FakeAccurateBlockPlacement;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.client.network.ClientPlayerEntity;
@@ -23,11 +24,19 @@ public abstract class ClientPlayerEntityMixin extends PlayerEntity {
 		super(world, pos, yaw, gameProfile);
 	}
 
+	private boolean canSendPacketNormally() {
+		// if FakeAccurateBlockPlacement is active, then return false
+		if (FakeAccurateBlockPlacement.requestedTicks <= -3 || FakeAccurateBlockPlacement.fakeDirection == null)
+			return false;
+		// if PRINTER_SUPPRESS_PACKETS is false, then return true
+		// if keybind is not held, then return true
+		return !PRINTER_SUPPRESS_PACKETS.getBooleanValue() || !Hotkeys.EASY_PLACE_ACTIVATION.getKeybind().isKeybindHeld();
+	}
 
 	@Redirect(method = "sendMovementPackets", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/ClientPlayNetworkHandler;sendPacket(Lnet/minecraft/network/packet/Packet;)V", ordinal = 1), require = 0)
 	private void onSendPacketVehicle(ClientPlayNetworkHandler clientPlayNetworkHandler, Packet<?> packet) {
 		// replaces all packets with a fake packet if PRINTER_SUPPRESS_PACKETS is true
-		if (!PRINTER_SUPPRESS_PACKETS.getBooleanValue() && (FakeAccurateBlockPlacement.requestedTicks <= -3 || FakeAccurateBlockPlacement.fakeDirection == null)) {
+		if (canSendPacketNormally()) {
 			clientPlayNetworkHandler.sendPacket(packet);
 			return;
 		}
@@ -41,7 +50,7 @@ public abstract class ClientPlayerEntityMixin extends PlayerEntity {
 
 	@Redirect(method = "sendMovementPackets", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/ClientPlayNetworkHandler;sendPacket(Lnet/minecraft/network/packet/Packet;)V", ordinal = 2), require = 0)
 	private void onSendPacketAll(ClientPlayNetworkHandler clientPlayNetworkHandler, Packet<?> packet) {
-		if (!PRINTER_SUPPRESS_PACKETS.getBooleanValue() && (FakeAccurateBlockPlacement.requestedTicks <= -3 || FakeAccurateBlockPlacement.fakeDirection == null)) {
+		if (canSendPacketNormally()) {
 			clientPlayNetworkHandler.sendPacket(packet);
 			return;
 		}
@@ -55,7 +64,7 @@ public abstract class ClientPlayerEntityMixin extends PlayerEntity {
 
 	@Redirect(method = "sendMovementPackets", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/ClientPlayNetworkHandler;sendPacket(Lnet/minecraft/network/packet/Packet;)V", ordinal = 3), require = 0)
 	private void onSendPacketPositionAndOnGround(ClientPlayNetworkHandler clientPlayNetworkHandler, Packet<?> packet) {
-		if (!PRINTER_SUPPRESS_PACKETS.getBooleanValue() && (FakeAccurateBlockPlacement.requestedTicks <= -3 || FakeAccurateBlockPlacement.fakeDirection == null)) {
+		if (canSendPacketNormally()) {
 			clientPlayNetworkHandler.sendPacket(packet);
 			return;
 		}
@@ -70,7 +79,7 @@ public abstract class ClientPlayerEntityMixin extends PlayerEntity {
 
 	@Redirect(method = "sendMovementPackets", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/ClientPlayNetworkHandler;sendPacket(Lnet/minecraft/network/packet/Packet;)V", ordinal = 4), require = 0)
 	private void onSendPacketLookAndOnGround(ClientPlayNetworkHandler clientPlayNetworkHandler, Packet<?> packet) {
-		if (!PRINTER_SUPPRESS_PACKETS.getBooleanValue() && (FakeAccurateBlockPlacement.requestedTicks <= -3 || FakeAccurateBlockPlacement.fakeDirection == null)) {
+		if (canSendPacketNormally()) {
 			clientPlayNetworkHandler.sendPacket(packet);
 			return;
 		}
@@ -84,7 +93,7 @@ public abstract class ClientPlayerEntityMixin extends PlayerEntity {
 	}
 	@Redirect(method = "sendMovementPackets", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/ClientPlayNetworkHandler;sendPacket(Lnet/minecraft/network/packet/Packet;)V", ordinal = 5), require = 0)
 	private void onSendPacketOnGroundOnly(ClientPlayNetworkHandler clientPlayNetworkHandler, Packet<?> packet) {
-		if (!PRINTER_SUPPRESS_PACKETS.getBooleanValue() && (FakeAccurateBlockPlacement.requestedTicks <= -3 || FakeAccurateBlockPlacement.fakeDirection == null)) {
+		if (canSendPacketNormally()) {
 			clientPlayNetworkHandler.sendPacket(packet);
 			return;
 		}
