@@ -16,6 +16,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.PRINTER_SUPPRESS_PACKETS;
+import static io.github.eatmyvenom.litematicin.utils.FakeAccurateBlockPlacement.shouldModifyValues;
 
 //see https://github.com/senseiwells/EssentialClient/blob/1.19.x/src/main/java/me/senseiwells/essentialclient/mixins/betterAccurateBlockPlacement/ClientPlayerEntityMixin.java for reference!!
 
@@ -27,9 +28,7 @@ public abstract class ClientPlayerEntityMixin extends PlayerEntity {
 
 	private boolean canSendPacketNormally() {
 		// if FakeAccurateBlockPlacement is active, then return false
-		if (FakeAccurateBlockPlacement.requestedTicks <= -3 || FakeAccurateBlockPlacement.fakeDirection == null)
-			return true;
-		return !(PRINTER_SUPPRESS_PACKETS.getBooleanValue() && Configs.Generic.EASY_PLACE_MODE.getBooleanValue() && Hotkeys.EASY_PLACE_ACTIVATION.getKeybind().isKeybindHeld());
+		return !shouldModifyValues();
 	}
 
 	@Redirect(method = "sendMovementPackets", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/ClientPlayNetworkHandler;sendPacket(Lnet/minecraft/network/packet/Packet;)V", ordinal = 1), require = 0)

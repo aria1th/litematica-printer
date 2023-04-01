@@ -8,21 +8,23 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.PRINTER_FAKE_ROTATION_AGGRESSIVE;
 import static io.github.eatmyvenom.litematicin.utils.FakeAccurateBlockPlacement.getPlayerFacing;
+import static io.github.eatmyvenom.litematicin.utils.FakeAccurateBlockPlacement.shouldModifyValues;
 
 @Mixin(value = ItemUsageContext.class, priority = 1200)
 public class ItemUsageContextMixin {
 	@Inject(method = "getHorizontalPlayerFacing", at = @At("HEAD"), cancellable = true, require = 0)
 	private void onGetFacing(CallbackInfoReturnable<Direction> cir) {
 		Direction direction = getPlayerFacing();
-		if (direction != null && FakeAccurateBlockPlacement.fakeDirection != null && FakeAccurateBlockPlacement.requestedTicks > -3 && FakeAccurateBlockPlacement.fakeDirection.getAxis() != Direction.Axis.Y) {
+		if (direction != null && (shouldModifyValues() || FakeAccurateBlockPlacement.fakeDirection != null && FakeAccurateBlockPlacement.requestedTicks > -3) && FakeAccurateBlockPlacement.fakeDirection.getAxis() != Direction.Axis.Y) {
 			cir.setReturnValue(direction);
 		}
 	}
 
 	@Inject(method = "getPlayerYaw", at = @At("HEAD"), cancellable = true, require = 0)
 	private void onGetYaw(CallbackInfoReturnable<Float> cir) {
-		if (FakeAccurateBlockPlacement.requestedTicks > -3 && FakeAccurateBlockPlacement.fakeDirection != null) {
+		if (shouldModifyValues()) {
 			cir.setReturnValue(FakeAccurateBlockPlacement.fakeYaw);
 		}
 	}

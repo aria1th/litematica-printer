@@ -294,8 +294,8 @@ public class BedrockBreaker {
 				facing = Direction.UP;
 			}
 		}
-		float OriginPitch = mc.player.getPitch(1.0f);
-		float OriginYaw = mc.player.getYaw(1.0f);
+		float OriginPitch = mc.player.getPitch();
+		float OriginYaw = mc.player.getYaw();
 		if (facing == Direction.DOWN) {
 			mc.getNetworkHandler().sendPacket(new PlayerMoveC2SPacket.LookAndOnGround(OriginYaw, -90.0f, mc.player.isOnGround()));
 		} else if (facing == Direction.UP) {

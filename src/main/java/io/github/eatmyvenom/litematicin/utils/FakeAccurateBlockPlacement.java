@@ -2,6 +2,8 @@ package io.github.eatmyvenom.litematicin.utils;
 
 //see https://github.com/senseiwells/EssentialClient/blob/1.19.x/src/main/java/me/senseiwells/essentialclient/feature/BetterAccurateBlockPlacement.java
 
+import fi.dy.masa.litematica.config.Configs;
+import fi.dy.masa.litematica.config.Hotkeys;
 import fi.dy.masa.litematica.materials.MaterialCache;
 import fi.dy.masa.litematica.world.SchematicWorldHandler;
 import io.github.eatmyvenom.litematicin.LitematicaMixinMod;
@@ -57,6 +59,11 @@ public class FakeAccurateBlockPlacement {
 		return requestedTicks > 0;
 	}
 
+	// flag for canceling
+	public static boolean shouldModifyValues() {
+		return requestedTicks > -3 && fakeDirection != null || Configs.Generic.EASY_PLACE_MODE.getBooleanValue() && (PRINTER_FAKE_ROTATION_AGGRESSIVE.getBooleanValue() || PRINTER_SUPPRESS_PACKETS.getBooleanValue());
+	}
+
 	public static boolean canHandleOther() {
 		return currentHandling == null || currentHandling == Items.AIR;
 	}
@@ -83,7 +90,7 @@ public class FakeAccurateBlockPlacement {
 			return;
 		}
 		if (requestedTicks >= -1) {
-			if (fakeYaw != previousFakeYaw || fakePitch != previousFakePitch) {
+			if (PRINTER_FAKE_ROTATION_AGGRESSIVE.getBooleanValue() || fakeYaw != previousFakeYaw || fakePitch != previousFakePitch) {
 				sendLookPacket(clientPlayNetworkHandler, playerEntity);
 				previousFakePitch = fakePitch;
 				previousFakeYaw = fakeYaw;
@@ -295,6 +302,8 @@ public class FakeAccurateBlockPlacement {
 		// instant
 		if (!canPlace(blockState, blockPos) || blockState.isAir() || MaterialCache.getInstance().getRequiredBuildItemForState(blockState, SchematicWorldHandler.getSchematicWorld(), blockPos).getItem() == Items.AIR) {
 			MessageHolder.sendOrderMessage("Cannot place "+ blockState.toString() + " at " + blockPos.toShortString());
+			// print reason, canPlace / isAir / isRequiredBuildItemForState
+			MessageHolder.sendOrderMessage("Reason : " + (canPlace(blockState, blockPos) ? "" : "cannotPlace") + " " + (blockState.isAir() ? "isAir" : "") + " " + (MaterialCache.getInstance().getRequiredBuildItemForState(blockState, SchematicWorldHandler.getSchematicWorld(), blockPos).getItem() == Items.AIR ? "materialWasAir" : ""));
 			return false;
 		}
 		if (blockState.isOf(Blocks.GRINDSTONE)) {
@@ -440,6 +449,7 @@ public class FakeAccurateBlockPlacement {
 				if (stateGrindStone != null) {
 					return stateGrindStone.get(GrindstoneBlock.FACE) == state.get(GrindstoneBlock.FACE) && stateGrindStone.get(GrindstoneBlock.FACING) == state.get(GrindstoneBlock.FACING);
 				}
+				MessageHolder.sendOrderMessage("No stateGrindStone was found");
 				return false;
 			} else if (handlingState != null && (handlingState.getBlock() instanceof FacingBlock || handlingState.getBlock() instanceof HorizontalFacingBlock && !(handlingState.getBlock() instanceof WallMountedBlock))) {
 				Direction handling = fi.dy.masa.malilib.util.BlockUtils.getFirstPropertyFacingValue(handlingState);
@@ -448,6 +458,7 @@ public class FakeAccurateBlockPlacement {
 			}
 			return true;
 		}
+		MessageHolder.sendOrderMessage("Cannot handle " + state.toString() + " at " + pos.toShortString());
 		return false;
 	}
 

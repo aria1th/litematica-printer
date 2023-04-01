@@ -15,7 +15,8 @@ public class LitematicaMixinMod implements ModInitializer {
 	public static final ConfigBoolean PRINTER_OFF = new ConfigBoolean("printerOff", false, "Disables printer.");
 	public static final ConfigBoolean PRINTER_ONLY_FAKE_ROTATION_MODE = new ConfigBoolean("easyPlaceMode++", false, "Disables printer and only make fake rotation work.");
 
-	public static final ConfigBoolean PRINTER_SUPPRESS_PACKETS = new ConfigBoolean("printerSuppressLookPackets", false, "Prevents other packets than fake rotations from being sent.");
+	public static final ConfigBoolean PRINTER_FAKE_ROTATION_AGGRESSIVE = new ConfigBoolean("printerFakeRotationAggressive", false, "Packets will be sent aggressively to force player direction.");
+	public static final ConfigBoolean PRINTER_SUPPRESS_PACKETS = new ConfigBoolean("printerSuppressLookPackets", false, "Prevents other packets than fake rotations from being sent when EasyPlaceMode is on.");
 	public static final ConfigBoolean INVENTORY_OPERATIONS = new ConfigBoolean("printerAllowInventoryOperations", false, "Printer will try to fill filters when screen is open and stop other actions");
 	public static final ConfigBoolean INVENTORY_OPERATIONS_CLOSE_SCREEN = new ConfigBoolean("inventoryCloseScreenAfterDone", false, "Screen will be closed after inventory filling operations");
 	public static final ConfigInteger INVENTORY_OPERATIONS_WAIT = new ConfigInteger("printerInventoryScreenWait", 200, 0, 8000, "Time(ms) to wait screen to be opened and synced");
@@ -65,6 +66,7 @@ public class LitematicaMixinMod implements ModInitializer {
 		USE_INVENTORY_CACHE,
 		PRINTER_OFF,
 		PRINTER_ONLY_FAKE_ROTATION_MODE,
+		PRINTER_FAKE_ROTATION_AGGRESSIVE,
 		DISABLE_SYNC,
 		DEBUG_MESSAGE,
 		DEBUG_EXTRA_MESSAGE,
