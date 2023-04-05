@@ -283,7 +283,7 @@ public class BedrockBreaker {
 	}
 
 	public static ActionResult interactBlock(MinecraftClient mc, BlockHitResult hitResult) {
-		//#if MC>=11700
+		//#if MC>=11900
 		return mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, hitResult);
 		//#else
 		//$$ return mc.interactionManager.interactBlock(mc.player, mc.player.clientWorld, Hand.MAIN_HAND, hitResult);
@@ -429,7 +429,7 @@ public class BedrockBreaker {
 		if (mc.world.getBlockState(pos).isAir()) {
 			return;
 		}
-		//#if MC>=11700
+		//#if MC>=11900
 		mc.getNetworkHandler().sendPacket(new PlayerActionC2SPacket(PlayerActionC2SPacket.Action.START_DESTROY_BLOCK, pos, direction, 64));
 		//#else
 		//$$ mc.getNetworkHandler().sendPacket(new PlayerActionC2SPacket(PlayerActionC2SPacket.Action.START_DESTROY_BLOCK, pos, direction));

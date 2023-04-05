@@ -5,7 +5,7 @@ import io.github.eatmyvenom.litematicin.LitematicaMixinMod;
 import io.github.eatmyvenom.litematicin.utils.MessageHolder;
 import io.github.eatmyvenom.litematicin.utils.Printer;
 import net.minecraft.client.MinecraftClient;
-//#if MC<11700
+//#if MC<11900
 //$$ import net.minecraft.text.LiteralText;
 //#else
 import net.minecraft.text.Text;
@@ -50,7 +50,7 @@ public class WorldUtilsMixin {
 				//in case of NPE, print log instead
 				MessageHolder.sendMessageUncheckedUnique(mc.player, e.getMessage());
 				if (!hasSent && mc.player != null) {
-					//#if MC>=11700
+					//#if MC>=11900
 					mc.player.sendMessage(Text.of("Null pointer exception has occured, please upload log at https://github.com/aria1th/litematica-printer/issues"));
 					//#else
 					//$$mc.player.sendMessage(new LiteralText("Null pointer exception has occured, please upload log at https://github.com/aria1th/litematica-printer/issues"), false);

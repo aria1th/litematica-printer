@@ -34,10 +34,12 @@ import net.minecraft.network.packet.c2s.play.UpdateSignC2SPacket;
 import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.state.property.Properties;
 import net.minecraft.text.Text;
-//#if MC>=11800
+//#if MC>=11900
 import net.minecraft.text.TextContent;
 //#else
 //$$ import net.minecraft.text.LiteralText;
+//#endif
+//#if MC<11902
 //$$ import fi.dy.masa.malilib.util.SubChunkPos;
 //#endif
 import net.minecraft.util.ActionResult;
@@ -362,7 +364,7 @@ public class Printer {
 		boolean CanUseProtocol = ACCURATE_BLOCK_PLACEMENT.getBooleanValue();
 		boolean FillInventory = PRINTER_PUMPKIN_PIE_FOR_COMPOSTER.getBooleanValue();
 		ItemStack composableItem = Items.PUMPKIN_PIE.getDefaultStack();
-		//#if MC>=11700
+		//#if MC>=11902
 		List<PlacementPart> allPlacementsTouchingSubChunk = DataManager.getSchematicPlacementManager().getAllPlacementsTouchingChunk(tracePos);
 		//#else
 		//$$ List<PlacementPart> allPlacementsTouchingSubChunk = DataManager.getSchematicPlacementManager().getAllPlacementsTouchingSubChunk(new SubChunkPos(tracePos));
@@ -2291,7 +2293,7 @@ public class Printer {
 		if (clientEntity == null) {
 			return;
 		}
-		//#if MC>=11800
+		//#if MC>=11900
 		if (entity instanceof SignBlockEntity signBlockEntity && clientEntity instanceof SignBlockEntity clientSignEntity) {
 			if (clientSignEntity.getTextOnRow(0, false).getContent() != TextContent.EMPTY || clientSignEntity.getTextOnRow(1, false).getContent() != TextContent.EMPTY ||
 				clientSignEntity.getTextOnRow(2, false).getContent() != TextContent.EMPTY ||
@@ -2304,6 +2306,19 @@ public class Printer {
 			signCache.add(pos.asLong());
 			mc.getNetworkHandler().sendPacket(new UpdateSignC2SPacket(signBlockEntity.getPos(), signBlockEntity.getTextOnRow(0, false).getString(), signBlockEntity.getTextOnRow(1, false).getString(), signBlockEntity.getTextOnRow(2, false).getString(), signBlockEntity.getTextOnRow(3, false).getString()));
 		}
+		//#elseif MC>=11700
+		//$$if (entity instanceof SignBlockEntity signBlockEntity && clientEntity instanceof SignBlockEntity clientSignEntity) {
+		//$$	if (clientSignEntity.getTextOnRow(0, false) != LiteralText.EMPTY || clientSignEntity.getTextOnRow(1, false) != LiteralText.EMPTY ||
+		//$$		clientSignEntity.getTextOnRow(2, false) != LiteralText.EMPTY ||
+		//$$		clientSignEntity.getTextOnRow(3, false) != LiteralText.EMPTY) {
+		//$$		MessageHolder.sendDebugMessage("Text already exists in " + pos.toShortString());
+		//$$		signCache.add(pos.asLong());
+		//$$		return;
+		//$$	}
+		//$$	MessageHolder.sendDebugMessage("Tries to copy sign text in " + pos.toShortString());
+		//$$	signCache.add(pos.asLong());
+		//$$	mc.getNetworkHandler().sendPacket(new UpdateSignC2SPacket(signBlockEntity.getPos(), signBlockEntity.getTextOnRow(0, false).getString(), signBlockEntity.getTextOnRow(1, false).getString(), signBlockEntity.getTextOnRow(2, false).getString(), signBlockEntity.getTextOnRow(3, false).getString()));
+		//$$}
 		//#else
 		//$$if (entity instanceof SignBlockEntity && clientEntity instanceof SignBlockEntity) {
 		//$$	SignBlockEntity signBlockEntity = (SignBlockEntity) entity;

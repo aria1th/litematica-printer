@@ -3,7 +3,9 @@ package io.github.eatmyvenom.litematicin.utils;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.text.Text;
-
+//#if MC<11900
+//$$ import net.minecraft.text.LiteralText;
+//#endif
 import java.util.HashSet;
 import java.util.Objects;
 
@@ -17,49 +19,63 @@ public class MessageHolder {
 	private static String orderPreviousMessage = "";
 
 	public static void sendPacketOrders(String string) {
-		final ClientPlayerEntity player = MinecraftClient.getInstance().player;
 		if (uniquePacketInfos.contains(string)) {
 			return;
 		}
 		uniquePacketInfos.add(string);
+		send(string);
+	}
+
+	private static void send(String string) {
+		final ClientPlayerEntity player = MinecraftClient.getInstance().player;
+		//#if MC>=11900
 		player.sendMessage(Text.of(string));
+		//#else
+		//$$player.sendMessage(new LiteralText(string), false);
+		//#endif
+	}
+
+	private static void send(String string, boolean actionbar) {
+		final ClientPlayerEntity player = MinecraftClient.getInstance().player;
+		//#if MC>=11900
+		player.sendMessage(Text.of(string), actionbar);
+		//#else
+		//$$player.sendMessage(new LiteralText(string), actionbar);
+		//#endif
 	}
 
 	public static void sendDebugMessage(ClientPlayerEntity player, String string) {
 		if (DEBUG_EXTRA_MESSAGE.getBooleanValue()) {
-			player.sendMessage(Text.of(string));
+			send(string);
 		}
 	}
 
 	public static void sendDebugMessage(String string) {
-		final ClientPlayerEntity player = MinecraftClient.getInstance().player;
 		if (DEBUG_EXTRA_MESSAGE.getBooleanValue()) {
-			player.sendMessage(Text.of(string));
+			send(string);
 		}
 	}
 
 	public static void sendOrderMessage(String string) {
-		final ClientPlayerEntity player = MinecraftClient.getInstance().player;
 		if (DEBUG_ORDER_PLACEMENTS.getBooleanValue() && !Objects.equals(orderPreviousMessage, string)) {
 			orderPreviousMessage = string;
-			player.sendMessage(Text.of(string));
+			send(string);
 		}
 	}
 
 	public static void sendUniqueDebugMessage(ClientPlayerEntity player, String string) {
 		if (DEBUG_EXTRA_MESSAGE.getBooleanValue()) {
 			if (!uniqueStrings.contains(string)) {
-				player.sendMessage(Text.of(string));
+				send(string);
 				uniqueStrings.add(string);
 			}
 		}
 	}
 
 	public static void sendUniqueDebugMessage(String string) {
-		final ClientPlayerEntity player = MinecraftClient.getInstance().player;
 		if (DEBUG_EXTRA_MESSAGE.getBooleanValue()) {
 			if (!uniqueStrings.contains(string)) {
-				player.sendMessage(Text.of(string));
+				send(string);
 				uniqueStrings.add(string);
 			}
 		}
@@ -67,22 +83,20 @@ public class MessageHolder {
 
 	public static void sendMessageUncheckedUnique(ClientPlayerEntity player, String string) {
 		if (!errorLogger.contains(string)) {
-			player.sendMessage(Text.of(string));
+			send(string);
 			errorLogger.add(string);
 		}
 	}
 
 	public static void sendMessageUncheckedUnique(String string) {
-		final ClientPlayerEntity player = MinecraftClient.getInstance().player;
 		if (!errorLogger.contains(string)) {
-			player.sendMessage(Text.of(string));
+			send(string);
 			errorLogger.add(string);
 		}
 	}
 
 	public static void sendMessageUnchecked(String string) {
-		final ClientPlayerEntity player = MinecraftClient.getInstance().player;
-		player.sendMessage(Text.of(string));
+		send(string);
 	}
 
 	public static void sendUniqueMessage(ClientPlayerEntity player, String string) {
@@ -91,15 +105,14 @@ public class MessageHolder {
 			return;
 		}
 		if (!uniqueStrings.contains(string)) {
-			player.sendMessage(Text.of(string));
+			send(string);
 			uniqueStrings.add(string);
 		}
 	}
 
 	public static void sendUniqueMessageAlways(String string) {
-		final ClientPlayerEntity player = MinecraftClient.getInstance().player;
 		if (!uniqueStringsAlways.contains(string)) {
-			player.sendMessage(Text.of(string));
+			send(string);
 			uniqueStringsAlways.add(string);
 		}
 	}
@@ -114,7 +127,7 @@ public class MessageHolder {
 			return;
 		}
 		if (!uniqueStrings.contains(string)) {
-			player.sendMessage(Text.of(string), true);
+			send(string, true);
 			uniqueStrings.add(string);
 		}
 	}
@@ -122,7 +135,7 @@ public class MessageHolder {
 		if (!DEBUG_MESSAGE.getBooleanValue()) {
 			return;
 		}
-		player.sendMessage(Text.of(string), true);
+		send(string, true);
 		uniqueStrings.add(string);
 	}
 }
