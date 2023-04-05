@@ -53,7 +53,7 @@ dependencies {
 	mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
 	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabricapi_version}"
-	modCompileOnly files("external/{project.essentialclient_filename}.jar") // shared external files.
+	modCompileOnly files("../../external/${project.essentialclient_filename}") // shared external files.
 	modImplementation "curse.maven:malilib-${project.malilib_projectid}:${project.malilib_fileid}"
 	modImplementation "curse.maven:litematica-${project.litematica_projectid}:${project.litematica_fileid}"
 	annotationProcessor "com.github.LlamaLad7:MixinExtras:0.1.1"
