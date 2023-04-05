@@ -9,9 +9,9 @@ on:
           - '**.yml'
     pull_request:
         branches: [ '*' ]
-
-permissions:
-    contents: read
+        paths-ignore:
+          - '**.md'
+          - '**.yml'
 
 # This workflow will build a Java project with Gradle and cache/restore any dependencies to improve the workflow execution time
 
