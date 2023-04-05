@@ -28,7 +28,8 @@
   "depends": {
     "fabricloader": ">=0.14.3",
     "fabric": "*",
-    "minecraft": "1.19.x"
+    "minecraft": "${minecraft_dependency}",
+    "litematica": "*"
   },
   "custom": {
     "modmenu": {

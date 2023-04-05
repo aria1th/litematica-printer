@@ -1,98 +1,42 @@
 plugins {
-	id 'fabric-loom' version '0.12-SNAPSHOT'
-	id 'maven-publish'
+	id 'fabric-loom' version '1.0-SNAPSHOT' apply false
+	id 'com.replaymod.preprocess' version 'e1050f4d72'
 }
 
+preprocess {
+	def mc116 = createNode('1.16.5', 1_16_05, 'yarn')
+	def mc117 = createNode('1.17.1', 1_17_01, 'yarn')
+	def mc118 = createNode('1.18.2', 1_18_02, 'yarn')
+	def mc1192 = createNode('1.19.2', 1_19_02, 'yarn')
+	def mc1193 = createNode('1.19.3', 1_19_03, 'yarn')
+	def mc1194 = createNode('1.19.4', 1_19_04, 'yarn')
 
-sourceCompatibility = JavaVersion.VERSION_17
-targetCompatibility = JavaVersion.VERSION_17
+	// mapping difference map
+	// base 1194 -> 1193 -> 1192 -> 118 -> 117 -> 116
+	// if no mapping difference, just use null instead of file
+	mc1194.link(mc1193, file('versions/mapping-1.19.4-1.19.3.txt'))
+	mc1193.link(mc1192, file('versions/mapping-1.19.3-1.19.2.txt'))
+	mc1192.link(mc118, file('versions/mapping-1.19.2-1.18.1.txt'))
+	mc118.link(mc117, file('versions/mapping-1.18.2-1.17.1.txt'))
+	mc117.link(mc116, file('versions/mapping-1.17.1-1.16.5.txt'))
+}
 
-
-archivesBaseName = "${project.archives_base_name}-mc${project.minecraft_version}"
-version = project.mod_version
-group = project.maven_group
-
-repositories {
-    mavenCentral()
-    maven { url "https://maven.terraformersmc.com/releases/" }
-    maven { url "https://jitpack.io" }
-    maven { url "https://pkgs.dev.azure.com/djtheredstoner/DevAuth/_packaging/public/maven/v1" }
-    maven { url 'https://masa.dy.fi/maven' }
-    maven { url = "https://www.cursemaven.com" }
-	maven {
-		url "https://maven.terraformersmc.com/releases/"
+tasks.register('buildAndGather') {
+	subprojects {
+		dependsOn project.name + ':build'
 	}
-	maven {
-		url "https://jitpack.io"
-	}
-	maven {
-		url "https://pkgs.dev.azure.com/djtheredstoner/DevAuth/_packaging/public/maven/v1"
-	}
-}
-
-dependencies {
-	//to change the versions see the gradle.properties file
-	minecraft "com.mojang:minecraft:${project.minecraft_version}"
-	mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
-	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
-	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabricapi_version}"
-	modCompileOnly files("external/essential-client-1.19.4-1.3.4.jar")
-	modImplementation "curse.maven:malilib-${project.malilib_projectid}:${project.malilib_fileid}"
-	modImplementation "curse.maven:litematica-${project.litematica_projectid}:${project.litematica_fileid}"
-	annotationProcessor "com.github.LlamaLad7:MixinExtras:0.1.1"
-}
-
-processResources {
-	inputs.property "version", project.version
-
-	filesMatching("fabric.mod.json") {
-		expand "version": project.version
-	}
-}
-
-tasks.withType(JavaCompile).configureEach {
-	// ensure that the encoding is set to UTF-8, no matter what the system default is
-	// this fixes some edge cases with special characters not displaying correctly
-	// see http://yodaconditions.net/blog/fix-for-java-file-encoding-problems-with-gradle.html
-	// If Javadoc is generated, this must be specified in that task too.
-	it.options.encoding = "UTF-8"
-
-	// Minecraft 1.17 (21w19a) upwards uses Java 16.
-	it.options.release = 17
-}
-
-java {
-	// Loom will automatically attach sourcesJar to a RemapSourcesJar task and to the "build" task
-	// if it is present.
-	// If you remove this line, sources will not be generated.
-	withSourcesJar()
-}
-
-jar {
-	from("LICENSE") {
-		rename { "${it}_${project.archivesBaseName}"}
-	}
-}
-
-// configure the maven publication
-publishing {
-	publications {
-		mavenJava(MavenPublication) {
-			// add all the jars that should be included when publishing to maven
-			artifact(remapJar) {
-				builtBy remapJar
-			}
-			artifact(sourcesJar) {
-				builtBy remapSourcesJar
+	doFirst {
+		println 'Building and gathering all subprojects'
+		copy {
+			subprojects {
+				def libDir = project.projectDir.toPath().resolve('build/libs')
+				from(libDir) {
+					include '*.jar'
+					exclude '*-sources.jar', '*-dev.jar'
+				}
+				into 'build/libs/'
+				duplicatesStrategy = DuplicatesStrategy.INCLUDE
 			}
 		}
-	}
-
-	// See https://docs.gradle.org/current/userguide/publishing_maven.html for information on how to set up publishing.
-	repositories {
-		// Add repositories to publish to here.
-		// Notice: This block does NOT have the same function as the block in the top level.
-		// The repositories here will be used for publishing your artifact, not for
-		// retrieving dependencies.
 	}
 }
