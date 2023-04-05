@@ -664,7 +664,7 @@ public class Printer {
 											int Schematiclevel = stateSchematic.get(ComposterBlock.LEVEL);
 											if (level != Schematiclevel && !(level == 7 && Schematiclevel == 8)) {
 												Hand hand = Hand.MAIN_HAND;
-												if (io.github.eatmyvenom.litematicin.utils.InventoryUtils.swapToItem(mc, composableItem)) {
+												if (doSchematicWorldPickBlock(mc, composableItem)) {
 													Vec3d hitPos = new Vec3d(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5);
 													BlockHitResult hitResult = new BlockHitResult(hitPos, side, pos, false);
 													mc.interactionManager.interactBlock(mc.player, hand, hitResult); //COMPOSTER
@@ -783,7 +783,7 @@ public class Printer {
 					}
 					if (ClearArea) {
 						Hand hand = Hand.MAIN_HAND;
-						if (ClearArea && io.github.eatmyvenom.litematicin.utils.InventoryUtils.swapToItem(mc, stack)) {
+						if (ClearArea && doSchematicWorldPickBlock(mc, stack)) {
 							Vec3d hitPos = Vec3d.ofCenter(pos).add(0, 0.5, 0);
 							BlockHitResult hitResult = new BlockHitResult(hitPos, Direction.UP, pos, false);
 							mc.interactionManager.interactBlock(mc.player, hand, hitResult); //FLUID REMOVAL
@@ -983,7 +983,7 @@ public class Printer {
 							if (!FakeAccurateBlockPlacement.canHandleOther(iceStack.getItem())) {
 								continue;
 							}
-							if (io.github.eatmyvenom.litematicin.utils.InventoryUtils.swapToItem(mc, iceStack)) {
+							if (doSchematicWorldPickBlock(mc, iceStack)) {
 								mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, new BlockHitResult(new Vec3d(pos.getX(), pos.getY(), pos.getZ()), Direction.DOWN, pos, false));
 								io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount(isCreative);
 								cacheEasyPlacePosition(pos, false);
@@ -1807,7 +1807,7 @@ public class Printer {
 			if (!FakeAccurateBlockPlacement.canHandleOther(Items.MINECART)) {
 				return false;
 			}
-			if (io.github.eatmyvenom.litematicin.utils.InventoryUtils.swapToItem(client, Items.MINECART.getDefaultStack())) {
+			if (doSchematicWorldPickBlock(client, Items.MINECART.getDefaultStack())) {
 				ActionResult actionResult = client.interactionManager.interactBlock(client.player, Hand.MAIN_HAND, new BlockHitResult(clickPos, Direction.UP, pos, false)); //place block
 				if (actionResult.isAccepted()) {
 					cacheEasyPlacePosition(pos, false, 600);

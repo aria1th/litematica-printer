@@ -18,10 +18,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.world.World;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
+import java.util.*;
 
 import static io.github.eatmyvenom.litematicin.utils.Printer.isSleeping;
 
@@ -32,6 +29,10 @@ public class InventoryUtils {
 	public static Item handlingItem = null;
 	public static Item previousItem = null; //only used for checks
 	public static int trackedSelectedSlot = -1;
+
+	private static String cachedPickBlockableSlots = "";
+
+	private static final HashSet<Integer> pickBlockableSlots = new HashSet<>();
 	public static HashMap<Integer, Item> usedSlots = new LinkedHashMap<>();
 	public static HashMap<Integer, Integer> slotCounts = new LinkedHashMap<>();
 
@@ -70,11 +71,34 @@ public class InventoryUtils {
 		}
 	}
 	private static int getPtr() {
+		parsePickblockableSlots();
+		if (pickBlockableSlots.isEmpty()) {
+			return -1;
+		}
 		ptr++;
-		ptr = ptr % 9;
+		ptr = ptr % pickBlockableSlots.size();
 		return ptr;
 	}
 
+	private static void parsePickblockableSlots() {
+		String pickBlockableSlot = Configs.Generic.PICK_BLOCKABLE_SLOTS.getStringValue();
+		if (!pickBlockableSlot.equals(cachedPickBlockableSlots)) {
+			cachedPickBlockableSlots = pickBlockableSlot;
+			pickBlockableSlots.clear();
+			for (String s : pickBlockableSlot.split(",")) {
+				try {
+					int i = Integer.parseInt(s);
+					if (i>0 && i<10) {
+						pickBlockableSlots.add(i-1);
+					}
+				} catch (NumberFormatException e) {
+					// ignore
+				}
+			}
+		}
+	}
+
+	// getAvailableSlot() is used to get the slot that the item is in, or the next available slot if it's not in the hotbar
 	public static int getAvailableSlot(Item item) {
 		if (usedSlots.containsValue(item)) {
 			for (Integer i : usedSlots.keySet()) {
@@ -84,11 +108,12 @@ public class InventoryUtils {
 			}
 			return -1;
 		}
-		if (usedSlots.size() == 9) { //full
+		parsePickblockableSlots();
+		if (usedSlots.size() == pickBlockableSlots.size()) { //full
 			return getPtr();
 		}
 		for (int i = 0; i < 9; i++) {
-			if (usedSlots.containsKey(i)) {
+			if (usedSlots.containsKey(i) || !pickBlockableSlots.contains(i)) {
 				continue;
 			}
 			return i;
@@ -106,7 +131,7 @@ public class InventoryUtils {
 	}
 
 	public static boolean hasEmptyHotbar() {
-		return usedSlots.size() < 9;
+		return usedSlots.size() < pickBlockableSlots.size();
 	}
 
 	public static ItemStack getMainHandStack(ClientPlayerEntity player) {
