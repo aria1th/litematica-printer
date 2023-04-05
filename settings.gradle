@@ -38,5 +38,6 @@ for (String version : versions) {
 
 	def proj = project(":$version")
 	proj.projectDir = file("versions/$version")
+	proj.essentialclient_filename = project.properties["essentialclient_filename"]
 	proj.buildFileName = "../../common.gradle"
 }

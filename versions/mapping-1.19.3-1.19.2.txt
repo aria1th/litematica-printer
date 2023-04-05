@@ -1,0 +1,3 @@
+net.minecraft.registry.tag.BlockTags net.minecraft.tag.BlockTags
+net.minecraft.world.dimension.NetherPortal net.minecraft.world.dimension.AreaHelper
+net.minecraft.block.ButtonBlock net.minecraft.block.AbstractButtonBlock
