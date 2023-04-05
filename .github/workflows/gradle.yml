@@ -3,15 +3,10 @@
 on:
     push:
       # ignore *.md *.yml file changes
-        branches: [ '*' ]
+      # run on 'multiversion' branch
+        branches: [ multiversion ]
         paths-ignore:
           - '**.md'
-          - '**.yml'
-    pull_request:
-        branches: [ '*' ]
-        paths-ignore:
-          - '**.md'
-          - '**.yml'
 
 # This workflow will build a Java project with Gradle and cache/restore any dependencies to improve the workflow execution time
 
@@ -27,8 +22,8 @@ jobs:
               path: |
                   ~/.gradle/caches
                   ~/.gradle/wrapper
-                  ~/.gradle/loom-cache
-              key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+                  ./.gradle/loom-cache
+              key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle.properties') }}
               restore-keys: |
                   ${{ runner.os }}-gradle-
           - name: Set up JDK 17
