@@ -60,10 +60,14 @@ dependencies {
 }
 
 processResources {
-	inputs.property "version", project.version
+	inputs.property "version", project.mod_version
     // {$argument} exists in src/main/resources/fabric.mod.json, then it will be replaced with the value of the argument.
 	filesMatching("fabric.mod.json") {
-        expand "minecraft_dependency" : project.minecraft_version_out
+        def map = [
+            "version": version,
+            "minecraft_dependency": project.minecraft_version
+        ]
+        expand map
 	}
 }
 

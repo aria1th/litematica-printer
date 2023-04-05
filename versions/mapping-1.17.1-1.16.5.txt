@@ -1,0 +1,2 @@
+net.minecraft.client.network.ClientPlayerEntity getInventory() inventory
+net.minecraft.client.network.ClientPlayerEntity getAbilities() abilities

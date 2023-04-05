@@ -12,6 +12,7 @@ import net.minecraft.item.Items;
 import net.minecraft.network.packet.c2s.play.PlayerActionC2SPacket;
 import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
 import net.minecraft.network.packet.c2s.play.UpdateSelectedSlotC2SPacket;
+import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
@@ -21,6 +22,9 @@ import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+//#if MC<11700
+//$$ import java.util.stream.Collectors;
+//#endif
 
 import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.*;
 
@@ -29,7 +33,11 @@ import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.*;
 public class BedrockBreaker {
 	public static long lastPlaced = new Date().getTime();
 	public static Long CurrentTick = 0L;
+	//#if MC>=11700
 	static List<Direction> HORIZONTAL = List.of(Direction.EAST, Direction.WEST, Direction.NORTH, Direction.SOUTH);
+	//#else
+	//$$ static List<Direction> HORIZONTAL = Arrays.asList(Direction.EAST, Direction.WEST, Direction.NORTH, Direction.SOUTH);
+	//#endif
 	private static final Map<Long, PositionCache> targetPosMap = new LinkedHashMap<>();
 	static int rangeX = EASY_PLACE_MODE_RANGE_X.getIntegerValue();
 	static int rangeY = EASY_PLACE_MODE_RANGE_Y.getIntegerValue();
@@ -206,11 +214,19 @@ public class BedrockBreaker {
 
 	public static void removeScheduledPos(MinecraftClient mc) {
 		for (Long position : targetPosMap.keySet().stream().filter(position ->
+			//#if MC>=11700
 			targetPosMap.get(position) != null && CurrentTick - targetPosMap.get(position).SysTime > 200L && targetPosMap.get(position).isIdle()).toList()) {
+			//#else
+			//$$ targetPosMap.get(position) != null && CurrentTick - targetPosMap.get(position).SysTime > 200L && targetPosMap.get(position).isIdle()).collect(Collectors.toList())) {
+			//#endif
 			targetPosMap.remove(position);
 		}
 		for (Long position : targetPosMap.keySet().stream().filter(position ->
+			//#if MC>=11700
 			targetPosMap.get(position).canSafeRemove(mc.world)).toList()) {
+			//#else
+			//$$ targetPosMap.get(position).canSafeRemove(mc.world)).collect(Collectors.toList())) {
+			//#endif
 			targetPosMap.remove(position);
 		}
 	}
@@ -227,7 +243,7 @@ public class BedrockBreaker {
 	public static void placePiston(MinecraftClient mc, BlockPos pos, Direction facing) {
 		final ItemStack PistonStack = Items.PISTON.getDefaultStack();
 		InventoryUtils.swapToItem(mc, PistonStack);
-		MessageHolder.sendDebugMessage("Places piston at %s with facing %s".formatted(pos.toShortString(), facing));
+		MessageHolder.sendDebugMessage("Places piston at " + pos.toShortString() + " with facing " + facing);
 		//mc.getNetworkHandler().sendPacket(new UpdateSelectedSlotC2SPacket(mc.player.getInventory().selectedSlot));
 		if (ACCURATE_BLOCK_PLACEMENT.getBooleanValue()) {
 			placeViaCarpet(mc, pos, facing);
@@ -240,9 +256,9 @@ public class BedrockBreaker {
 		final ItemStack PistonStack = Items.PISTON.getDefaultStack();
 		InventoryUtils.swapToItem(mc, PistonStack);
 		if (sync) {
-			mc.getNetworkHandler().sendPacket(new UpdateSelectedSlotC2SPacket(mc.player.getInventory().selectedSlot));
+			mc.getNetworkHandler().sendPacket(new UpdateSelectedSlotC2SPacket(getInventory(mc).selectedSlot));
 		}
-		MessageHolder.sendDebugMessage("Places piston at %s with facing %s".formatted(pos.toShortString(), facing));
+		MessageHolder.sendDebugMessage("Places piston at " + pos.toShortString() + " with facing " + facing);
 		//mc.getNetworkHandler().sendPacket(new UpdateSelectedSlotC2SPacket(mc.player.getInventory().selectedSlot));
 		if (ACCURATE_BLOCK_PLACEMENT.getBooleanValue()) {
 			placeViaCarpet(mc, pos, facing);
@@ -254,7 +270,7 @@ public class BedrockBreaker {
 	public static void placeSlime(MinecraftClient mc, BlockPos pos) {
 		final ItemStack SlimeStack = Items.SLIME_BLOCK.getDefaultStack();
 		InventoryUtils.swapToItem(mc, SlimeStack);
-		MessageHolder.sendDebugMessage("Places slime at %s".formatted(pos.toShortString()));
+		MessageHolder.sendDebugMessage("Places slime at " + pos.toShortString());
 		//mc.getNetworkHandler().sendPacket(new UpdateSelectedSlotC2SPacket(mc.player.getInventory().selectedSlot));
 		placeViaCarpet(mc, pos, Direction.UP);
 	}
@@ -264,6 +280,14 @@ public class BedrockBreaker {
 		Vec3d hitVec = new Vec3d(pos.getX() + 2 + (facing.getId() * 2), pos.getY(), pos.getZ());
 		BlockHitResult hitResult = new BlockHitResult(hitVec, facing, pos, false);
 		handleTweakPlacementPacket(mc, hitResult);
+	}
+
+	public static ActionResult interactBlock(MinecraftClient mc, BlockHitResult hitResult) {
+		//#if MC>=11700
+		return mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, hitResult);
+		//#else
+		//$$ return mc.interactionManager.interactBlock(mc.player, mc.player.clientWorld, Hand.MAIN_HAND, hitResult);
+		//#endif
 	}
 
 	public static void placeViaPacketReversed(MinecraftClient mc, BlockPos pos, Direction facing, boolean ShouldOffset) {
@@ -294,8 +318,13 @@ public class BedrockBreaker {
 				facing = Direction.UP;
 			}
 		}
+		//#if MC<11700
+		//$$ float OriginPitch = mc.player.pitch;
+		//$$ float OriginYaw = mc.player.yaw;
+		//#else
 		float OriginPitch = mc.player.getPitch();
 		float OriginYaw = mc.player.getYaw();
+		//#endif
 		if (facing == Direction.DOWN) {
 			mc.getNetworkHandler().sendPacket(new PlayerMoveC2SPacket.LookAndOnGround(OriginYaw, -90.0f, mc.player.isOnGround()));
 		} else if (facing == Direction.UP) {
@@ -316,7 +345,7 @@ public class BedrockBreaker {
 
 	public static void handleTweakPlacementPacket(MinecraftClient mc, BlockHitResult hitResult) {
 		//mc.getNetworkHandler().sendPacket(new PlayerInteractBlockC2SPacket(Hand.MAIN_HAND, hitResult, 64));
-		mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, hitResult);
+		interactBlock(mc, hitResult);
 	}
 
 	public static void placeTorch(MinecraftClient mc, BlockPos pos, Direction torchFacing) {
@@ -329,11 +358,11 @@ public class BedrockBreaker {
 		} else {
 			npos = pos.offset(torchFacing.getOpposite());
 		}
-		MessageHolder.sendDebugMessage("Places torch at %s with facing %s".formatted(pos.toShortString(), torchFacing));
+		MessageHolder.sendDebugMessage("Places torch at " + pos.toShortString() + " with facing " + torchFacing);
 		Vec3d hitVec = Vec3d.ofCenter(npos).add(Vec3d.of(torchFacing.getVector()).multiply(0.5));
 		BlockHitResult hitResult = new BlockHitResult(hitVec, torchFacing, npos, false);
-		MessageHolder.sendDebugMessage("Hitresult is %s %s".formatted(hitVec, npos.toShortString()));
-		mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, hitResult);
+		MessageHolder.sendDebugMessage("Hitresult is " + hitVec.toString() + " " + npos.toShortString());
+		interactBlock(mc, hitResult);
 		positionStorage.registerPos(pos, true);
 	}
 
@@ -362,15 +391,23 @@ public class BedrockBreaker {
 		return false;
 	}
 
+	private static PlayerInventory getInventory(MinecraftClient mc) {
+		//#if MC<11700
+		//$$ return mc.player.inventory;
+		//#else
+		return mc.player.getInventory();
+		//#endif
+	}
+
 	public static boolean isItemPrePared(MinecraftClient mc) {
-		PlayerInventory inv = mc.player.getInventory();
+		PlayerInventory inv = getInventory(mc);
 		ItemStack PistonStack = Items.PISTON.getDefaultStack();
 		ItemStack RedstoneTorchStack = Items.REDSTONE_TORCH.getDefaultStack();
 		return inv.getSlotWithStack(PistonStack) != -1 && inv.getSlotWithStack(RedstoneTorchStack) != -1;
 	}
 
 	public static boolean canPlaceSlime(MinecraftClient mc) {
-		PlayerInventory inv = mc.player.getInventory();
+		PlayerInventory inv = getInventory(mc);
 		ItemStack SlimeStack = Items.SLIME_BLOCK.getDefaultStack();
 		return inv.getSlotWithStack(SlimeStack) != -1;
 	}
@@ -380,11 +417,11 @@ public class BedrockBreaker {
 		if (bestSlotId == -1) {
 			return;
 		}
-		ItemStack stack = mc.player.getInventory().getStack(bestSlotId);
+		ItemStack stack = getInventory(mc).getStack(bestSlotId);
 		MessageHolder.sendDebugMessage("Swaps to Pickaxe " + stack);
 		InventoryUtils.swapToItem(mc, stack);
 		MessageHolder.sendDebugMessage("Holding stack " + mc.player.getMainHandStack());
-		mc.getNetworkHandler().sendPacket(new UpdateSelectedSlotC2SPacket(mc.player.getInventory().selectedSlot));
+		mc.getNetworkHandler().sendPacket(new UpdateSelectedSlotC2SPacket(getInventory(mc).selectedSlot));
 	}
 
 
@@ -392,7 +429,11 @@ public class BedrockBreaker {
 		if (mc.world.getBlockState(pos).isAir()) {
 			return;
 		}
+		//#if MC>=11700
 		mc.getNetworkHandler().sendPacket(new PlayerActionC2SPacket(PlayerActionC2SPacket.Action.START_DESTROY_BLOCK, pos, direction, 64));
+		//#else
+		//$$ mc.getNetworkHandler().sendPacket(new PlayerActionC2SPacket(PlayerActionC2SPacket.Action.START_DESTROY_BLOCK, pos, direction));
+		//#endif
 		//positionStorage.registerPos(pos, false);
 	}
 
@@ -452,7 +493,8 @@ public class BedrockBreaker {
 				Direction PistonFacing = torch.Pistonfacing;
 				Direction PistonExtendFacing = torch.PistonBreakableFacing;
 				BlockPos SlimePos = torch.slimePos;
-				MessageHolder.sendDebugMessage("Will place Torch at %s, facing %s \n Piston at %s, Facing %s, and changes as %s \n Optional Slime at %s".formatted(TorchPos.toShortString(), TorchFacing, PistonPos.toShortString(), PistonFacing, PistonExtendFacing, SlimePos));
+				//MessageHolder.sendDebugMessage("Will place Torch at %s, facing %s \n Piston at %s, Facing %s, and changes as %s \n Optional Slime at %s".formatted(TorchPos.toShortString(), TorchFacing, PistonPos.toShortString(), PistonFacing, PistonExtendFacing, SlimePos));
+				MessageHolder.sendDebugMessage("Will place Torch at " + TorchPos.toShortString() + ", facing " + TorchFacing + "\n Piston at " + PistonPos.toShortString() + ", Facing " + PistonFacing + ", and changes as " + PistonExtendFacing + "\n Optional Slime at " + SlimePos);
 				if (SlimePos != null) {
 					placeSlime(mc, SlimePos);
 				}
@@ -544,11 +586,11 @@ public class BedrockBreaker {
 		public int doSomething(MinecraftClient mc) {
 			refresh(mc.world);
 			switch (this.state) {
-				case EXTENDED -> {
+				case EXTENDED : {
 					this.processBreaking(mc);
 					return 4;
 				}
-				case FAIL -> {
+				case FAIL : {
 					this.resetFailure(mc);
 					return 3;
 				}

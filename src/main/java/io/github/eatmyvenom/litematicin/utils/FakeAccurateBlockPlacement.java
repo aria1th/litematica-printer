@@ -14,6 +14,8 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.network.ClientPlayerInteractionManager;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
@@ -33,6 +35,8 @@ import java.util.Queue;
 import java.util.concurrent.ArrayBlockingQueue;
 
 import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.*;
+import static io.github.eatmyvenom.litematicin.utils.BedrockBreaker.interactBlock;
+import static io.github.eatmyvenom.litematicin.utils.InventoryUtils.isCreative;
 
 public class FakeAccurateBlockPlacement {
 
@@ -50,7 +54,7 @@ public class FakeAccurateBlockPlacement {
 	private static int blockPlacedInTick = 0;
 	private static BlockState handlingState = null;
 	public static Item currentHandling = Items.AIR;
-	private static final Queue<PosWithBlock> waitingQueue = new ArrayBlockingQueue<>(1) {
+	private static final Queue<PosWithBlock> waitingQueue = new ArrayBlockingQueue<PosWithBlock>(1) {
 	};
 	private static final HashSet<Block> warningSet = new HashSet<>();
 
@@ -76,6 +80,22 @@ public class FakeAccurateBlockPlacement {
 			return true;
 		}
 		return currentHandling == item;
+	}
+
+	public static float getYaw(PlayerEntity player) {
+		//#if MC>=11700
+		return player.getYaw();
+		//#else
+		//$$ return player.yaw;
+		//#endif
+	}
+
+	public static float getPitch(PlayerEntity player) {
+		//#if MC>=11700
+		return player.getPitch();
+		//#else
+		//$$ return player.pitch;
+		//#endif
 	}
 
 
@@ -105,8 +125,8 @@ public class FakeAccurateBlockPlacement {
 		if (requestedTicks <= -3) {
 			requestedTicks = -3;
 			fakeDirection = null;
-			previousFakePitch = playerEntity.getPitch();
-			previousFakeYaw = playerEntity.getYaw();
+			previousFakePitch = getPitch(playerEntity);
+			previousFakeYaw = getYaw(playerEntity);
 		}
 		if (requestedTicks == 0 && PRINTER_ONLY_FAKE_ROTATION_MODE.getBooleanValue()){
 			placeFromQueue();
@@ -148,7 +168,11 @@ public class FakeAccurateBlockPlacement {
 
 	public static void sendLookPacket(ClientPlayNetworkHandler networkHandler, ClientPlayerEntity playerEntity) {
 		networkHandler.sendPacket(
+			//#if MC>=11700
 			new PlayerMoveC2SPacket.LookAndOnGround(
+			//#else
+			//$$ new PlayerMoveC2SPacket.LookOnly(
+			//#endif
 				fakeYaw,
 				fakePitch,
 				playerEntity.isOnGround()
@@ -309,10 +333,16 @@ public class FakeAccurateBlockPlacement {
 			MessageHolder.sendOrderMessage("Reason : " + (canPlace(blockState, blockPos) ? "" : "cannotPlace") + " " + (blockState.isAir() ? "isAir" : "") + " " + (MaterialCache.getInstance().getRequiredBuildItemForState(blockState, SchematicWorldHandler.getSchematicWorld(), blockPos).getItem() == Items.AIR ? "materialWasAir" : ""));
 			return false;
 		}
-		if (blockState.isOf(Blocks.HOPPER) || blockState.isIn(BlockTags.SHULKER_BOXES) || blockState.isOf(Blocks.LIGHTNING_ROD) || blockState.isOf(Blocks.END_ROD)) {
+		if (blockState.isOf(Blocks.HOPPER) || blockState.isIn(BlockTags.SHULKER_BOXES) ||  blockState.isOf(Blocks.END_ROD)) {
 			placeBlock(blockPos, blockState);
 			return true;
 		}
+		//#if MC>=11700
+		else if (blockState.isOf(Blocks.LIGHTNING_ROD)) {
+			placeBlock(blockPos, blockState);
+			return true;
+		}
+		//#endif
 		if (!blockState.contains(Properties.FACING) && !blockState.contains(Properties.HORIZONTAL_FACING) && !(blockState.getBlock() instanceof AbstractRailBlock) && !(blockState.getBlock() instanceof TorchBlock)) {
 			placeBlock(blockPos, blockState);
 			return true; //without facing properties
@@ -503,10 +533,10 @@ public class FakeAccurateBlockPlacement {
 
 			MessageHolder.sendDebugMessage(player, "Placing " + blockState.getBlock().getTranslationKey() + " at " + pos.toShortString() + " facing : " + fi.dy.masa.malilib.util.BlockUtils.getFirstPropertyFacingValue(blockState));
 			MessageHolder.sendDebugMessage(player, "Player facing is set to : " + fakeDirection + " Yaw : " + fakeYaw + " Pitch : " + fakePitch + " ticks : " + requestedTicks + " for pos " + pos.toShortString());
-			interactionManager.interactBlock(player, Hand.MAIN_HAND, blockHitResult);
-			InventoryUtils.decrementCount(player.getAbilities().creativeMode);
+			interactBlock(minecraftClient, blockHitResult);
+			InventoryUtils.decrementCount(isCreative(player));
 			blockPlacedInTick++;
-			if ( !player.getAbilities().creativeMode && InventoryUtils.lastCount <= 0 && SLEEP_AFTER_CONSUME.getIntegerValue() > 0) {
+			if ( !isCreative(player) && InventoryUtils.lastCount <= 0 && SLEEP_AFTER_CONSUME.getIntegerValue() > 0) {
 				shouldReturnValue = true;
 				Printer.lastPlaced = new Date().getTime() + SLEEP_AFTER_CONSUME.getIntegerValue();
 			}
@@ -528,8 +558,19 @@ public class FakeAccurateBlockPlacement {
 		return false;
 	}
 
-	// we just record pos + block and put in queue.
+	//#if MC>=11700
 	private record PosWithBlock(BlockPos pos, BlockState blockState) {
 	}
+	//#else
+	// we just record pos + block and put in queue.
+	//$$ private static class PosWithBlock {
+	//$$ public BlockPos pos;
+	//$$ public BlockState blockState;
+	//$$ PosWithBlock(BlockPos pos, BlockState blockState) {
+	//$$ 	this.pos = pos;
+	//$$ 	this.blockState = blockState;
+	//$$ }
+	//$$ }
+	//#endif
 
 }

@@ -56,6 +56,22 @@ public class InventoryUtils {
 		}
 	}
 
+	public static PlayerInventory getInventory(ClientPlayerEntity player) {
+		//#if MC>=11700
+		return player.getInventory();
+		//#else
+		//$$ return player.inventory;
+		//#endif
+	}
+
+	public static boolean isCreative(ClientPlayerEntity player) {
+		//#if MC>=11700
+		return player.getAbilities().creativeMode;
+		//#else
+		//$$ return player.abilities.creativeMode;
+		//#endif
+	}
+
 
 	public static void decrementCount() {
 		if (lastCount > 0) {
@@ -167,7 +183,7 @@ public class InventoryUtils {
 	}
 
 	public static boolean requiresSwap(ClientPlayerEntity player, ItemStack stack) {
-		int selectedSlot = player.getInventory().selectedSlot;
+		int selectedSlot = getInventory(player).selectedSlot;
 		if (usedSlots.get(selectedSlot) != null) {
 			return stack.getItem() != usedSlots.get(selectedSlot) || slotCounts.getOrDefault(selectedSlot, 0) <= 0;
 		}
@@ -175,11 +191,11 @@ public class InventoryUtils {
 	}
 
 	public static boolean canSwap(ClientPlayerEntity player, ItemStack stack) {
-		if (player.getAbilities().creativeMode) {
+		if (isCreative(player)) {
 			return true;
 		}
-		int slotNum = player.getInventory().getSlotWithStack(stack);
-		return slotNum != -1 && areItemsExact(player.getInventory().getStack(slotNum), stack);
+		int slotNum = getInventory(player).getSlotWithStack(stack);
+		return slotNum != -1 && areItemsExact(getInventory(player).getStack(slotNum), stack);
 	}
 
 	synchronized public static boolean swapToItem(MinecraftClient client, ItemStack stack) {
@@ -189,7 +205,7 @@ public class InventoryUtils {
 		if (player == null || client.interactionManager == null) {
 			return false;
 		}
-		//player.getInventory().updateItems();
+		//getInventory(player).updateItems();
 		if (stack.getItem() != handlingItem) {
 			if (maxChange != 0 && itemChangeCount > maxChange) {
 				MessageHolder.sendOrderMessage("Exceeded item change count");
@@ -197,38 +213,39 @@ public class InventoryUtils {
 			}
 		}
 		if (!requiresSwap(player, stack)) {
-			assert trackedSelectedSlot == -1 || trackedSelectedSlot == player.getInventory().selectedSlot : "Selected slot changed for external reason! : expected %s, current %s".formatted(trackedSelectedSlot, player.getInventory().selectedSlot);
+			assert trackedSelectedSlot == -1 || trackedSelectedSlot == getInventory(player).selectedSlot :
+				"Selected slot changed for external reason! : expected " + trackedSelectedSlot + ", current " + getInventory(player).selectedSlot;
 			assert previousItem == null || previousItem == stack.getItem() : "Handling item :  " + handlingItem + " was not equal to " + stack.getItem();
 			MessageHolder.sendOrderMessage("Didn't require swap for item " + stack.getItem() + " previous handling item : " + previousItem);
-			lastCount = player.getAbilities().creativeMode ? 65536 : getMainHandStack(player).getCount();
+			lastCount = isCreative(player) ? 65536 : getMainHandStack(player).getCount();
 			if (usedSlots.containsValue(stack.getItem())) {
 				if (searchSlot(stack.getItem()) != trackedSelectedSlot) {
 					MessageHolder.sendMessageUncheckedUnique("Hotbar has duplicate item references, which should not happen!");
 				}
 			}
-			trackedSelectedSlot = player.getInventory().selectedSlot;
-			usedSlots.put(player.getInventory().selectedSlot, getMainHandStack(player).getItem());
-			slotCounts.put(player.getInventory().selectedSlot, lastCount);
+			trackedSelectedSlot = getInventory(player).selectedSlot;
+			usedSlots.put(getInventory(player).selectedSlot, getMainHandStack(player).getItem());
+			slotCounts.put(getInventory(player).selectedSlot, lastCount);
 			previousItem = stack.getItem();
 			return true;
 		}
 		if (usedSlots.containsValue(stack.getItem())) {
 			int slot = searchSlot(stack.getItem());
 			if (slot != -1) {
-				player.getInventory().selectedSlot = slot;
-				trackedSelectedSlot = player.getInventory().selectedSlot;
+				getInventory(player).selectedSlot = slot;
+				trackedSelectedSlot = getInventory(player).selectedSlot;
 				usedSlots.put(trackedSelectedSlot, stack.getItem());
 				slotCounts.put(trackedSelectedSlot, stack.getCount());
 				lastCount = stack.getCount();
 				previousItem = stack.getItem();
 				handlingItem = previousItem;
-				MessageHolder.sendOrderMessage("Selected slot " + player.getInventory().selectedSlot + " based on cache for " + stack.getItem());
-				client.getNetworkHandler().sendPacket(new UpdateSelectedSlotC2SPacket(player.getInventory().selectedSlot));
-				return !player.getInventory().getMainHandStack().isEmpty();
+				MessageHolder.sendOrderMessage("Selected slot " + getInventory(player).selectedSlot + " based on cache for " + stack.getItem());
+				client.getNetworkHandler().sendPacket(new UpdateSelectedSlotC2SPacket(getInventory(player).selectedSlot));
+				return !getInventory(player).getMainHandStack().isEmpty();
 			}
 		}
 		if (survivalSwap(client, player, stack)) {
-			usedSlots.put(player.getInventory().selectedSlot, stack.getItem());
+			usedSlots.put(getInventory(player).selectedSlot, stack.getItem());
 			slotCounts.put(trackedSelectedSlot, getMainHandStack(player).getCount());
 			MessageHolder.sendOrderMessage("Swapped to item " + stack.getItem());
 			handlingItem = stack.getItem();
@@ -240,12 +257,12 @@ public class InventoryUtils {
 	}
 
 	public static int getSlotWithStack(ClientPlayerEntity player, ItemStack stack) {
-		return player.getInventory().getSlotWithStack(stack);
+		return getInventory(player).getSlotWithStack(stack);
 	}
 
 	@SuppressWarnings("ConstantConditions")
 	private static boolean creativeSwap(MinecraftClient client, ClientPlayerEntity player, ItemStack stack) {
-		if (!player.getAbilities().creativeMode) {
+		if (!isCreative(player)) {
 			return false;
 		}
 		int selectedSlot = getAvailableSlot(stack.getItem());
@@ -253,13 +270,13 @@ public class InventoryUtils {
 			return false;
 		}
 		MessageHolder.sendOrderMessage("Clicked creative stack " + stack.getItem() + " for slot " + selectedSlot);
-		//player.getInventory().addPickBlock(stack);
-		player.getInventory().selectedSlot = selectedSlot;
+		//getInventory(player).addPickBlock(stack);
+		getInventory(player).selectedSlot = selectedSlot;
 		client.interactionManager.clickCreativeStack(stack, 36 + selectedSlot);
-		client.getNetworkHandler().sendPacket(new UpdateSelectedSlotC2SPacket(player.getInventory().selectedSlot));
+		client.getNetworkHandler().sendPacket(new UpdateSelectedSlotC2SPacket(getInventory(player).selectedSlot));
 		trackedSelectedSlot = selectedSlot;
-		player.getInventory().main.set(selectedSlot, stack);
-		usedSlots.put(player.getInventory().selectedSlot, stack.getItem());
+		getInventory(player).main.set(selectedSlot, stack);
+		usedSlots.put(getInventory(player).selectedSlot, stack.getItem());
 		slotCounts.put(trackedSelectedSlot, 65536);
 		lastCount = 65536;
 		handlingItem = stack.getItem();
@@ -274,7 +291,7 @@ public class InventoryUtils {
 			return false;
 		}
 		if (areItemsExact(player.getOffHandStack(), stack) && !areItemsExact(getMainHandStack(player), stack)) {
-			lastCount = client.player.getAbilities().creativeMode ? 65536 : client.player.getOffHandStack().getCount();
+			lastCount = isCreative(player) ? 65536 : client.player.getOffHandStack().getCount();
 			client.getNetworkHandler().sendPacket(new PlayerActionC2SPacket(net.minecraft.network.packet.c2s.play.PlayerActionC2SPacket.Action.SWAP_ITEM_WITH_OFFHAND, BlockPos.ORIGIN, Direction.DOWN));
 			return true;
 		}
@@ -288,10 +305,10 @@ public class InventoryUtils {
 				MessageHolder.sendOrderMessage("Expected : " + usedSlots.get(slot) + " but current client handles : " + stack.getItem());
 				return false;
 			}
-			player.getInventory().selectedSlot = slot;
+			getInventory(player).selectedSlot = slot;
 			trackedSelectedSlot = slot;
 			MessageHolder.sendOrderMessage("Selected hotbar Slot " + slot);
-			lastCount = player.getAbilities().creativeMode ? 65536 : player.getInventory().getStack(slot).getCount();
+			lastCount = isCreative(player) ? 65536 : getInventory(player).getStack(slot).getCount();
 			client.getNetworkHandler().sendPacket(new UpdateSelectedSlotC2SPacket(slot));
 		} else {
 			int selectedSlot = getAvailableSlot(stack.getItem());
@@ -299,11 +316,11 @@ public class InventoryUtils {
 				MessageHolder.sendOrderMessage("All hotbar slots are used");
 				return false;
 			}
-			lastCount = player.getAbilities().creativeMode ? 65536 : player.getInventory().getStack(slot).getCount();
-			MessageHolder.sendOrderMessage("Slot at " + slot + "(%s)".formatted(player.getInventory().getStack(slot).getItem()) + " is swapped with " + selectedSlot + "(%s)".formatted(player.getInventory().main.get(selectedSlot)));
+			lastCount = isCreative(player) ? 65536 : getInventory(player).getStack(slot).getCount();
+			MessageHolder.sendOrderMessage("Slot at " + slot + "(" + getInventory(player).getStack(slot).getItem() + ")" + " is swapped with " + selectedSlot + "(" + getInventory(player).main.get(selectedSlot) + ")");
 			usedSlots.put(selectedSlot, stack.getItem());
 			client.interactionManager.clickSlot(player.playerScreenHandler.syncId, slot, selectedSlot, SlotActionType.SWAP, player);
-			player.getInventory().selectedSlot = selectedSlot;
+			getInventory(player).selectedSlot = selectedSlot;
 			trackedSelectedSlot = selectedSlot;
 
 		}
@@ -322,7 +339,9 @@ public class InventoryUtils {
 		if (blockEntity == null) {
 			return result;
 		}
-		if (blockEntity instanceof LootableContainerBlockEntity containerBlockEntity) {
+		if (blockEntity instanceof LootableContainerBlockEntity) {
+			// might use JAVA 8
+			LootableContainerBlockEntity containerBlockEntity = (LootableContainerBlockEntity) blockEntity;
 			if (containerBlockEntity.isEmpty()) {
 				return result;
 			}
@@ -342,13 +361,15 @@ public class InventoryUtils {
 		if (blockEntity == null) {
 			return false;
 		}
-		if (blockEntity instanceof LootableContainerBlockEntity containerBlockEntity) {
+		if (blockEntity instanceof LootableContainerBlockEntity) {
+			// might use JAVA 8
+			LootableContainerBlockEntity containerBlockEntity = (LootableContainerBlockEntity) blockEntity;
 			if (containerBlockEntity.isEmpty()) {
 				return false;
 			}
 			for (int i = 0; i < (containerBlockEntity).size(); i++) {
 				if (!containerBlockEntity.getStack(i).isEmpty()) {
-					return false;
+					return true;
 				}
 			}
 		}

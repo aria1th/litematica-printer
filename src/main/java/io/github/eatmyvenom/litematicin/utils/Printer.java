@@ -34,9 +34,15 @@ import net.minecraft.network.packet.c2s.play.UpdateSignC2SPacket;
 import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.state.property.Properties;
 import net.minecraft.text.Text;
+//#if MC>=11800
 import net.minecraft.text.TextContent;
+//#else
+//$$ import net.minecraft.text.LiteralText;
+//$$ import fi.dy.masa.malilib.util.SubChunkPos;
+//#endif
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
+import net.minecraft.util.Pair;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
@@ -45,16 +51,19 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import net.minecraft.world.dimension.NetherPortal;
 
-import javax.annotation.Nullable;
 import java.util.*;
 
 import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.*;
+import static io.github.eatmyvenom.litematicin.utils.BedrockBreaker.interactBlock;
+import static io.github.eatmyvenom.litematicin.utils.FakeAccurateBlockPlacement.getYaw;
+import static io.github.eatmyvenom.litematicin.utils.InventoryUtils.getInventory;
+import static io.github.eatmyvenom.litematicin.utils.InventoryUtils.isCreative;
 
 @SuppressWarnings("ConstantConditions")
 public class Printer {
 
 	private static final HashSet<Long> signCache = new HashSet<>();
-	private static final LinkedHashMap<Map.Entry<Long, Boolean>, PositionCache> positionCache = new LinkedHashMap<>();
+	private static final LinkedHashMap<Pair<Long, Boolean>, PositionCache> positionCache = new LinkedHashMap<>();
 	// For printing delay
 	public static boolean isSleeping = false;
 	public static long lastPlaced = new Date().getTime();
@@ -101,8 +110,8 @@ public class Printer {
 		World world = SchematicWorldHandler.getSchematicWorld();
 		ItemStack stack = isReplaceableWaterFluidSource(preference) && PRINTER_PLACE_ICE.getBooleanValue() ? Items.ICE.getDefaultStack() : MaterialCache.getInstance().getRequiredBuildItemForState(preference, world, pos);
 		if (!stack.isEmpty() && stack.getItem() != Items.AIR) {
-			PlayerInventory inv = mc.player.getInventory();
-			if (!mc.player.getAbilities().creativeMode) {
+			PlayerInventory inv = getInventory(mc.player);
+			if (!isCreative(mc.player)) {
 				int slot = inv.getSlotWithStack(stack);
 				if (slot == -1) {
 					return false;
@@ -118,8 +127,8 @@ public class Printer {
 
 	public static boolean canPickItem(MinecraftClient mc, ItemStack stack) {
 		if (!stack.isEmpty()) {
-			PlayerInventory inv = mc.player.getInventory();
-			if (!mc.player.getAbilities().creativeMode) {
+			PlayerInventory inv = getInventory(mc.player);
+			if (!isCreative(mc.player)) {
 				int slot = inv.getSlotWithStack(stack);
 				if (slot == -1) {
 					return false;
@@ -240,7 +249,7 @@ public class Printer {
 			BlockHitResult hitResult = new BlockHitResult(hitPos, side, blockPos, false);
 			boolean canContinue;
 			if (!FAKE_ROTATION_BETA.getBooleanValue() || ACCURATE_BLOCK_PLACEMENT.getBooleanValue()) { //Accurateblockplacement, or vanilla but no fake
-				canContinue = mc.interactionManager.interactBlock(mc.player, hand, hitResult).isAccepted(); //PLACE block
+				canContinue = interactBlock(mc, hitResult).isAccepted(); //PLACE block
 				cacheEasyPlacePosition(blockPos, false);
 			} else {
 				canContinue = FakeAccurateBlockPlacement.request(schematicState, blockPos);
@@ -331,7 +340,7 @@ public class Printer {
 		} else {
 			isSleeping = false;
 		}
-		boolean isCreative = mc.player.isCreative();
+		boolean isCreative = isCreative(mc.player);
 		BlockPos tracePos = mc.player.getBlockPos();
 		int posX = tracePos.getX();
 		int posY = tracePos.getY();
@@ -353,8 +362,11 @@ public class Printer {
 		boolean CanUseProtocol = ACCURATE_BLOCK_PLACEMENT.getBooleanValue();
 		boolean FillInventory = PRINTER_PUMPKIN_PIE_FOR_COMPOSTER.getBooleanValue();
 		ItemStack composableItem = Items.PUMPKIN_PIE.getDefaultStack();
-		//SubChunkPos cpos = new SubChunkPos(tracePos);
+		//#if MC>=11700
 		List<PlacementPart> allPlacementsTouchingSubChunk = DataManager.getSchematicPlacementManager().getAllPlacementsTouchingChunk(tracePos);
+		//#else
+		//$$ List<PlacementPart> allPlacementsTouchingSubChunk = DataManager.getSchematicPlacementManager().getAllPlacementsTouchingSubChunk(new SubChunkPos(tracePos));
+		//#endif
 		Box selectedBox = null;
 		if (allPlacementsTouchingSubChunk.isEmpty() && !ClearArea) {
 			if (BEDROCK_BREAKING.getBooleanValue()) {
@@ -472,7 +484,6 @@ public class Printer {
 		toX = Math.min(toX, (int) mc.player.getX() + rangeX);
 		toY = Math.min(toY, (int) mc.player.getY() + rangeY);
 		toZ = Math.min(toZ, (int) mc.player.getZ() + rangeZ);
-		long startTime = new Date().getTime();
 		for (int y = fromY; y <= toY; y++) {
 			for (int x = fromX; x <= toX; x++) {
 				for (int z = fromZ; z <= toZ; z++) {
@@ -535,7 +546,7 @@ public class Printer {
 								(stateClient.getBlock() instanceof SlabBlock && stateSchematic.getBlock() instanceof SlabBlock && stateClient.get(SlabBlock.TYPE) != stateSchematic.get(SlabBlock.TYPE))
 									&& dx * dx + Math.pow(dy + 1.5, 2) + dz * dz <= MaxReach * MaxReach) {
 
-								if (mc.player.getAbilities().creativeMode) {
+								if (isCreative(mc.player)) {
 									mc.interactionManager.attackBlock(pos, Direction.DOWN);
 									interact++;
 
@@ -569,7 +580,7 @@ public class Printer {
 										if (breaker.startBreakingBlock(pos, mc)) {
 											return ActionResult.SUCCESS;
 										}
-									} // it needs to avoid unbreakable blocks and just added and lava, but its not block so somehow made it work
+									} // it needs to avoid unbreakable blocks and just added and lava, but it's not block so somehow made it work
 									continue;
 								}
 							}
@@ -663,11 +674,10 @@ public class Printer {
 											int level = stateClient.get(ComposterBlock.LEVEL);
 											int Schematiclevel = stateSchematic.get(ComposterBlock.LEVEL);
 											if (level != Schematiclevel && !(level == 7 && Schematiclevel == 8)) {
-												Hand hand = Hand.MAIN_HAND;
 												if (doSchematicWorldPickBlock(mc, composableItem)) {
 													Vec3d hitPos = new Vec3d(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5);
 													BlockHitResult hitResult = new BlockHitResult(hitPos, side, pos, false);
-													mc.interactionManager.interactBlock(mc.player, hand, hitResult); //COMPOSTER
+													interactBlock(mc, hitResult); //COMPOSTER
 													io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount(isCreative);
 													cacheEasyPlacePosition(pos, false);
 													if (shouldSleepLonger) {
@@ -688,13 +698,11 @@ public class Printer {
 										}
 										for (int i = 0; i < clickTimes; i++) // Click on the block a few times
 										{
-											Hand hand = Hand.MAIN_HAND;
-
 											Vec3d hitPos = Vec3d.ofCenter(pos);
 
 											BlockHitResult hitResult = new BlockHitResult(hitPos, side, pos, false);
 
-											mc.interactionManager.interactBlock(mc.player, hand, hitResult); //NOTEBLOCK, REPEATER...
+											interactBlock(mc, hitResult); //NOTEBLOCK, REPEATER...
 											interact++;
 										}
 
@@ -734,10 +742,9 @@ public class Printer {
 									}
 									Direction side = Direction.UP;
 									if (ShapeBoolean) {
-										Hand hand = Hand.MAIN_HAND;
 										Vec3d hitPos = Vec3d.ofCenter(pos);
 										BlockHitResult hitResult = new BlockHitResult(hitPos, side, pos, false);
-										mc.interactionManager.interactBlock(mc.player, hand, hitResult); //CACTUS
+										interactBlock(mc, hitResult); //CACTUS
 										cacheEasyPlacePosition(pos, true);
 										interact++;
 									} else if (breakBlocks && ShouldFix) { //cannot fix via flippincactus
@@ -782,11 +789,10 @@ public class Printer {
 						}
 					}
 					if (ClearArea) {
-						Hand hand = Hand.MAIN_HAND;
 						if (ClearArea && doSchematicWorldPickBlock(mc, stack)) {
 							Vec3d hitPos = Vec3d.ofCenter(pos).add(0, 0.5, 0);
 							BlockHitResult hitResult = new BlockHitResult(hitPos, Direction.UP, pos, false);
-							mc.interactionManager.interactBlock(mc.player, hand, hitResult); //FLUID REMOVAL
+							interactBlock(mc, hitResult); //FLUID REMOVAL
 							io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount(isCreative);
 							interact++;
 							cacheEasyPlacePosition(pos, false);
@@ -900,30 +906,35 @@ public class Printer {
 								continue;
 							}
 							if (sBlock instanceof ObserverBlock) {
-								Map.Entry<Boolean, BlockPos> value = isWatchingCorrectState(mc, world, pos, null, true);
-								if (!value.getKey()) {
-									recordCause(pos, sBlock.getTranslationKey() + " at " + pos.toShortString() + " can't be placed due to " + value.getValue().toShortString(), value.getValue());
+								Pair<Boolean, BlockPos> value = isWatchingCorrectState(mc, world, pos, null, true);
+								if (!value.getLeft()) {
+									recordCause(pos, sBlock.getTranslationKey() + " at " + pos.toShortString() + " can't be placed due to " + value.getRight().toShortString(), value.getRight());
 									MessageHolder.sendUniqueMessage(mc.player, getReason(pos.asLong()));
 									continue;
 								}
 							}
 						}
-						if (sBlock instanceof NetherPortalBlock && !sBlock.getName().equals(cBlock.getName()) && NetherPortal.getNewPortal(mc.world, pos, Direction.Axis.X).isPresent()) {
+						if (sBlock instanceof NetherPortalBlock && !sBlock.getName().equals(cBlock.getName()) &&
+							//#if MC>=11700
+							NetherPortal.getNewPortal(mc.world, pos, Direction.Axis.X).isPresent()
+							//#else
+							//$$ AreaHelper.method_30485(mc.world, pos, Direction.Axis.X).isPresent()
+							//#endif
+						) {
 							ItemStack lightStack = Items.FIRE_CHARGE.getDefaultStack();
-							if (mc.player.getInventory().getSlotWithStack(lightStack) == -1) {
+							if (getInventory(mc.player).getSlotWithStack(lightStack) == -1) {
 								lightStack = Items.FLINT_AND_STEEL.getDefaultStack();
 							}
-							Hand hand = Hand.MAIN_HAND;
 							BlockPos offsetPos = new BlockPos(x, y - 1, z);
 							BlockState offsetStateSchematic = world.getBlockState(offsetPos);
 							BlockState offsetStateClient = mc.world.getBlockState(offsetPos);
-							if (mc.player.getInventory().getSlotWithStack(lightStack) == -1 || offsetStateClient.isAir() || (!offsetStateClient.getBlock().getName().equals(offsetStateSchematic.getBlock().getName()))) {
+							if (getInventory(mc.player).getSlotWithStack(lightStack) == -1 || offsetStateClient.isAir() || (!offsetStateClient.getBlock().getName().equals(offsetStateSchematic.getBlock().getName()))) {
 								continue;
 							}
 							if (doSchematicWorldPickBlock(mc, lightStack)) {
 								Vec3d hitPos = Vec3d.ofCenter(new BlockPos(x, y - 1, z)).add(0, 0.5, 0);
 								BlockHitResult hitResult = new BlockHitResult(hitPos, Direction.UP, new BlockPos(x, y - 1, z), false);
-								mc.interactionManager.interactBlock(mc.player, hand, hitResult); //LIGHT
+								interactBlock(mc, hitResult); //LIGHT
 								cacheEasyPlacePosition(pos, false);
 								sleepWhenRequired(mc);
 								if (shouldSleepLonger) {
@@ -964,7 +975,7 @@ public class Printer {
 						// Exception for signs (edge case)
 						if (stateSchematic.getBlock() instanceof SignBlock
 							&& !(stateSchematic.getBlock() instanceof WallSignBlock)) {
-							if ((MathHelper.floor((double) ((180.0F + mc.player.getYaw()) * 16.0F / 360.0F) + 0.5D)
+							if ((MathHelper.floor((double) ((180.0F + getYaw(mc.player)) * 16.0F / 360.0F) + 0.5D)
 								& 15) != stateSchematic.get(SignBlock.ROTATION)) {
 								continue;
 							}
@@ -984,7 +995,7 @@ public class Printer {
 								continue;
 							}
 							if (doSchematicWorldPickBlock(mc, iceStack)) {
-								mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, new BlockHitResult(new Vec3d(pos.getX(), pos.getY(), pos.getZ()), Direction.DOWN, pos, false));
+								interactBlock(mc, new BlockHitResult(new Vec3d(pos.getX(), pos.getY(), pos.getZ()), Direction.DOWN, pos, false));
 								io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount(isCreative);
 								cacheEasyPlacePosition(pos, false);
 								sleepWhenRequired(mc);
@@ -1096,7 +1107,7 @@ public class Printer {
 											if (stateSchematic.contains(RedstoneTorchBlock.LIT) && !stateSchematic.get(RedstoneTorchBlock.LIT)) {
 												cacheEasyPlacePosition(pos.up(), false, miliseconds);
 											}
-											mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, new BlockHitResult(hitVec, required, npos, false)); //place block
+											interactBlock(mc, new BlockHitResult(hitVec, required, npos, false)); //place block
 											io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount(isCreative);
 											sleepWhenRequired(mc);
 										}
@@ -1113,7 +1124,7 @@ public class Printer {
 										if (stateSchematic.contains(RedstoneTorchBlock.LIT) && !stateSchematic.get(RedstoneTorchBlock.LIT)) {
 											cacheEasyPlacePosition(pos.up(), false, miliseconds);
 										}
-										mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, new BlockHitResult(hitVec, Direction.UP, npos, false)); //place block
+										interactBlock(mc, new BlockHitResult(hitVec, Direction.UP, npos, false)); //place block
 										io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount(isCreative);
 										sleepWhenRequired(mc);
 									}
@@ -1128,7 +1139,7 @@ public class Printer {
 										if (stateSchematic.contains(RedstoneTorchBlock.LIT) && !stateSchematic.get(RedstoneTorchBlock.LIT)) {
 											cacheEasyPlacePosition(pos.up(), false, 700);
 										}
-										mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, new BlockHitResult(hitVec, required, npos, false)); //place block
+										interactBlock(mc, new BlockHitResult(hitVec, required, npos, false)); //place block
 										io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount(isCreative);
 										sleepWhenRequired(mc);
 									}
@@ -1139,7 +1150,7 @@ public class Printer {
 								if (horizontalFacing.getOpposite() == trapdoor) {
 									if (doSchematicWorldPickBlock(mc, stateSchematic, pos)) {
 										cacheEasyPlacePosition(pos, false);
-										mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, new BlockHitResult(Vec3d.of(pos),
+										interactBlock(mc, new BlockHitResult(Vec3d.of(pos),
 											stateSchematic.get(TrapdoorBlock.FACING).getOpposite(), pos, false)); //place block
 										io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount(isCreative);
 										sleepWhenRequired(mc);
@@ -1152,7 +1163,7 @@ public class Printer {
 								if ((primaryFacing.getAxis() == Direction.Axis.Y && horizontalFacing == direction) || (primaryFacing.getAxis() != Direction.Axis.Y && horizontalFacing == direction.getOpposite())) {
 									if (doSchematicWorldPickBlock(mc, stateSchematic, pos)) {
 										cacheEasyPlacePosition(pos, false);
-										mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, new BlockHitResult(Vec3d.of(pos),
+										interactBlock(mc, new BlockHitResult(Vec3d.of(pos),
 											stateSchematic.get(GrindstoneBlock.FACING).getOpposite(), pos, false)); //place block
 										io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount(isCreative);
 										sleepWhenRequired(mc);
@@ -1164,7 +1175,7 @@ public class Printer {
 								if (blockSchematic instanceof EndRodBlock) {
 									if (doSchematicWorldPickBlock(mc, stateSchematic, pos)) {
 										cacheEasyPlacePosition(pos, false);
-										mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, new BlockHitResult(Vec3d.ofCenter(pos),
+										interactBlock(mc, new BlockHitResult(Vec3d.ofCenter(pos),
 											stateSchematic.get(EndRodBlock.FACING), pos, false)); //place block
 										io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount(isCreative);
 										interact++;
@@ -1175,8 +1186,6 @@ public class Printer {
 							}
 
 						} //End of trapdoor / wall mounted blocks
-
-						Hand hand = Hand.MAIN_HAND;
 
 						Vec3d hitPos;
 						// Carpet Accurate Placement protocol support, plus BlockSlab support
@@ -1201,7 +1210,7 @@ public class Printer {
 								if (doSchematicWorldPickBlock(mc, stateSchematic, pos)) {
 									cacheEasyPlacePosition(pos, false);
 									interact++;
-									mc.interactionManager.interactBlock(mc.player, hand, hitResult); //SNOW LAYERS
+									interactBlock(mc, hitResult); //SNOW LAYERS
 									io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount(isCreative);
 									sleepWhenRequired(mc);
 								}
@@ -1224,7 +1233,7 @@ public class Printer {
 						if (!FAKE_ROTATION_BETA.getBooleanValue() || ACCURATE_BLOCK_PLACEMENT.getBooleanValue()) { //Accurateblockplacement, or vanilla but no fake
 							if (doSchematicWorldPickBlock(mc, stateSchematic, pos)) {
 								MessageHolder.sendOrderMessage("Places block " + blockSchematic + " at " + pos.toShortString());
-								mc.interactionManager.interactBlock(mc.player, hand, hitResult); //PLACE BLOCK
+								interactBlock(mc, hitResult); //PLACE BLOCK
 								io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount(isCreative);
 								cacheEasyPlacePosition(pos, false);
 								sleepWhenRequired(mc);
@@ -1247,7 +1256,7 @@ public class Printer {
 								side = applyPlacementFacing(stateSchematic, sideOrig, stateClient);
 								hitResult = new BlockHitResult(hitPos, side, npos, false);
 								if (doSchematicWorldPickBlock(mc, stateSchematic, pos)) {
-									mc.interactionManager.interactBlock(mc.player, hand, hitResult); //double slab
+									interactBlock(mc, hitResult); //double slab
 									io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount(isCreative);
 									cacheEasyPlacePosition(pos, false);
 									sleepWhenRequired(mc);
@@ -1264,7 +1273,7 @@ public class Printer {
 								side = applyPlacementFacing(stateSchematic, sideOrig, stateClient);
 								hitResult = new BlockHitResult(hitPos, side, npos, false);
 								if (doSchematicWorldPickBlock(mc, stateSchematic, pos)) {
-									mc.interactionManager.interactBlock(mc.player, hand, hitResult); //double slab
+									interactBlock(mc, hitResult); //double slab
 									io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount(isCreative);
 									cacheEasyPlacePosition(pos, false);
 									sleepWhenRequired(mc);
@@ -1318,15 +1327,11 @@ public class Printer {
 		returns if redstone block should not be placed (before piston)
 	 */
 	private static boolean isQCable(MinecraftClient mc, World world, BlockPos pos) {
-		BlockPos posoffset = pos.down();
-		BlockPos poseast = posoffset.east();
-		BlockPos poswest = posoffset.west();
-		BlockPos posnorth = posoffset.north();
-		BlockPos possouth = posoffset.south();
-		Iterable<BlockPos> OffsetIterable = List.of(poseast, poswest, posnorth, possouth);
-		for (BlockPos Position : OffsetIterable) {
-			BlockState stateClient = mc.world.getBlockState(Position);
-			BlockState stateSchematic = world.getBlockState(Position);
+		BlockPos downPos = pos.down();
+		for (Direction direction : BedrockBreaker.HORIZONTAL) {
+			BlockPos offsetPos = downPos.offset(direction);
+			BlockState stateClient = mc.world.getBlockState(offsetPos);
+			BlockState stateSchematic = world.getBlockState(offsetPos);
 			if (!(stateSchematic.getBlock() instanceof PistonBlock)) {
 				continue;
 			}
@@ -1335,16 +1340,16 @@ public class Printer {
 			}
 			if (stateClient.isAir()) { //very basic qc
 				return true;
-			} else if (!hasNoUpdatableState(mc, world, Position)) {
+			} else if (!hasNoUpdatableState(mc, world, offsetPos)) {
 				return true;
 			} else if (stateClient.getBlock() instanceof PistonBlock && stateSchematic.get(PistonBlock.FACING).equals(Direction.UP)) {
-				if (!world.getBlockState(Position.up()).getBlock().equals(mc.world.getBlockState(Position.up()).getBlock())) {
+				if (!world.getBlockState(offsetPos.up()).getBlock().equals(mc.world.getBlockState(offsetPos.up()).getBlock())) {
 					return true;
 				}
 			}
 		}
-		BlockState stateSchematic = world.getBlockState(posoffset.down());
-		return stateSchematic.getBlock() instanceof PistonBlock && !stateSchematic.get(PistonBlock.EXTENDED) && !world.getBlockState(posoffset).getBlock().equals(mc.world.getBlockState(posoffset).getBlock());
+		BlockState stateSchematic = world.getBlockState(downPos.down());
+		return stateSchematic.getBlock() instanceof PistonBlock && !stateSchematic.get(PistonBlock.EXTENDED) && !world.getBlockState(downPos).getBlock().equals(mc.world.getBlockState(downPos).getBlock());
 	}
 
 	private static boolean hasNoUpdatableState(MinecraftClient mc, World world, BlockPos pos) {
@@ -1511,8 +1516,8 @@ public class Printer {
 		for (Direction direction : Direction.values()) {
 			BlockState offsetState = schematicWorld.getBlockState(pos.offset(direction));
 			if (offsetState.getBlock() instanceof ObserverBlock && offsetState.get(ObserverBlock.FACING) == direction) {
-				Map.Entry<Boolean, BlockPos> value = isWatchingCorrectState(mc, schematicWorld, pos.offset(direction), null, false);
-				if (!value.getKey()) {
+				Pair<Boolean, BlockPos> value = isWatchingCorrectState(mc, schematicWorld, pos.offset(direction), null, false);
+				if (!value.getLeft()) {
 					return pos.offset(direction);
 				}
 			}
@@ -1525,8 +1530,8 @@ public class Printer {
 			BlockState qcState = schematicWorld.getBlockState(qcPos);
 			BlockState existingState = mc.world.getBlockState(qcPos);
 			if (qcState.getBlock() instanceof ObserverBlock && !existingState.isOf(Blocks.OBSERVER) && qcState.get(ObserverBlock.FACING) == direction) {
-				Map.Entry<Boolean, BlockPos> value = isWatchingCorrectState(mc, schematicWorld, qcPos, null, false);
-				if (!value.getKey()) {
+				Pair<Boolean, BlockPos> value = isWatchingCorrectState(mc, schematicWorld, qcPos, null, false);
+				if (!value.getLeft()) {
 					return pos.offset(direction);
 				}
 			}
@@ -1535,8 +1540,8 @@ public class Printer {
 				qcPos = qcPos.offset(direction);
 				qcState = schematicWorld.getBlockState(qcPos);
 				if (qcState.getBlock() instanceof ObserverBlock && !existingState.isOf(Blocks.OBSERVER) && qcState.get(ObserverBlock.FACING) == direction) {
-					Map.Entry<Boolean, BlockPos> value = isWatchingCorrectState(mc, schematicWorld, qcPos, null, false);
-					if (!value.getKey()) {
+					Pair<Boolean, BlockPos> value = isWatchingCorrectState(mc, schematicWorld, qcPos, null, false);
+					if (!value.getLeft()) {
 						return pos.offset(direction);
 					}
 				}
@@ -1576,14 +1581,13 @@ public class Printer {
 	 * @param allowFirst : direct search of wallmount / walls / etc. at first
 	 * @return Entry : correct / position caused
 	 */
-	@SuppressWarnings({"ConstantConditions"})
-	private static Map.Entry<Boolean, BlockPos> isWatchingCorrectState(MinecraftClient mc, World schematicWorld, BlockPos pos, Set<Long> recursive, boolean allowFirst) {
+	private static Pair<Boolean, BlockPos> isWatchingCorrectState(MinecraftClient mc, World schematicWorld, BlockPos pos, Set<Long> recursive, boolean allowFirst) {
 		//observer, then recursive
 		if (recursive == null) {
 			recursive = new HashSet<>();
 		}
 		if (recursive.contains(pos.asLong())) {
-			return Map.entry(true, pos);
+			return new Pair<>(true, pos);
 		}
 		BlockState clientState = mc.world.getBlockState(pos);
 		BlockState schematicState = schematicWorld.getBlockState(pos);
@@ -1591,31 +1595,31 @@ public class Printer {
 			Direction facing = schematicState.get(ObserverBlock.FACING);
 			recursive.add(pos.asLong());
 			if (allowFirst && ObserverCantAvoid(mc, schematicWorld, facing, pos)) {
-				return Map.entry(true, pos);
+				return new Pair<>(true, pos);
 			} else {
-				Map.Entry<Boolean, BlockPos> entry = isWatchingCorrectState(mc, schematicWorld, pos.offset(facing), recursive, allowFirst);
-				if (entry.getKey()) {
+				Pair<Boolean, BlockPos> entry = isWatchingCorrectState(mc, schematicWorld, pos.offset(facing), recursive, allowFirst);
+				if (entry.getLeft()) {
 					return entry;
 				} else {
-					return Map.entry(false, pos);
+					return new Pair<>(false, pos);
 				}
 			}
 		}// virtual observers then go recursive
 		else {
 			if (schematicState == Blocks.VOID_AIR.getDefaultState() || schematicState == Blocks.BARRIER.getDefaultState() || schematicState.isAir()) {
-				return Map.entry(true, pos);
+				return new Pair<>(true, pos);
 			} else if (clientState != schematicState) {
 				//but check wire...
 				if (isNoteBlockInstrumentError(mc, schematicWorld, pos) || isDoorHingeError(mc, schematicWorld, pos)) {
-					return Map.entry(true, pos);
+					return new Pair<>(true, pos);
 				}
 				if (isClientPowerError(mc, schematicWorld, clientState, schematicState, pos)) {
-					return Map.entry(true, pos);
+					return new Pair<>(true, pos);
 				}
-				return Map.entry(false, pos);
+				return new Pair<>(false, pos);
 			}
 		}
-		return Map.entry(true, pos);
+		return new Pair<>(true, pos);
 	}
 
 	private static boolean isClientPowerError(MinecraftClient mc, World world, BlockState clientState, BlockState schematicState, BlockPos pos) {
@@ -1683,19 +1687,19 @@ public class Printer {
 
 		} else if (state.getBlock() instanceof PoweredRailBlock) {
 			switch (watching) {
-				case NORTH -> {
+				case NORTH : {
 					return state.get(PoweredRailBlock.SHAPE) == RailShape.ASCENDING_SOUTH;
 				}
-				case SOUTH -> {
+				case SOUTH : {
 					return state.get(PoweredRailBlock.SHAPE) == RailShape.ASCENDING_NORTH;
 				}
-				case EAST -> {
+				case EAST : {
 					return state.get(PoweredRailBlock.SHAPE) == RailShape.ASCENDING_WEST;
 				}
-				case WEST -> {
+				case WEST : {
 					return state.get(PoweredRailBlock.SHAPE) == RailShape.ASCENDING_EAST;
 				}
-				default -> {
+				default : {
 					return false;
 				}
 			}
@@ -1808,7 +1812,7 @@ public class Printer {
 				return false;
 			}
 			if (doSchematicWorldPickBlock(client, Items.MINECART.getDefaultStack())) {
-				ActionResult actionResult = client.interactionManager.interactBlock(client.player, Hand.MAIN_HAND, new BlockHitResult(clickPos, Direction.UP, pos, false)); //place block
+				ActionResult actionResult = interactBlock(client, new BlockHitResult(clickPos, Direction.UP, pos, false)); //place block
 				if (actionResult.isAccepted()) {
 					cacheEasyPlacePosition(pos, false, 600);
 					return true;
@@ -1845,7 +1849,7 @@ public class Printer {
 			hitVec = Vec3d.ofCenter(clickPos).add(Vec3d.of(side.getVector()).multiply(0.5));
 			if (doSchematicWorldPickBlock(client, state, pos)) {
 				cacheEasyPlacePosition(pos, false);
-				client.interactionManager.interactBlock(client.player, Hand.MAIN_HAND, new BlockHitResult(hitVec, side, clickPos, false)); //place block
+				interactBlock(client, new BlockHitResult(hitVec, side, clickPos, false)); //place block
 			}
 		} else {
 			if (isFacingCorrectly(state, client.player)) {
@@ -1853,7 +1857,7 @@ public class Printer {
 				clickPos = pos;
 				if (doSchematicWorldPickBlock(client, state, pos)) {
 					cacheEasyPlacePosition(pos, false);
-					client.interactionManager.interactBlock(client.player, Hand.MAIN_HAND, new BlockHitResult(hitVec, side, clickPos, false)); //place block
+					interactBlock(client, new BlockHitResult(hitVec, side, clickPos, false)); //place block
 				}
 			}
 		}
@@ -1913,7 +1917,7 @@ public class Printer {
 		}
 		if (doSchematicWorldPickBlock(client, state, pos)) {
 			cacheEasyPlacePosition(pos, false);
-			client.interactionManager.interactBlock(client.player, Hand.MAIN_HAND, new BlockHitResult(hitVec, side, clickPos, false)); //place block
+			interactBlock(client, new BlockHitResult(hitVec, side, clickPos, false)); //place block
 		}
 	}
 
@@ -2279,14 +2283,15 @@ public class Printer {
 		if (mc.currentScreen instanceof SignEditScreen || !schematicWorld.getBlockState(pos).isIn(BlockTags.SIGNS) || signCache.contains(pos.asLong())) {
 			return;
 		}
-		@Nullable BlockEntity entity = schematicWorld.getBlockEntity(pos);
+		BlockEntity entity = schematicWorld.getBlockEntity(pos);
 		if (entity == null) {
 			return;
 		}
-		@Nullable BlockEntity clientEntity = mc.world.getBlockEntity(pos);
+		BlockEntity clientEntity = mc.world.getBlockEntity(pos);
 		if (clientEntity == null) {
 			return;
 		}
+		//#if MC>=11800
 		if (entity instanceof SignBlockEntity signBlockEntity && clientEntity instanceof SignBlockEntity clientSignEntity) {
 			if (clientSignEntity.getTextOnRow(0, false).getContent() != TextContent.EMPTY || clientSignEntity.getTextOnRow(1, false).getContent() != TextContent.EMPTY ||
 				clientSignEntity.getTextOnRow(2, false).getContent() != TextContent.EMPTY ||
@@ -2299,6 +2304,22 @@ public class Printer {
 			signCache.add(pos.asLong());
 			mc.getNetworkHandler().sendPacket(new UpdateSignC2SPacket(signBlockEntity.getPos(), signBlockEntity.getTextOnRow(0, false).getString(), signBlockEntity.getTextOnRow(1, false).getString(), signBlockEntity.getTextOnRow(2, false).getString(), signBlockEntity.getTextOnRow(3, false).getString()));
 		}
+		//#else
+		//$$if (entity instanceof SignBlockEntity && clientEntity instanceof SignBlockEntity) {
+		//$$	SignBlockEntity signBlockEntity = (SignBlockEntity) entity;
+		//$$	SignBlockEntity clientSignEntity = (SignBlockEntity) clientEntity;
+		//$$	if (clientSignEntity.getTextOnRow(0) != LiteralText.EMPTY || clientSignEntity.getTextOnRow(1) != LiteralText.EMPTY ||
+		//$$		clientSignEntity.getTextOnRow(2) != LiteralText.EMPTY ||
+		//$$		clientSignEntity.getTextOnRow(3) != LiteralText.EMPTY) {
+		//$$		MessageHolder.sendDebugMessage("Text already exists in " + pos.toShortString());
+		//$$		signCache.add(pos.asLong());
+		//$$		return;
+		//$$	}
+		//$$	MessageHolder.sendDebugMessage("Tries to copy sign text in " + pos.toShortString());
+		//$$	signCache.add(pos.asLong());
+		//$$	mc.getNetworkHandler().sendPacket(new UpdateSignC2SPacket(signBlockEntity.getPos(), signBlockEntity.getTextOnRow(0).getString(), signBlockEntity.getTextOnRow(1).getString(), signBlockEntity.getTextOnRow(2).getString(), signBlockEntity.getTextOnRow(3).getString()));
+		//$$ }
+		//#endif
 	}
 
 	/*
@@ -2363,8 +2384,10 @@ public class Printer {
 			return Direction.UP;
 		} else if (blockSchematic instanceof HopperBlock) {
 			return stateSchematic.get(HopperBlock.FACING).getOpposite();
+		//#if MC>=11700
 		} else if (blockSchematic instanceof LightningRodBlock) {
 			return stateSchematic.get(LightningRodBlock.FACING);
+		//#endif
 		}  else if (stateSchematic.isIn(BlockTags.SHULKER_BOXES)) {
 			return stateSchematic.get(ShulkerBoxBlock.FACING);
 		} else if (blockSchematic instanceof TorchBlock) {
@@ -2414,8 +2437,12 @@ public class Printer {
 	public static boolean isPositionCached(BlockPos pos, boolean useClicked) {
 		long currentTime = System.nanoTime();
 		boolean cached = false;
-
-		for (Map.Entry<Long, Boolean> keys : List.copyOf(positionCache.keySet())) {
+		//#if MC>=11900
+		for (Pair<Long, Boolean> keys : List.copyOf(positionCache.keySet())) {
+		//#else
+		//$$ ArrayList<Pair<Long, Boolean>> keySet = new ArrayList<>(positionCache.keySet());
+		//$$ for (Pair<Long, Boolean> keys : keySet) {
+		//#endif
 			PositionCache val = positionCache.get(keys);
 			boolean expired = val.hasExpired(currentTime);
 
@@ -2443,7 +2470,7 @@ public class Printer {
 		if (useClicked) {
 			item.hasClicked = true;
 		}
-		Map.Entry<Long, Boolean> entry = Map.entry(pos.asLong(), useClicked);
+		Pair<Long, Boolean> entry = new Pair<>(pos.asLong(), useClicked);
 		if (positionCache.containsKey(entry)) {
 			PositionCache value = positionCache.get(entry);
 			if (item.timeout > value.timeout) {
@@ -2461,7 +2488,7 @@ public class Printer {
 		if (useClicked) {
 			item.hasClicked = true;
 		}
-		Map.Entry<Long, Boolean> entry = Map.entry(pos.asLong(), useClicked);
+		Pair<Long, Boolean> entry = new Pair<>(pos.asLong(), useClicked);
 		if (positionCache.containsKey(entry)) {
 			PositionCache value = positionCache.get(entry);
 			if (item.timeout > value.timeout) {
@@ -2473,9 +2500,14 @@ public class Printer {
 	}
 
 	public static Vec3d applyCarpetProtocolHitVec(BlockPos pos, BlockState state) {
+		//#if MC>=11700
 		if (Configs.Generic.EASY_PLACE_PROTOCOL.getOptionListValue() == EasyPlaceProtocol.V3) {
+		//#else
+		//$$ if (Configs.Generic.EASY_PLACE_PROTOCOL_V3.getBooleanValue()) {
+		//#endif
 			return WorldUtils.applyPlacementProtocolV3(pos, state, new Vec3d(pos.getX(), pos.getY(), pos.getZ()));
 		}
+
 		double code = 0;
 		double y = pos.getY();
 		double z = pos.getZ();

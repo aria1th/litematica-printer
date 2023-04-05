@@ -38,7 +38,7 @@ public class MixinConfigPlugin implements IMixinConfigPlugin {
 		}
 		if (desyncOptions.contains(mixinClassName)) {
 			Optional<ModContainer> container = FabricLoader.getInstance().getModContainer("matchrevisions");
-			return container.isEmpty();
+			return !container.isPresent(); // Java 8 compatibility
 		}
 		return true;
 	}

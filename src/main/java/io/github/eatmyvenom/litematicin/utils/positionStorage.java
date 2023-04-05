@@ -5,7 +5,9 @@ import net.minecraft.block.Blocks;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
-
+//#if MC<11700
+//$$ import java.util.stream.Collectors;
+//#endif
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -30,7 +32,11 @@ public class positionStorage {
 	}
 
 	public static void refresh(World world) {
+		//#if MC<11700
+		//$$ for (Long longPos : positionMap.keySet().stream().filter(longPos -> !positionMap.get(longPos) && !match(world.getBlockState(BlockPos.fromLong(longPos)).getBlock())).collect(Collectors.toList())) {
+		//#else
 		for (Long longPos : positionMap.keySet().stream().filter(longPos -> !positionMap.get(longPos) && !match(world.getBlockState(BlockPos.fromLong(longPos)).getBlock())).toList()) {
+		//#endif
 			positionMap.remove(longPos);
 		}
 	}
