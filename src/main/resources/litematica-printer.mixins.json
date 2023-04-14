@@ -20,6 +20,7 @@
     "defaultRequire": 1
   },
   "mixins": [
+    "Litematica.ChunkRendererSchematicVboMixin",
     "Litematica.SchematicVerifierMixin"
   ]
 }

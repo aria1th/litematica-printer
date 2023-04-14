@@ -3,32 +3,42 @@ package io.github.eatmyvenom.litematicin.utils;
 import fi.dy.masa.litematica.config.Configs;
 import fi.dy.masa.litematica.config.Hotkeys;
 import io.github.eatmyvenom.litematicin.LitematicaMixinMod;
+import net.minecraft.block.ShulkerBoxBlock;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.LootableContainerBlockEntity;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.inventory.Inventories;
+import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ToolItem;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.packet.c2s.play.PlayerActionC2SPacket;
 import net.minecraft.network.packet.c2s.play.UpdateSelectedSlotC2SPacket;
 import net.minecraft.screen.slot.SlotActionType;
+import net.minecraft.util.collection.DefaultedList;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.world.World;
 
 import java.util.*;
 
+import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.RENDER_ONLY_HOLDING_ITEMS;
 import static io.github.eatmyvenom.litematicin.utils.Printer.isSleeping;
 
 public class InventoryUtils {
 	private static int ptr = -1;
+
+	public final static HashSet<Item> ITEMS = new HashSet<>();
 	public static int lastCount = 0;
 	public static int itemChangeCount = 0;
 	public static Item handlingItem = null;
 	public static Item previousItem = null; //only used for checks
 	public static int trackedSelectedSlot = -1;
+
+	private static long tickCount = 0;
 
 	private static String cachedPickBlockableSlots = "";
 
@@ -37,6 +47,10 @@ public class InventoryUtils {
 	public static HashMap<Integer, Integer> slotCounts = new LinkedHashMap<>();
 
 	public static void tick() {
+		tickCount++;
+		if (RENDER_ONLY_HOLDING_ITEMS.getBooleanValue() && tickCount % 20 == 0) {
+			calculateCache();
+		}
 		if (!isSleeping && Configs.Generic.EASY_PLACE_MODE.getBooleanValue() && Configs.Generic.EASY_PLACE_HOLD_ENABLED.getBooleanValue() && Hotkeys.EASY_PLACE_ACTIVATION.getKeybind().isKeybindHeld()) {
 			for (int i = 0; i < 9; i++) {
 				if (!usedSlots.containsKey(i)) {
@@ -53,6 +67,45 @@ public class InventoryUtils {
 			handlingItem = null;
 			usedSlots.clear();
 			slotCounts.clear();
+		}
+	}
+
+
+	private static void calculateCache() {
+		ITEMS.clear();
+		MinecraftClient client = MinecraftClient.getInstance();
+		if (client == null || client.player == null || client.world == null) {
+			return;
+		}
+		//#if MC>=11700
+		for (ItemStack stack : client.player.getInventory().main) {
+		//#else
+		//$$ for (ItemStack stack : client.player.inventory.main) {
+		//#endif
+			Item item = stack.getItem();
+			if (item != null) {
+				ITEMS.add(item);
+			}
+			if (item instanceof BlockItem) {
+				BlockItem blockItem = (BlockItem) item;
+				if (blockItem.getBlock() instanceof ShulkerBoxBlock) {
+					int invSize = 27;
+					NbtCompound compound = stack.getSubNbt("BlockEntityTag");
+					if (compound == null) {
+						continue;
+					}
+					DefaultedList<ItemStack> returnStacks = DefaultedList.ofSize(invSize, ItemStack.EMPTY);
+					if (compound.contains("Items")) {
+						Inventories.readNbt(compound, returnStacks);
+					}
+					for (ItemStack returnStack : returnStacks) {
+						Item returnItem = returnStack.getItem();
+						if (returnItem != null) {
+							ITEMS.add(returnItem);
+						}
+					}
+				}
+			}
 		}
 	}
 

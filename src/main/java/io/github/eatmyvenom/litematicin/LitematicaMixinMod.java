@@ -15,6 +15,7 @@ public class LitematicaMixinMod implements ModInitializer {
 	public static final ConfigBoolean PRINTER_OFF = new ConfigBoolean("printerOff", false, "Disables printer.");
 	public static final ConfigBoolean PRINTER_ONLY_FAKE_ROTATION_MODE = new ConfigBoolean("easyPlaceMode++", false, "Disables printer and only make fake rotation work.");
 
+	public static final ConfigBoolean RENDER_ONLY_HOLDING_ITEMS = new ConfigBoolean("printerRenderOnlyHoldingItems", false, "Only render blocks that are in player's inventory.");
 	public static final ConfigBoolean PRINTER_FAKE_ROTATION_AGGRESSIVE = new ConfigBoolean("printerFakeRotationAggressive", false, "Packets will be sent aggressively to force player direction.");
 	public static final ConfigBoolean PRINTER_SUPPRESS_PACKETS = new ConfigBoolean("printerFakeRotationSuppressOther", false, "Prevents other packets than fake rotations from being sent when EasyPlaceMode is on.");
 	public static final ConfigBoolean INVENTORY_OPERATIONS = new ConfigBoolean("printerAllowInventoryOperations", false, "Printer will try to fill filters when screen is open and stop other actions");
@@ -67,6 +68,7 @@ public class LitematicaMixinMod implements ModInitializer {
 		PRINTER_OFF,
 		PRINTER_ONLY_FAKE_ROTATION_MODE,
 		PRINTER_FAKE_ROTATION_AGGRESSIVE,
+		RENDER_ONLY_HOLDING_ITEMS,
 		DISABLE_SYNC,
 		DEBUG_MESSAGE,
 		DEBUG_EXTRA_MESSAGE,
