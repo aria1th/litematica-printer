@@ -42,8 +42,11 @@ public abstract class ClientPlayerEntityMixin extends PlayerEntity {
 		// if FakeAccurateBlockPlacement is active, then return false
 		return !shouldModifyValues();
 	}
-
+	//#if MC>=11904
 	@Redirect(method = "sendMovementPackets", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/ClientPlayNetworkHandler;sendPacket(Lnet/minecraft/network/packet/Packet;)V", ordinal = 1), require = 0)
+	//#else
+	//$$@Redirect(method = "sendMovementPackets", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/ClientPlayNetworkHandler;sendPacket(Lnet/minecraft/network/Packet;)V", ordinal = 2), require = 0)
+	//#endif
 	private void onSendPacketVehicle(ClientPlayNetworkHandler clientPlayNetworkHandler, Packet<?> packet) {
 		// replaces all packets with a fake packet if PRINTER_SUPPRESS_PACKETS is true
 		if (canSendPacketNormally()) {
@@ -58,7 +61,11 @@ public abstract class ClientPlayerEntityMixin extends PlayerEntity {
 		));
 	}
 
+	//#if MC>=11904
 	@Redirect(method = "sendMovementPackets", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/ClientPlayNetworkHandler;sendPacket(Lnet/minecraft/network/packet/Packet;)V", ordinal = 2), require = 0)
+	//#else
+	//$$@Redirect(method = "sendMovementPackets", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/ClientPlayNetworkHandler;sendPacket(Lnet/minecraft/network/Packet;)V", ordinal = 3), require = 0)
+	//#endif
 	private void onSendPacketFull(ClientPlayNetworkHandler clientPlayNetworkHandler, Packet<?> packet) {
 		if (canSendPacketNormally()) {
 			clientPlayNetworkHandler.sendPacket(packet);
@@ -72,7 +79,11 @@ public abstract class ClientPlayerEntityMixin extends PlayerEntity {
 		));
 	}
 
+	//#if MC>=11904
 	@Redirect(method = "sendMovementPackets", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/ClientPlayNetworkHandler;sendPacket(Lnet/minecraft/network/packet/Packet;)V", ordinal = 4), require = 0)
+	//#else
+	//$$@Redirect(method = "sendMovementPackets", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/ClientPlayNetworkHandler;sendPacket(Lnet/minecraft/network/Packet;)V", ordinal = 5), require = 0)
+	//#endif
 	private void onSendPacketLookAndOnGround(ClientPlayNetworkHandler clientPlayNetworkHandler, Packet<?> packet) {
 		if (canSendPacketNormally()) {
 			clientPlayNetworkHandler.sendPacket(packet);
