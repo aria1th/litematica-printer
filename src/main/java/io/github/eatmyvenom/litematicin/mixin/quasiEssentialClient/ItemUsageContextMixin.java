@@ -17,8 +17,8 @@ public class ItemUsageContextMixin {
 	@Inject(method = "getHorizontalPlayerFacing", at = @At("HEAD"), cancellable = true, require = 0)
 	private void onGetFacing(CallbackInfoReturnable<Direction> cir) {
 		Direction direction = getPlayerFacing();
-		if (direction != null && (shouldModifyValues() || FakeAccurateBlockPlacement.fakeDirection != null && FakeAccurateBlockPlacement.requestedTicks > -3) && FakeAccurateBlockPlacement.fakeDirection.getAxis() != Direction.Axis.Y) {
-			cir.setReturnValue(direction);
+		if (direction != null && (shouldModifyValues() || FakeAccurateBlockPlacement.fakeDirection != null && FakeAccurateBlockPlacement.requestedTicks > -3)) {
+			if (FakeAccurateBlockPlacement.fakeDirection != null && FakeAccurateBlockPlacement.fakeDirection.getAxis() != Direction.Axis.Y) cir.setReturnValue(direction);
 		}
 	}
 
