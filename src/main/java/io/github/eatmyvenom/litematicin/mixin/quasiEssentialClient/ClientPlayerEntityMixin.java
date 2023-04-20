@@ -14,6 +14,7 @@ import net.minecraft.world.World;
 //$$ import org.jetbrains.annotations.Nullable;
 //#endif
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
@@ -23,6 +24,7 @@ import static io.github.eatmyvenom.litematicin.utils.FakeAccurateBlockPlacement.
 
 @Mixin(value = ClientPlayerEntity.class, priority = 1200)
 public abstract class ClientPlayerEntityMixin extends PlayerEntity {
+
 	//#if MC<11900
 	public ClientPlayerEntityMixin(World world, BlockPos pos, float yaw, GameProfile gameProfile) {
 		super(world, pos, yaw, gameProfile);
@@ -54,7 +56,7 @@ public abstract class ClientPlayerEntityMixin extends PlayerEntity {
 			return;
 		}
 		clientPlayNetworkHandler.sendPacket(new PlayerMoveC2SPacket.Full(
-			this.getX(), -999.0D, this.getZ(),
+			this.getX(), this.hasVehicle()? -999.0D : this.getY(), this.getZ(),
 			FakeAccurateBlockPlacement.fakeYaw,
 			FakeAccurateBlockPlacement.fakePitch,
 			this.isOnGround()
@@ -72,7 +74,7 @@ public abstract class ClientPlayerEntityMixin extends PlayerEntity {
 			return;
 		}
 		clientPlayNetworkHandler.sendPacket(new PlayerMoveC2SPacket.Full(
-			this.getX(), this.getY(), this.getZ(),
+			this.getX(), this.hasVehicle()? -999.0D : this.getY(), this.getZ(),
 			FakeAccurateBlockPlacement.fakeYaw,
 			FakeAccurateBlockPlacement.fakePitch,
 			this.isOnGround()
