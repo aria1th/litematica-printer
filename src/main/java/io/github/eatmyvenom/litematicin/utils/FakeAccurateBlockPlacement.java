@@ -3,7 +3,6 @@ package io.github.eatmyvenom.litematicin.utils;
 //see https://github.com/senseiwells/EssentialClient/blob/1.19.x/src/main/java/me/senseiwells/essentialclient/feature/BetterAccurateBlockPlacement.java
 
 import fi.dy.masa.litematica.config.Configs;
-import fi.dy.masa.litematica.config.Hotkeys;
 import fi.dy.masa.litematica.materials.MaterialCache;
 import fi.dy.masa.litematica.world.SchematicWorldHandler;
 import io.github.eatmyvenom.litematicin.LitematicaMixinMod;
@@ -15,14 +14,12 @@ import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.network.ClientPlayerInteractionManager;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
 import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.state.property.Properties;
-import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
@@ -265,7 +262,7 @@ public class FakeAccurateBlockPlacement {
 		stateGrindStone = state;
 		if (waitingQueue.isEmpty()) {
 			if (waitingQueue.offer(new PosWithBlock(blockPos, state))) {
-				request(fy, fp, lookRefdir, LitematicaMixinMod.FAKE_ROTATION_TICKS.getIntegerValue(), false);
+				request(fy, fp, lookRefdir, LitematicaMixinMod.PRINTER_FAKE_ROTATION_DELAY.getIntegerValue(), false);
 			}
 			return true;
 		}
@@ -412,15 +409,15 @@ public class FakeAccurateBlockPlacement {
 			fy = 0;
 			fp = 12;
 		}
-		if (LitematicaMixinMod.FAKE_ROTATION_TICKS.getIntegerValue() == 0) {
+		if (LitematicaMixinMod.PRINTER_FAKE_ROTATION_DELAY.getIntegerValue() == 0) {
 			//instant place
 			if (lookRefdir != fakeDirection) {
-				if (tickElapsed > LitematicaMixinMod.FAKE_ROTATION_LIMIT.getIntegerValue()) {
+				if (tickElapsed > LitematicaMixinMod.PRINTER_FAKE_ROTATION_LIMIT_PER_TICKS.getIntegerValue()) {
 					MessageHolder.sendDebugMessage("Failure because limited fake rotation per tick " + blockPos.toShortString());
 					return false;
 				}
 				tickElapsed += 1;
-				request(fy, fp, lookRefdir, LitematicaMixinMod.FAKE_ROTATION_TICKS.getIntegerValue(), true);
+				request(fy, fp, lookRefdir, LitematicaMixinMod.PRINTER_FAKE_ROTATION_DELAY.getIntegerValue(), true);
 				placeBlock(blockPos, blockState);
 			} else {
 				placeBlock(blockPos, blockState);
@@ -437,7 +434,7 @@ public class FakeAccurateBlockPlacement {
 				return true;
 			}
 			if (waitingQueue.isEmpty()) {
-				request(fy, fp, lookRefdir, LitematicaMixinMod.FAKE_ROTATION_TICKS.getIntegerValue(), false);
+				request(fy, fp, lookRefdir, LitematicaMixinMod.PRINTER_FAKE_ROTATION_DELAY.getIntegerValue(), false);
 				pickFirst(blockState, blockPos);
 				boolean offered = waitingQueue.offer(new PosWithBlock(blockPos, blockState));
 				if (offered){
@@ -471,7 +468,7 @@ public class FakeAccurateBlockPlacement {
 	 * @return : can place or not
 	 */
 	public static boolean canPlace(BlockState state, BlockPos pos) {
-		if (!FAKE_ROTATION_BETA.getBooleanValue()) {
+		if (!PRINTER_FAKE_ROTATION.getBooleanValue()) {
 			return true;
 		}
 		if (canHandleOther(MaterialCache.getInstance().getRequiredBuildItemForState(state, SchematicWorldHandler.getSchematicWorld(), pos).getItem())) {
@@ -536,9 +533,9 @@ public class FakeAccurateBlockPlacement {
 			interactBlock(minecraftClient, blockHitResult);
 			InventoryUtils.decrementCount(isCreative(player));
 			blockPlacedInTick++;
-			if ( !isCreative(player) && InventoryUtils.lastCount <= 0 && SLEEP_AFTER_CONSUME.getIntegerValue() > 0) {
+			if ( !isCreative(player) && InventoryUtils.lastCount <= 0 && PRINTER_SLEEP_STACK_EMPTIED.getIntegerValue() > 0) {
 				shouldReturnValue = true;
-				Printer.lastPlaced = new Date().getTime() + SLEEP_AFTER_CONSUME.getIntegerValue();
+				Printer.lastPlaced = new Date().getTime() + PRINTER_SLEEP_STACK_EMPTIED.getIntegerValue();
 			}
 			Printer.cacheEasyPlacePosition(pos, false);
 			return true;

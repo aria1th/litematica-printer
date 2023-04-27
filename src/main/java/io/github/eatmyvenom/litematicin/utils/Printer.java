@@ -243,14 +243,14 @@ public class Printer {
 			Vec3d hitPos;
 			Direction sideOrig = trace.getSide();
 			Direction side = applyPlacementFacing(schematicState, sideOrig, clientState);
-			if (ACCURATE_BLOCK_PLACEMENT.getBooleanValue()) {
+			if (PRINTER_ACCURATE_BLOCK_PLACEMENT.getBooleanValue()) {
 				hitPos = applyCarpetProtocolHitVec(blockPos, schematicState);
 			} else {
 				hitPos = applyHitVec(blockPos, schematicState, side);
 			}
 			BlockHitResult hitResult = new BlockHitResult(hitPos, side, blockPos, false);
 			boolean canContinue;
-			if (!FAKE_ROTATION_BETA.getBooleanValue() || ACCURATE_BLOCK_PLACEMENT.getBooleanValue()) { //Accurateblockplacement, or vanilla but no fake
+			if (!PRINTER_FAKE_ROTATION.getBooleanValue() || PRINTER_ACCURATE_BLOCK_PLACEMENT.getBooleanValue()) { //Accurateblockplacement, or vanilla but no fake
 				canContinue = interactBlock(mc, hitResult).isAccepted(); //PLACE block
 				cacheEasyPlacePosition(blockPos, false);
 			} else {
@@ -321,7 +321,7 @@ public class Printer {
 		if (!DEBUG_MESSAGE.getBooleanValue()) {
 			causeMap.clear(); //reduce ram usage
 		}
-		if (!BEDROCK_BREAKING.getBooleanValue()) {
+		if (!PRINTER_BEDROCK_BREAKING.getBooleanValue()) {
 			BedrockBreaker.clear();
 		}
 		FakeAccurateBlockPlacement.requestedTicks = Math.max(-2, FakeAccurateBlockPlacement.requestedTicks);
@@ -329,7 +329,7 @@ public class Printer {
 			mc.player.sendMessage(Text.of("Handling breakBlock!"), true);
 			return ActionResult.SUCCESS;
 		}
-		if (INVENTORY_OPERATIONS.getBooleanValue()) {
+		if (PRINTER_ALLOW_INVENTORY_OPERATIONS.getBooleanValue()) {
 			ItemInputs.execute(mc);
 			mc.player.sendMessage(Text.of("Handling inventory operation!"), true);
 			return ActionResult.PASS;
@@ -358,10 +358,10 @@ public class Printer {
 			posZ = tracePos.getZ();
 		}
 
-		boolean ClearArea = CLEAR_AREA_MODE.getBooleanValue(); // if it's true, will ignore everything and remove fluids.
-		boolean UseCobble = CLEAR_AREA_MODE_COBBLESTONE.getBooleanValue() && ClearArea;
-		boolean ClearSnow = CLEAR_AREA_MODE_SNOWPREVENT.getBooleanValue() && ClearArea;
-		boolean CanUseProtocol = ACCURATE_BLOCK_PLACEMENT.getBooleanValue();
+		boolean ClearArea = PRINTER_CLEAR_FLUIDS.getBooleanValue(); // if it's true, will ignore everything and remove fluids.
+		boolean UseCobble = PRINTER_CLEAR_FLUIDS_USE_COBBLESTONE.getBooleanValue() && ClearArea;
+		boolean ClearSnow = PRINTER_CLEAR_SNOW_LAYER.getBooleanValue() && ClearArea;
+		boolean CanUseProtocol = PRINTER_ACCURATE_BLOCK_PLACEMENT.getBooleanValue();
 		boolean FillInventory = PRINTER_PUMPKIN_PIE_FOR_COMPOSTER.getBooleanValue();
 		ItemStack composableItem = Items.PUMPKIN_PIE.getDefaultStack();
 		//#if MC>=11902
@@ -371,7 +371,7 @@ public class Printer {
 		//#endif
 		Box selectedBox = null;
 		if (allPlacementsTouchingSubChunk.isEmpty() && !ClearArea) {
-			if (BEDROCK_BREAKING.getBooleanValue()) {
+			if (PRINTER_BEDROCK_BREAKING.getBooleanValue()) {
 				BedrockBreaker.scheduledTickHandler(mc, null);
 			}
 			return ActionResult.PASS;
@@ -434,7 +434,7 @@ public class Printer {
 		}
 
 		if (!foundBox) {
-			if (BEDROCK_BREAKING.getBooleanValue()) {
+			if (PRINTER_BEDROCK_BREAKING.getBooleanValue()) {
 				BedrockBreaker.scheduledTickHandler(mc, null);
 			}
 			return ActionResult.PASS;
@@ -442,7 +442,7 @@ public class Printer {
 		LayerRange range = DataManager.getRenderLayerRange(); //add range following
 		int MaxReach = Math.max(Math.max(rangeX, rangeY), rangeZ);
 		boolean breakBlocks = PRINTER_BREAK_BLOCKS.getBooleanValue();
-		boolean Flippincactus = FLIPPIN_CACTUS.getBooleanValue();
+		boolean Flippincactus = PRINTER_FLIPPINCACTUS.getBooleanValue();
 		boolean ExplicitObserver = PRINTER_OBSERVER_AVOID_ALL.getBooleanValue();
 		ItemStack Mainhandstack = mc.player.getMainHandStack();
 		boolean Cactus = Mainhandstack.getItem().getTranslationKey().contains("cactus") && Flippincactus;
@@ -492,7 +492,7 @@ public class Printer {
 					if (interact >= maxInteract) {
 						if (shouldSleepLonger) {
 							shouldSleepLonger = false;
-							lastPlaced = Math.max(lastPlaced, new Date().getTime() + SLEEP_AFTER_CONSUME.getIntegerValue());
+							lastPlaced = Math.max(lastPlaced, new Date().getTime() + PRINTER_SLEEP_STACK_EMPTIED.getIntegerValue());
 						} else {
 							lastPlaced = Math.max(lastPlaced, new Date().getTime());
 						}
@@ -520,7 +520,7 @@ public class Printer {
 					BlockState stateSchematic;
 					BlockState stateClient;
 					updateSignText(mc, world, pos);
-					if (!breakBlocks && !ClearArea && !Flippincactus && !BEDROCK_BREAKING.getBooleanValue()) {
+					if (!breakBlocks && !ClearArea && !Flippincactus && !PRINTER_BEDROCK_BREAKING.getBooleanValue()) {
 						if (world.isAir(pos)) {
 							continue;
 						} else {
@@ -555,17 +555,17 @@ public class Printer {
 									if (interact >= maxInteract) {
 										if (shouldSleepLonger) {
 											shouldSleepLonger = false;
-											lastPlaced = Math.max(lastPlaced, new Date().getTime() + SLEEP_AFTER_CONSUME.getIntegerValue());
+											lastPlaced = Math.max(lastPlaced, new Date().getTime() + PRINTER_SLEEP_STACK_EMPTIED.getIntegerValue());
 										} else {
 											lastPlaced = Math.max(lastPlaced, new Date().getTime());
 										}
 										return ActionResult.SUCCESS;
 									}
-								} else if (BedrockBreaker.isBlockNotInstantBreakable(stateClient.getBlock()) && BEDROCK_BREAKING.getBooleanValue()) {
+								} else if (BedrockBreaker.isBlockNotInstantBreakable(stateClient.getBlock()) && PRINTER_BEDROCK_BREAKING.getBooleanValue()) {
 									mc.player.sendMessage(Text.of("Handling printerBedrockBreaking!"), true);
 									interact += BedrockBreaker.scheduledTickHandler(mc, pos);
 									continue;
-								} else if (BEDROCK_BREAKING.getBooleanValue()) {
+								} else if (PRINTER_BEDROCK_BREAKING.getBooleanValue()) {
 									mc.player.sendMessage(Text.of("Handling printerBedrockBreaking!"), true);
 									interact += BedrockBreaker.scheduledTickHandler(mc, null);
 									continue;
@@ -607,7 +607,7 @@ public class Printer {
 									if (facingSchematic == facingClient) {
 										int clickTimes = 0;
 										Direction side = Direction.NORTH;
-										if (sBlock instanceof RepeaterBlock && !ACCURATE_BLOCK_PLACEMENT.getBooleanValue()) {
+										if (sBlock instanceof RepeaterBlock && !PRINTER_ACCURATE_BLOCK_PLACEMENT.getBooleanValue()) {
 											int clientDelay = stateClient.get(RepeaterBlock.DELAY);
 											int schematicDelay = stateSchematic.get(RepeaterBlock.DELAY);
 											if (clientDelay != schematicDelay) {
@@ -619,7 +619,7 @@ public class Printer {
 												}
 											}
 											side = Direction.UP;
-										} else if (sBlock instanceof ComparatorBlock && !ACCURATE_BLOCK_PLACEMENT.getBooleanValue()) {
+										} else if (sBlock instanceof ComparatorBlock && !PRINTER_ACCURATE_BLOCK_PLACEMENT.getBooleanValue()) {
 											if (stateSchematic.get(ComparatorBlock.MODE) != stateClient
 												.get(ComparatorBlock.MODE)) {
 												clickTimes = 1;
@@ -684,7 +684,7 @@ public class Printer {
 													cacheEasyPlacePosition(pos, false);
 													if (shouldSleepLonger) {
 														shouldSleepLonger = false;
-														lastPlaced = Math.max(lastPlaced, new Date().getTime() + 200 + SLEEP_AFTER_CONSUME.getIntegerValue());
+														lastPlaced = Math.max(lastPlaced, new Date().getTime() + 200 + PRINTER_SLEEP_STACK_EMPTIED.getIntegerValue());
 													} else {
 														lastPlaced = Math.max(lastPlaced, new Date().getTime() + 200);
 													}
@@ -764,7 +764,7 @@ public class Printer {
 						mc.player.sendMessage(Text.of("Handling printerFlippinCactus!"), true);
 						continue;
 					}
-					if (isPositionCached(pos, false) || BEDROCK_BREAKING.getBooleanValue() || (!(stateSchematic.getBlock() instanceof NetherPortalBlock) && stateSchematic.isAir() && !ClearArea)) {
+					if (isPositionCached(pos, false) || PRINTER_BEDROCK_BREAKING.getBooleanValue() || (!(stateSchematic.getBlock() instanceof NetherPortalBlock) && stateSchematic.isAir() && !ClearArea)) {
 						continue;
 					}
 					ItemStack stack = MaterialCache.getInstance().getRequiredBuildItemForState(stateSchematic);
@@ -886,7 +886,7 @@ public class Printer {
 								}
 							} else if (sBlock instanceof ObserverBlock) {
 								if (ObserverUpdateOrder(mc, world, pos, selectedBox)) {
-									if (FLIPPIN_CACTUS.getBooleanValue() && canBypass(mc, world, pos)) {
+									if (PRINTER_FLIPPINCACTUS.getBooleanValue() && canBypass(mc, world, pos)) {
 										stateSchematic = stateSchematic.with(ObserverBlock.FACING, stateSchematic.get(ObserverBlock.FACING).getOpposite());
 									} else {
 										BlockPos causedPos = ObserverUpdateOrderPos(mc, world, pos);
@@ -941,7 +941,7 @@ public class Printer {
 								sleepWhenRequired(mc);
 								if (shouldSleepLonger) {
 									shouldSleepLonger = false;
-									lastPlaced = Math.max(lastPlaced, new Date().getTime() + 200 + SLEEP_AFTER_CONSUME.getIntegerValue());
+									lastPlaced = Math.max(lastPlaced, new Date().getTime() + 200 + PRINTER_SLEEP_STACK_EMPTIED.getIntegerValue());
 								} else {
 									lastPlaced = Math.max(lastPlaced, new Date().getTime() + 200);
 								}
@@ -962,7 +962,7 @@ public class Printer {
 								if (PRINTER_SKIP_UNKNOWN_BLOCKSTATE.getBooleanValue()) continue;
 
 							}
-							if (!(CanUseProtocol && IsBlockSupportedCarpet(stateSchematic.getBlock())) && !FAKE_ROTATION_BETA.getBooleanValue() && !canPlaceFace(facedata, stateSchematic, primaryFacing, horizontalFacing)) {
+							if (!(CanUseProtocol && IsBlockSupportedCarpet(stateSchematic.getBlock())) && !PRINTER_FAKE_ROTATION.getBooleanValue() && !canPlaceFace(facedata, stateSchematic, primaryFacing, horizontalFacing)) {
 								continue;
 							}
 
@@ -1024,7 +1024,7 @@ public class Printer {
 							interact++;
 							continue;
 						}
-						if (blockSchematic instanceof TrapdoorBlock && !CanUseProtocol && !FAKE_ROTATION_BETA.getBooleanValue()) {
+						if (blockSchematic instanceof TrapdoorBlock && !CanUseProtocol && !PRINTER_FAKE_ROTATION.getBooleanValue()) {
 							placeTrapDoor(stateSchematic, mc, pos);
 							interact++;
 							continue;
@@ -1056,7 +1056,7 @@ public class Printer {
 									npos = pos.down();
 								}
 								if (hasGui(world.getBlockState(npos).getBlock())) {
-									if (FAKE_ROTATION_BETA.getBooleanValue() && interact < maxInteract) {
+									if (PRINTER_FAKE_ROTATION.getBooleanValue() && interact < maxInteract) {
 										if (FakeAccurateBlockPlacement.request(stateSchematic, pos)) {
 											interact++;
 										}
@@ -1084,7 +1084,7 @@ public class Printer {
 								//but First check if its block with GUI*
 								Block checkGui = mc.world.getBlockState(npos).getBlock();
 								if (!mc.player.shouldCancelInteraction() && hasGui(checkGui)) {
-									if (blockSchematic instanceof TrapdoorBlock && FAKE_ROTATION_BETA.getBooleanValue() && interact < maxInteract) {
+									if (blockSchematic instanceof TrapdoorBlock && PRINTER_FAKE_ROTATION.getBooleanValue() && interact < maxInteract) {
 										if (FakeAccurateBlockPlacement.request(stateSchematic, pos)) {
 											interact++;
 										}
@@ -1232,7 +1232,7 @@ public class Printer {
 								});
 							}
 						}
-						if (!FAKE_ROTATION_BETA.getBooleanValue() || ACCURATE_BLOCK_PLACEMENT.getBooleanValue()) { //Accurateblockplacement, or vanilla but no fake
+						if (!PRINTER_FAKE_ROTATION.getBooleanValue() || PRINTER_ACCURATE_BLOCK_PLACEMENT.getBooleanValue()) { //Accurateblockplacement, or vanilla but no fake
 							if (doSchematicWorldPickBlock(mc, stateSchematic, pos)) {
 								MessageHolder.sendOrderMessage("Places block " + blockSchematic + " at " + pos.toShortString());
 								interactBlock(mc, hitResult); //PLACE BLOCK
@@ -1288,7 +1288,7 @@ public class Printer {
 						if (interact >= maxInteract) {
 							if (shouldSleepLonger) {
 								shouldSleepLonger = false;
-								lastPlaced = Math.max(lastPlaced, new Date().getTime() + SLEEP_AFTER_CONSUME.getIntegerValue());
+								lastPlaced = Math.max(lastPlaced, new Date().getTime() + PRINTER_SLEEP_STACK_EMPTIED.getIntegerValue());
 							} else {
 								lastPlaced = Math.max(lastPlaced, new Date().getTime());
 							}
@@ -1306,7 +1306,7 @@ public class Printer {
 		if (interact > 0) {
 			if (shouldSleepLonger) {
 				shouldSleepLonger = false;
-				lastPlaced = Math.max(lastPlaced, new Date().getTime() + SLEEP_AFTER_CONSUME.getIntegerValue());
+				lastPlaced = Math.max(lastPlaced, new Date().getTime() + PRINTER_SLEEP_STACK_EMPTIED.getIntegerValue());
 			} else {
 				lastPlaced = Math.max(lastPlaced, new Date().getTime());
 			}
@@ -1556,9 +1556,9 @@ public class Printer {
 		if (!USE_INVENTORY_CACHE.getBooleanValue()) {
 			return;
 		}
-		if (SLEEP_AFTER_CONSUME.getIntegerValue() > 0 && io.github.eatmyvenom.litematicin.utils.InventoryUtils.lastCount <= 0) {
+		if (PRINTER_SLEEP_STACK_EMPTIED.getIntegerValue() > 0 && io.github.eatmyvenom.litematicin.utils.InventoryUtils.lastCount <= 0) {
 			shouldSleepLonger = true;
-			lastPlaced = new Date().getTime() + SLEEP_AFTER_CONSUME.getIntegerValue();
+			lastPlaced = new Date().getTime() + PRINTER_SLEEP_STACK_EMPTIED.getIntegerValue();
 			MessageHolder.sendUniqueMessageActionBar(mc.player, "Sleeping because stack is emptied!");
 			isSleeping = true;
 		}
@@ -1566,12 +1566,12 @@ public class Printer {
 
 	private static boolean isQCableBlock(World world, BlockPos pos) {
 		Block block = world.getBlockState(pos).getBlock();
-		return (!AVOID_CHECK_ONLY_PISTONS.getBooleanValue() && block instanceof DispenserBlock) || block instanceof PistonBlock;
+		return (!PRINTER_AVOID_CHECK_ONLY_PISTONS.getBooleanValue() && block instanceof DispenserBlock) || block instanceof PistonBlock;
 	}
 
 	private static boolean isQCableBlock(BlockState blockState) {
 		Block block = blockState.getBlock();
-		return (!AVOID_CHECK_ONLY_PISTONS.getBooleanValue() && block instanceof DispenserBlock) || block instanceof PistonBlock;
+		return (!PRINTER_AVOID_CHECK_ONLY_PISTONS.getBooleanValue() && block instanceof DispenserBlock) || block instanceof PistonBlock;
 	}
 
 	/***
@@ -1827,7 +1827,7 @@ public class Printer {
 
 	@SuppressWarnings({"ConstantConditions"})
 	private static void placeGrindStone(BlockState state, MinecraftClient client, BlockPos pos) {
-		if (FAKE_ROTATION_BETA.getBooleanValue()) {
+		if (PRINTER_FAKE_ROTATION.getBooleanValue()) {
 			FakeAccurateBlockPlacement.request(state, pos);
 			return;
 			//place in air
@@ -1867,7 +1867,7 @@ public class Printer {
 
 	@SuppressWarnings({"ConstantConditions"})
 	private static boolean canAttachGrindstone(BlockState state, MinecraftClient client, BlockPos pos) {
-		if (FAKE_ROTATION_BETA.getBooleanValue()) {
+		if (PRINTER_FAKE_ROTATION.getBooleanValue()) {
 			return true;
 			//place in air.
 		}
@@ -2414,7 +2414,7 @@ public class Printer {
 		} else if (blockSchematic instanceof LadderBlock) {
 			return stateSchematic.get(LadderBlock.FACING);
 		} else if (blockSchematic instanceof TrapdoorBlock) {
-			if (ACCURATE_BLOCK_PLACEMENT.getBooleanValue()) {
+			if (PRINTER_ACCURATE_BLOCK_PLACEMENT.getBooleanValue()) {
 				return Direction.UP; //Placement State fixing first
 			}
 			return stateSchematic.get(TrapdoorBlock.FACING);
@@ -2423,7 +2423,7 @@ public class Printer {
 		} else if (blockSchematic instanceof EndRodBlock) {
 			return stateSchematic.get(EndRodBlock.FACING);
 		} else if (blockSchematic instanceof AnvilBlock) {
-			if (ADVANCED_ACCURATE_BLOCK_PLACEMENT.getBooleanValue() || ACCURATE_BLOCK_PLACEMENT.getBooleanValue() && IsBlockSupportedCarpet(blockSchematic)) {
+			if (ADVANCED_ACCURATE_BLOCK_PLACEMENT.getBooleanValue() || PRINTER_ACCURATE_BLOCK_PLACEMENT.getBooleanValue() && IsBlockSupportedCarpet(blockSchematic)) {
 				return stateSchematic.get(AnvilBlock.FACING);
 			}
 			return stateSchematic.get(AnvilBlock.FACING).rotateYCounterclockwise();

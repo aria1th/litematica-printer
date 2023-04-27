@@ -71,7 +71,7 @@ public class BedrockBreaker {
 	@Nullable
 	public static TorchPath getPistonTorchPosDir(MinecraftClient mc, BlockPos bedrockPos) {
 		for (Direction lv : Direction.values()) {
-			if (!ACCURATE_BLOCK_PLACEMENT.getBooleanValue()) {
+			if (!PRINTER_ACCURATE_BLOCK_PLACEMENT.getBooleanValue()) {
 				if (lv != Direction.DOWN && lv != Direction.UP) {
 					continue;
 				}
@@ -113,7 +113,7 @@ public class BedrockBreaker {
 	@Nullable
 	public static TorchData getPossiblePowerableTorchPosFace(MinecraftClient mc, BlockPos pos1, BlockPos pistonPos, BlockPos pos2) {
 		World world = mc.world;
-		boolean forceSlimeBlock = BEDROCK_BREAKING_FORCE_TORCH.getBooleanValue();
+		boolean forceSlimeBlock = PRINTER_BEDROCK_BREAKING_USE_SLIMEBLOCK.getBooleanValue();
 		for (Direction hd : HORIZONTAL) { //normal 4 dir
 			BlockPos torchCheck = pistonPos.offset(hd);
 			if (checkTorchPosition(pos1, pos2, world, torchCheck)) {
@@ -245,7 +245,7 @@ public class BedrockBreaker {
 		InventoryUtils.swapToItem(mc, PistonStack);
 		MessageHolder.sendDebugMessage("Places piston at " + pos.toShortString() + " with facing " + facing);
 		//mc.getNetworkHandler().sendPacket(new UpdateSelectedSlotC2SPacket(mc.player.getInventory().selectedSlot));
-		if (ACCURATE_BLOCK_PLACEMENT.getBooleanValue()) {
+		if (PRINTER_ACCURATE_BLOCK_PLACEMENT.getBooleanValue()) {
 			placeViaCarpet(mc, pos, facing);
 		} else {
 			placeViaPacketReversed(mc, pos, facing, false);
@@ -260,7 +260,7 @@ public class BedrockBreaker {
 		}
 		MessageHolder.sendDebugMessage("Places piston at " + pos.toShortString() + " with facing " + facing);
 		//mc.getNetworkHandler().sendPacket(new UpdateSelectedSlotC2SPacket(mc.player.getInventory().selectedSlot));
-		if (ACCURATE_BLOCK_PLACEMENT.getBooleanValue()) {
+		if (PRINTER_ACCURATE_BLOCK_PLACEMENT.getBooleanValue()) {
 			placeViaCarpet(mc, pos, facing);
 		} else {
 			placeViaPacketReversed(mc, pos, facing, false);
@@ -282,12 +282,17 @@ public class BedrockBreaker {
 		handleTweakPlacementPacket(mc, hitResult);
 	}
 
+	// Wrapper function for interacting with blocks
 	public static ActionResult interactBlock(MinecraftClient mc, BlockHitResult hitResult) {
 		//#if MC>=11900
-		return mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, hitResult);
+		ActionResult result = mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, hitResult);
 		//#else
-		//$$ return mc.interactionManager.interactBlock(mc.player, mc.player.clientWorld, Hand.MAIN_HAND, hitResult);
+		//$$ ActionResult result =  mc.interactionManager.interactBlock(mc.player, mc.player.clientWorld, Hand.MAIN_HAND, hitResult);
 		//#endif
+		if (PRINTER_SHOULD_SWING_HAND.getBooleanValue() && result.isAccepted() && result.shouldSwingHand()) {
+			mc.player.swingHand(Hand.MAIN_HAND);
+		}
+		return result;
 	}
 
 	public static void placeViaPacketReversed(MinecraftClient mc, BlockPos pos, Direction facing, boolean ShouldOffset) {
@@ -368,7 +373,7 @@ public class BedrockBreaker {
 
 
 	public static boolean canProcess(MinecraftClient mc, BlockPos pos) {
-		double SafetyDistance = BEDROCK_BREAKING_RANGE_SAFE.getIntegerValue();
+		double SafetyDistance = PRINTER_BEDROCK_BREAKING_RANGE_SAFE.getIntegerValue();
 		if (positionAnyNear(mc, pos, SafetyDistance)) {
 			return false;
 		}
@@ -431,6 +436,9 @@ public class BedrockBreaker {
 		}
 		//#if MC>=11900
 		mc.getNetworkHandler().sendPacket(new PlayerActionC2SPacket(PlayerActionC2SPacket.Action.START_DESTROY_BLOCK, pos, direction, 64));
+		if (PRINTER_SHOULD_SWING_HAND.getBooleanValue()) {
+			mc.player.swingHand(Hand.MAIN_HAND);
+		}
 		//#else
 		//$$ mc.getNetworkHandler().sendPacket(new PlayerActionC2SPacket(PlayerActionC2SPacket.Action.START_DESTROY_BLOCK, pos, direction));
 		//#endif
@@ -575,7 +583,7 @@ public class BedrockBreaker {
 					}
 				}
 				case IDLE: {
-					if (this.SysTime + BEDROCK_BREAKING_CLEAR_WAIT.getIntegerValue() < CurrentTick) {
+					if (this.SysTime + PRINTER_BEDROCK_DELAY.getIntegerValue() < CurrentTick) {
 						this.setFalse();
 						this.state = world.getBlockState(this.targetPos).isOf(Blocks.BEDROCK) ? State.FAIL : State.DONE;
 					}
