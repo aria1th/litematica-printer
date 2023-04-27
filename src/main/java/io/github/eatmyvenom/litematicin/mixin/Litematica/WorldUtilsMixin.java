@@ -16,7 +16,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.PRINTER_ONLY_FAKE_ROTATION_MODE;
+import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.*;
 
 @Mixin(value = WorldUtils.class, remap = false, priority = 1010)
 public class WorldUtilsMixin {
@@ -65,6 +65,42 @@ public class WorldUtilsMixin {
 			}
 			cir.setReturnValue(defaultResult);
 			//return defaultResult;
+		}
+	}
+
+	@Inject(
+		method = "doEasyPlaceAction",
+		at = @At(
+			value = "INVOKE_ASSIGN",
+			target = "Lnet/minecraft/client/network/ClientPlayerInteractionManager;interactBlock(Lnet/minecraft/client/network/ClientPlayerEntity;Lnet/minecraft/util/Hand;Lnet/minecraft/util/hit/BlockHitResult;)Lnet/minecraft/util/ActionResult;",
+			ordinal = 0
+		),
+		require = 0
+	)
+	private static void swingHandAfterPlace(MinecraftClient mc, CallbackInfoReturnable<ActionResult> cir) {
+		if (mc.player == null) {
+			return;
+		}
+		if (PRINTER_OFF.getBooleanValue() && PRINTER_SHOULD_SWING_HAND.getBooleanValue()) {
+			mc.player.swingHand(mc.player.getActiveHand());
+		}
+	}
+
+	@Inject(
+		method = "doEasyPlaceAction",
+		at = @At(
+			value = "INVOKE_ASSIGN",
+			target = "Lnet/minecraft/client/network/ClientPlayerInteractionManager;interactBlock(Lnet/minecraft/client/network/ClientPlayerEntity;Lnet/minecraft/util/Hand;Lnet/minecraft/util/hit/BlockHitResult;)Lnet/minecraft/util/ActionResult;",
+			ordinal = 1
+		),
+		require = 0
+	)
+	private static void swingHandAfterPlaceDoubleSlab(MinecraftClient mc, CallbackInfoReturnable<ActionResult> cir) {
+		if (mc.player == null) {
+			return;
+		}
+		if (PRINTER_OFF.getBooleanValue() && PRINTER_SHOULD_SWING_HAND.getBooleanValue()) {
+			mc.player.swingHand(mc.player.getActiveHand());
 		}
 	}
 }
