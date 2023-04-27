@@ -34,7 +34,7 @@ class ItemInputs {
 	}
 
 	public static boolean canHandle() {
-		return new Date().getTime() > handling + LitematicaMixinMod.INVENTORY_OPERATIONS_WAIT.getIntegerValue();
+		return new Date().getTime() > handling + LitematicaMixinMod.PRINTER_INVENTORY_SCREEN_WAIT.getIntegerValue();
 	}
 
 	private static void handle() {
@@ -141,7 +141,7 @@ class ItemInputs {
 			MessageHolder.sendUniqueMessageActionBar(client.player, "Cooldown....");
 			return;
 		}
-		boolean allowNamed = LitematicaMixinMod.INVENTORY_OPERATIONS_FILTER_ALLOW_NAMED.getBooleanValue();
+		boolean allowNamed = LitematicaMixinMod.PRINTER_INVENTORY_OPERATION_ALLOW_ALL_NAMED.getBooleanValue();
 		BlockPos where = rayCast(client);
 		if (where == null) {
 			MessageHolder.sendUniqueMessageActionBar(client.player, "Failed to raycast");
@@ -174,7 +174,7 @@ class ItemInputs {
 				return;
 			}
 			if (entry == null || entry.getLeft() != where.asLong()) {
-				entry = new Pair<>(where.asLong(), new Date().getTime() + LitematicaMixinMod.INVENTORY_OPERATIONS_WAIT.getIntegerValue());
+				entry = new Pair<>(where.asLong(), new Date().getTime() + LitematicaMixinMod.PRINTER_INVENTORY_SCREEN_WAIT.getIntegerValue());
 				return;
 			} else if (entry.getRight() > new Date().getTime()) {
 				return;
@@ -182,7 +182,7 @@ class ItemInputs {
 				entry = null;
 			}
 			boolean allCorrect = true;
-			for (int j = 0; j < LitematicaMixinMod.INVENTORY_OPERATIONS_RETRY.getIntegerValue(); j++) {
+			for (int j = 0; j < LitematicaMixinMod.PRINTER_INVENTORY_OPERATIONS_RETRY.getIntegerValue(); j++) {
 				for (int i = 0; i < requiredStacks.size(); i++) {
 					if (InventoryUtils.areItemsExactCount(nonPlayerSlot.get(i).getStack(), requiredStacks.get(i), allowNamed)) {
 						continue;
@@ -196,7 +196,7 @@ class ItemInputs {
 			if (allCorrect) {
 				handledPos.add(where.asLong());
 				MessageHolder.sendUniqueDebugMessage("Successfully done operation at " + where.toShortString());
-				if (LitematicaMixinMod.INVENTORY_OPERATIONS_CLOSE_SCREEN.getBooleanValue()) {
+				if (LitematicaMixinMod.PRINTER_INVENTORY_OPERATIONS_CLOSE_SCREEN.getBooleanValue()) {
 					client.player.closeHandledScreen();
 				}
 			} else {
@@ -204,7 +204,7 @@ class ItemInputs {
 			}
 		} else {
 			MessageHolder.sendUniqueDebugMessage("Does not have enough item for " + where.toShortString() + "!");
-			if (LitematicaMixinMod.INVENTORY_OPERATIONS_CLOSE_SCREEN.getBooleanValue()) {
+			if (LitematicaMixinMod.PRINTER_INVENTORY_OPERATIONS_CLOSE_SCREEN.getBooleanValue()) {
 				client.player.closeHandledScreen();
 			}
 		}
