@@ -26,10 +26,7 @@ import net.minecraft.client.gui.screen.ingame.SignEditScreen;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.fluid.LavaFluid;
-import net.minecraft.item.BlockItem;
-import net.minecraft.item.ItemPlacementContext;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
+import net.minecraft.item.*;
 import net.minecraft.network.packet.c2s.play.UpdateSignC2SPacket;
 import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.state.property.Properties;
@@ -54,12 +51,12 @@ import net.minecraft.world.World;
 import net.minecraft.world.dimension.NetherPortal;
 
 import java.util.*;
+import java.util.function.Predicate;
 
 import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.*;
 import static io.github.eatmyvenom.litematicin.utils.BedrockBreaker.interactBlock;
 import static io.github.eatmyvenom.litematicin.utils.FakeAccurateBlockPlacement.getYaw;
-import static io.github.eatmyvenom.litematicin.utils.InventoryUtils.getInventory;
-import static io.github.eatmyvenom.litematicin.utils.InventoryUtils.isCreative;
+import static io.github.eatmyvenom.litematicin.utils.InventoryUtils.*;
 
 @SuppressWarnings("ConstantConditions")
 public class Printer {
@@ -71,7 +68,7 @@ public class Printer {
 	public static long lastPlaced = new Date().getTime();
 	private static boolean shouldSleepLonger = false;
 	public static Breaker breaker = new Breaker();
-	public static int worldBottomY = 0;
+	public static int worldBottomY = 0; // this is handled in MinecraftClientMixin.joinWorld callback
 	public static int worldTopY = 256;
 	private static final LinkedHashMap<Long, String> causeMap = new LinkedHashMap<>();
 	private static final Long2LongOpenHashMap referenceSet = new Long2LongOpenHashMap();
@@ -110,7 +107,10 @@ public class Printer {
 
 	public static boolean canPickBlock(MinecraftClient mc, BlockState preference, BlockPos pos) {
 		World world = SchematicWorldHandler.getSchematicWorld();
-		ItemStack stack = isReplaceableWaterFluidSource(preference) && PRINTER_PLACE_ICE.getBooleanValue() ? Items.ICE.getDefaultStack() : MaterialCache.getInstance().getRequiredBuildItemForState(preference, world, pos);
+		ItemStack stack = getStackForState(mc, preference, world, pos);
+		if (stack.isEmpty()) {
+			return false;
+		}
 		if (!stack.isEmpty() && stack.getItem() != Items.AIR) {
 			PlayerInventory inv = getInventory(mc.player);
 			if (!isCreative(mc.player)) {
@@ -151,7 +151,7 @@ public class Printer {
 	synchronized public static boolean doSchematicWorldPickBlock(MinecraftClient mc, BlockState preference,
 	                                                             BlockPos pos) {
 		World world = SchematicWorldHandler.getSchematicWorld();
-		ItemStack stack = isReplaceableWaterFluidSource(preference) && PRINTER_PLACE_ICE.getBooleanValue() ? Items.ICE.getDefaultStack() : MaterialCache.getInstance().getRequiredBuildItemForState(preference, world, pos);
+		ItemStack stack = getStackForState(mc, preference, world, pos);
 		if (!FakeAccurateBlockPlacement.canHandleOther(stack.getItem())) {
 			return false;
 		}
@@ -181,6 +181,13 @@ public class Printer {
 		}
 		return false;
 	}
+
+	@Environment(EnvType.CLIENT)
+	synchronized public static boolean doSchematicWorldPickBlock(MinecraftClient mc, Predicate<ItemStack> stack) {
+		ItemStack stack1 = io.github.eatmyvenom.litematicin.utils.InventoryUtils.findItem(mc, stack);
+		return doSchematicWorldPickBlock(mc, stack1);
+	}
+
 	public static ActionResult doEasyPlaceFakeRotation(MinecraftClient mc) { //force normal easyplace action, ignore condition checks
 		if (FakeAccurateBlockPlacement.isHandling()){
 			MessageHolder.sendDebugMessage(mc.player, "Passed because already handling something");
@@ -442,11 +449,8 @@ public class Printer {
 		LayerRange range = DataManager.getRenderLayerRange(); //add range following
 		int MaxReach = Math.max(Math.max(rangeX, rangeY), rangeZ);
 		boolean breakBlocks = PRINTER_BREAK_BLOCKS.getBooleanValue();
-		boolean Flippincactus = PRINTER_FLIPPINCACTUS.getBooleanValue();
 		boolean ExplicitObserver = PRINTER_OBSERVER_AVOID_ALL.getBooleanValue();
-		ItemStack Mainhandstack = mc.player.getMainHandStack();
-		boolean Cactus = Mainhandstack.getItem().getTranslationKey().contains("cactus") && Flippincactus;
-		boolean MaxFlip = Flippincactus && Cactus;
+		boolean flipBlocks = mc.player.getMainHandStack().getItem().equals(Items.CACTUS) && PRINTER_FLIPPINCACTUS.getBooleanValue();; //if true, will flip blocks with cactus
 		boolean smartRedstone = PRINTER_SMART_REDSTONE_AVOID.getBooleanValue();
 		Direction[] facingSides = Direction.getEntityFacingOrder(mc.player);
 		Direction primaryFacing = facingSides[0];
@@ -520,7 +524,7 @@ public class Printer {
 					BlockState stateSchematic;
 					BlockState stateClient;
 					updateSignText(mc, world, pos);
-					if (!breakBlocks && !ClearArea && !Flippincactus && !PRINTER_BEDROCK_BREAKING.getBooleanValue()) {
+					if (!breakBlocks && !ClearArea && !flipBlocks && !PRINTER_BEDROCK_BREAKING.getBooleanValue()) {
 						if (world.isAir(pos)) {
 							continue;
 						} else {
@@ -588,16 +592,16 @@ public class Printer {
 							}
 						}
 						// Abort if there is already a block in the target position
-						if (MaxFlip || printerCheckCancel(stateSchematic, stateClient)) {
+						if (flipBlocks || requiresMoreAction(stateSchematic, stateClient)) {
 							/*
 							 * Sometimes, blocks have other states like the delay on a repeater. So, this
 							 * code clicks the block until the state is the same I don't know if Schematica
 							 * does this too, I just did it because I work with a lot of redstone
 							 */
-							if (!MaxFlip && !stateClient.isAir() && !mc.player.isSneaking() && !isPositionCached(pos, true)) {
+							if (!flipBlocks && !stateClient.isAir() && !mc.player.isSneaking() && !isPositionCached(pos, true)) {
 								Block cBlock = stateClient.getBlock();
 								Block sBlock = stateSchematic.getBlock();
-
+								// Blocks are equal, but have different states
 								if (cBlock.getName().equals(sBlock.getName())) {
 									Direction facingSchematic = fi.dy.masa.malilib.util.BlockUtils
 										.getFirstPropertyFacingValue(stateSchematic);
@@ -714,7 +718,26 @@ public class Printer {
 
 									} //can place vanilla
 								}
-							} else if (!ClearArea && MaxFlip) {
+								// Blocks are not equal, but can be converted. example: dirt -> dirt path
+								if (stateClient.isOf(Blocks.DIRT)) {
+									if (stateSchematic.isOf(Blocks.DIRT_PATH) && PRINTER_PRINT_DIRT_VARIANTS.getBooleanValue() && io.github.eatmyvenom.litematicin.utils.InventoryUtils.canSwap(mc.player, item -> item.getItem() instanceof ShovelItem)) {
+										if (doSchematicWorldPickBlock(mc, stack -> stack.getItem() instanceof ShovelItem)){
+											Vec3d hitPos = new Vec3d(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5);
+											BlockHitResult hitResult = new BlockHitResult(hitPos, Direction.UP, pos, false);
+											interactBlock(mc, hitResult);
+										}
+									}
+									// farmland
+									else if (stateSchematic.isOf(Blocks.FARMLAND) && PRINTER_PRINT_DIRT_VARIANTS.getBooleanValue() && io.github.eatmyvenom.litematicin.utils.InventoryUtils.canSwap(mc.player, item -> item.getItem() instanceof HoeItem)) {
+										if (doSchematicWorldPickBlock(mc, stack -> stack.getItem() instanceof HoeItem)){
+											Vec3d hitPos = new Vec3d(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5);
+											BlockHitResult hitResult = new BlockHitResult(hitPos, Direction.UP, pos, false);
+											interactBlock(mc, hitResult);
+										}
+									}
+								}
+							} else if (!ClearArea && flipBlocks) {
+								// Flip the block
 								Block cBlock = stateClient.getBlock();
 								Block sBlock = stateSchematic.getBlock();
 								if (cBlock.getName().equals(sBlock.getName())) {
@@ -760,7 +783,7 @@ public class Printer {
 							continue;
 						} //cancel normal placing
 					}
-					if (!ClearArea && MaxFlip) {
+					if (!ClearArea && flipBlocks) {
 						mc.player.sendMessage(Text.of("Handling printerFlippinCactus!"), true);
 						continue;
 					}
@@ -771,7 +794,7 @@ public class Printer {
 					Block cBlock = stateClient.getBlock();
 					Block sBlock = stateSchematic.getBlock();
 					if (ClearArea) {
-						mc.player.sendMessage(Text.of("Handling printerClear*!"), true);
+						MessageHolder.sendUniqueMessageActionBar(mc.player, "Handling printerClearArea!");
 						if (isReplaceableWaterFluidSource(stateClient)) {
 							if (!UseCobble) {
 								stack = Items.SPONGE.getDefaultStack();
@@ -2089,7 +2112,7 @@ public class Printer {
 			checkState.getBlock() instanceof Waterloggable && checkState.get(Properties.WATERLOGGED) && checkState.getMaterial().isReplaceable();
 	}
 
-	private static boolean isReplaceableWaterFluidSource(BlockState checkState) {
+	static boolean isReplaceableWaterFluidSource(BlockState checkState) {
 		return checkState.isOf(Blocks.SEAGRASS) || checkState.isOf(Blocks.TALL_SEAGRASS) ||
 			checkState.isOf(Blocks.WATER) && checkState.contains(FluidBlock.LEVEL) && checkState.get(FluidBlock.LEVEL) == 0 ||
 			checkState.getBlock() instanceof BubbleColumnBlock ||
@@ -2100,7 +2123,8 @@ public class Printer {
 		return state.getBlock() instanceof Waterloggable && state.get(Properties.WATERLOGGED);
 	}
 
-	private static boolean printerCheckCancel(BlockState stateSchematic, BlockState stateClient) {
+	private static boolean requiresMoreAction(BlockState stateSchematic, BlockState stateClient) {
+		// Return true if current state requires more action to be taken
 		Block blockSchematic = stateSchematic.getBlock();
 		if (blockSchematic instanceof SeaPickleBlock && stateSchematic.get(SeaPickleBlock.PICKLES) > 1) {
 			Block blockClient = stateClient.getBlock();
@@ -2130,6 +2154,10 @@ public class Printer {
 		if (blockClient instanceof SnowBlock && stateClient.get(SnowBlock.LAYERS) < 3 && !(stateSchematic.getBlock() instanceof SnowBlock)) {
 			return false;
 		}
+		if (stateClient.isOf(Blocks.DIRT) && stateSchematic.isOf(Blocks.DIRT_PATH)) {
+			return true;
+		}
+		// finally
 		return !stateClient.isAir() && !stateClient.getMaterial().isReplaceable();
 	}
 

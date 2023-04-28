@@ -33,6 +33,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 
 import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.*;
 import static io.github.eatmyvenom.litematicin.utils.BedrockBreaker.interactBlock;
+import static io.github.eatmyvenom.litematicin.utils.InventoryUtils.getStackForState;
 import static io.github.eatmyvenom.litematicin.utils.InventoryUtils.isCreative;
 
 public class FakeAccurateBlockPlacement {
@@ -524,7 +525,7 @@ public class FakeAccurateBlockPlacement {
 			appliedHitVec = Vec3d.ofCenter(pos); //follows player looking
 		}
 		BlockHitResult blockHitResult = new BlockHitResult(appliedHitVec, side, pos, true);
-		ItemStack pickedItem = MaterialCache.getInstance().getRequiredBuildItemForState(blockState, SchematicWorldHandler.getSchematicWorld(), pos);
+		ItemStack pickedItem = getStackForState(minecraftClient, blockState, minecraftClient.world, pos);
 		if (pickedItem.getItem() == currentHandling && Printer.doSchematicWorldPickBlock(minecraftClient, blockState, pos)) {
 			MessageHolder.sendOrderMessage("Placing " + blockState.getBlock().getTranslationKey() + " at " + pos.toShortString() + " stack at hand is " + player.getMainHandStack());
 
@@ -547,7 +548,7 @@ public class FakeAccurateBlockPlacement {
 	private static boolean pickFirst(BlockState blockState, BlockPos pos) {
 		final MinecraftClient minecraftClient = MinecraftClient.getInstance();
 		if (Printer.doSchematicWorldPickBlock(minecraftClient, blockState, pos)) {
-			currentHandling = MaterialCache.getInstance().getRequiredBuildItemForState(blockState, SchematicWorldHandler.getSchematicWorld(), pos).getItem();
+			currentHandling = getStackForState(minecraftClient, blockState, minecraftClient.world, pos).getItem();
 			handlingState = blockState;
 			requestedTicks = 0;
 			return true;

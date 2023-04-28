@@ -15,6 +15,7 @@ public class LitematicaMixinMod implements ModInitializer {
 	public static final ConfigBoolean PRINTER_OFF = new ConfigBoolean("printerOff", false, "Disables printer.");
 	public static final ConfigBoolean PRINTER_ONLY_FAKE_ROTATION_MODE = new ConfigBoolean("easyPlaceMode++", false, "Disables printer and only make fake rotation work.");
 	public static final ConfigBoolean PRINTER_SHOULD_SWING_HAND = new ConfigBoolean("printerSwingHand", false, "Swings hand when placing/attacking blocks.");
+	public static final ConfigBoolean PRINTER_PRINT_DIRT_VARIANTS = new ConfigBoolean("printerPrintDirtVariant", false, "Uses shovel/hoe on dirt to make variants. Also tries to place dirt instead first");
 	public static final ConfigBoolean RENDER_ONLY_HOLDING_ITEMS = new ConfigBoolean("printerRenderOnlyHoldingItems", false, "Only render blocks that are in player's inventory.");
 	public static final ConfigBoolean PRINTER_FAKE_ROTATION_AGGRESSIVE = new ConfigBoolean("printerFakeRotationAggressive", false, "Packets will be sent aggressively to force player direction.");
 	public static final ConfigBoolean PRINTER_SUPPRESS_PACKETS = new ConfigBoolean("printerFakeRotationSuppressOther", false, "Prevents other packets than fake rotations from being sent when EasyPlaceMode is on.");
@@ -65,6 +66,7 @@ public class LitematicaMixinMod implements ModInitializer {
 	public static final ImmutableList<IConfigBase> betterList = originalList.addAll(ImmutableList.of(
 		VERIFY_INVENTORY,
 		PRINTER_SHOULD_SWING_HAND,
+		PRINTER_PRINT_DIRT_VARIANTS,
 		USE_INVENTORY_CACHE,
 		PRINTER_OFF,
 		PRINTER_ONLY_FAKE_ROTATION_MODE,

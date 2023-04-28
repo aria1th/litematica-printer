@@ -2,7 +2,10 @@ package io.github.eatmyvenom.litematicin.utils;
 
 import fi.dy.masa.litematica.config.Configs;
 import fi.dy.masa.litematica.config.Hotkeys;
+import fi.dy.masa.litematica.materials.MaterialCache;
 import io.github.eatmyvenom.litematicin.LitematicaMixinMod;
+import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
 import net.minecraft.block.ShulkerBoxBlock;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.LootableContainerBlockEntity;
@@ -10,10 +13,8 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.Inventories;
-import net.minecraft.item.BlockItem;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.ToolItem;
+import net.minecraft.inventory.Inventory;
+import net.minecraft.item.*;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.packet.c2s.play.PlayerActionC2SPacket;
 import net.minecraft.network.packet.c2s.play.UpdateSelectedSlotC2SPacket;
@@ -24,9 +25,10 @@ import net.minecraft.util.math.Direction;
 import net.minecraft.world.World;
 
 import java.util.*;
+import java.util.function.Predicate;
 
-import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.RENDER_ONLY_HOLDING_ITEMS;
-import static io.github.eatmyvenom.litematicin.utils.Printer.isSleeping;
+import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.*;
+import static io.github.eatmyvenom.litematicin.utils.Printer.*;
 
 public class InventoryUtils {
 	private static int ptr = -1;
@@ -228,6 +230,15 @@ public class InventoryUtils {
 		return ItemStack.areItemsEqual(a, b) && ItemStack.areNbtEqual(a, b);
 	}
 
+	public static ItemStack getStackForState(MinecraftClient client, BlockState state, World world, BlockPos pos) {
+		ItemStack stack = isReplaceableWaterFluidSource(state) && PRINTER_PLACE_ICE.getBooleanValue() ? Items.ICE.getDefaultStack() : MaterialCache.getInstance().getRequiredBuildItemForState(state, world, pos);
+		if (PRINTER_PRINT_DIRT_VARIANTS.getBooleanValue() && !canPickItem(client, stack)) {
+			if (state.isOf(Blocks.FARMLAND)) stack = Items.DIRT.getDefaultStack();
+			else if (state.isOf(Blocks.DIRT_PATH)) stack = Items.DIRT.getDefaultStack();
+		}
+		return stack;
+	}
+
 	public static boolean areItemsExactAllowNamed(ItemStack a, ItemStack b) {
 		if (a.getItem() instanceof ToolItem || b.getItem() instanceof ToolItem) { //safety
 			return false;
@@ -249,6 +260,20 @@ public class InventoryUtils {
 		}
 		int slotNum = getInventory(player).getSlotWithStack(stack);
 		return slotNum != -1 && areItemsExact(getInventory(player).getStack(slotNum), stack);
+	}
+
+	public static boolean canSwap(ClientPlayerEntity player, Predicate<ItemStack> predicate) {
+		if (isCreative(player)) {
+			return true;
+		}
+		Inventory inv = getInventory(player);
+		for (int i = 0; i < inv.size(); i++) {
+			ItemStack stack = inv.getStack(i);
+			if (stack.getItem() instanceof ToolItem && predicate.test(stack)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	synchronized public static boolean swapToItem(MinecraftClient client, ItemStack stack) {
@@ -307,6 +332,26 @@ public class InventoryUtils {
 			return true;
 		}
 		return creativeSwap(client, player, stack);
+	}
+
+	synchronized public static ItemStack findItem(MinecraftClient client, Predicate<ItemStack> predicate) {
+		ClientPlayerEntity player = client.player;
+		if (player == null) {
+			return ItemStack.EMPTY;
+		}
+		Inventory inv = getInventory(player);
+		for (int i = 0; i < inv.size(); i++) {
+			ItemStack stack = inv.getStack(i);
+			if (stack.getItem() instanceof ToolItem && predicate.test(stack)) {
+				return stack;
+			}
+		}
+		return ItemStack.EMPTY;
+	}
+
+	synchronized public static boolean swapToItem(MinecraftClient client, Predicate<ItemStack> predicate) {
+		ItemStack stack = findItem(client, predicate);
+		return swapToItem(client, stack);
 	}
 
 	public static int getSlotWithStack(ClientPlayerEntity player, ItemStack stack) {
