@@ -519,7 +519,7 @@ public class Printer {
 
 					BlockPos pos = new BlockPos(x, y, z);
 					if (PRINTER_ALLOW_INVENTORY_OPERATIONS.getBooleanValue() && io.github.eatmyvenom.litematicin.utils.InventoryUtils.hasItemInSchematic(world, pos)) {
-						MessageHolder.sendUniqueMessageAlways("Inventory in " + pos.toCenterPos().toString() + " has Item inside!");
+						MessageHolder.sendUniqueMessageAlways("Inventory in " + pos.toShortString() + " has Item inside!");
 					}
 					BlockState stateSchematic;
 					BlockState stateClient;
