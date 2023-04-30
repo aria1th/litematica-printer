@@ -80,6 +80,16 @@ public class FakeAccurateBlockPlacement {
 		return currentHandling == item;
 	}
 
+	private static String canHandleOtherReason(Item item) {
+		if (canHandleOther()) {
+			return "canHandleOther";
+		}
+		if (currentHandling != item) {
+			return "currently handling "+ currentHandling.getName().getString() + " but requested " + item.getName().getString();
+		}
+		return "unknown";
+	}
+
 	public static float getYaw(PlayerEntity player) {
 		//#if MC>=11700
 		return player.getYaw();
@@ -426,8 +436,24 @@ public class FakeAccurateBlockPlacement {
 			return true;
 		} else {
 			//delay
-			if (isHandling() && (lookRefdir != fakeDirection || fp != fakePitch || fy != fakeYaw || !canPlaceWallMounted(blockState))) {
-				MessageHolder.sendOrderMessage("Cannot handle "+ blockState + " at " + blockPos.toShortString());
+			if (isHandling() && (fakeDirection != null && lookRefdir != fakeDirection || fp != 12 && fp != fakePitch || fy != 0 && fy != fakeYaw || !canPlaceWallMounted(blockState))) {
+				String reason = "Failure because of ";
+				if (isHandling()) {
+					reason += "isHandling ";
+				}
+				if (fakeDirection != null && lookRefdir != fakeDirection) {
+					reason += "lookRefdir " + lookRefdir + " is different from " + fakeDirection + " ";
+				}
+				if (fp != 12 && fp != fakePitch) {
+					reason += "fp " + fp + " is different from " + fakePitch + " ";
+				}
+				if (fy != 0 && fy != fakeYaw) {
+					reason += "fy " + fy + " is different from " + fakeYaw + " ";
+				}
+				if (!canPlaceWallMounted(blockState)) {
+					reason += "cannot place wall mounted ";
+				}
+				MessageHolder.sendOrderMessage("Cannot handle "+ blockState + " at " + blockPos.toShortString() + reason);
 				return false;
 			}
 			if (requestedTicks <= 0 && fakeDirection == lookRefdir && fp == fakePitch && fy == fakeYaw) {
@@ -472,7 +498,9 @@ public class FakeAccurateBlockPlacement {
 		if (!PRINTER_FAKE_ROTATION.getBooleanValue()) {
 			return true;
 		}
-		if (canHandleOther(MaterialCache.getInstance().getRequiredBuildItemForState(state, SchematicWorldHandler.getSchematicWorld(), pos).getItem())) {
+		ItemStack stack = getStackForState(MinecraftClient.getInstance(), state, SchematicWorldHandler.getSchematicWorld(), pos);
+		Item item = stack.getItem();
+		if (canHandleOther(item)) {
 			if (state.isOf(Blocks.GRINDSTONE)) {
 				if (stateGrindStone != null) {
 					return stateGrindStone.get(GrindstoneBlock.FACE) == state.get(GrindstoneBlock.FACE) && stateGrindStone.get(GrindstoneBlock.FACING) == state.get(GrindstoneBlock.FACING);
@@ -486,7 +514,7 @@ public class FakeAccurateBlockPlacement {
 			}
 			return true;
 		}
-		MessageHolder.sendOrderMessage("Cannot handle " + state.toString() + " at " + pos.toShortString());
+		MessageHolder.sendOrderMessage("Cannot handle " + state.toString() + " at " + pos.toShortString() + canHandleOtherReason(item));
 		return false;
 	}
 

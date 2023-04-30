@@ -36,7 +36,7 @@ public class Breaker implements IClientTickHandler {
 		int bestSlotId = getBestItemSlotIdToMineBlock(mc, pos);
 		// If slot isn't selected, change
 		if (bestSlotId != -1) {
-			ItemStack stack = mc.player.getInventory().getStack(bestSlotId);
+			ItemStack stack = InventoryUtils.getInventory(mc.player).getStack(bestSlotId);
 			InventoryUtils.swapToItem(mc, stack);
 		}
 		// Start breaking
@@ -67,7 +67,7 @@ public class Breaker implements IClientTickHandler {
 	}
 
 	private static int getFastestToolSlot(MinecraftClient mc, int bestSlot, float bestSpeed, BlockState state) {
-		for (int i = mc.player.getInventory().size(); i >= 0; i--) {
+		for (int i = InventoryUtils.getInventory(mc.player).size(); i >= 0; i--) {
 			float speed = getBlockBreakingSpeed(state, mc, i);
 			if ((speed > bestSpeed && speed > 1.0F)
 				|| (speed >= bestSpeed && !mc.player.getInventory().getStack(i).isDamageable())) {
@@ -88,7 +88,7 @@ public class Breaker implements IClientTickHandler {
 		if (slotId < -1 || slotId >= 36) {
 			return 0;
 		}
-		float f = mc.player.getInventory().main.get(slotId).getMiningSpeedMultiplier(block);
+		float f = InventoryUtils.getInventory(mc.player).main.get(slotId).getMiningSpeedMultiplier(block);
 		if (f > 1.0F) {
 			int i = EnchantmentHelper.getEfficiency(mc.player);
 			ItemStack itemStack = mc.player.getInventory().getMainHandStack();
