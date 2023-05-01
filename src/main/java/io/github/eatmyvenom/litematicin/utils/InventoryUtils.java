@@ -41,6 +41,7 @@ public class InventoryUtils {
 	public static int trackedSelectedSlot = -1;
 
 	private static long tickCount = 0;
+	private static long lastWorkedTick = 0;
 
 	private static String cachedPickBlockableSlots = "";
 
@@ -53,6 +54,9 @@ public class InventoryUtils {
 		if (RENDER_ONLY_HOLDING_ITEMS.getBooleanValue() && tickCount % 20 == 0) {
 			calculateCache();
 		}
+		if (INVENTORY_CACHE_TICKS.getIntegerValue() != 0 && tickCount - lastWorkedTick > INVENTORY_CACHE_TICKS.getIntegerValue()){
+			clearCache();
+		}
 		if (!isSleeping && Configs.Generic.EASY_PLACE_MODE.getBooleanValue() && Configs.Generic.EASY_PLACE_HOLD_ENABLED.getBooleanValue() && Hotkeys.EASY_PLACE_ACTIVATION.getKeybind().isKeybindHeld()) {
 			for (int i = 0; i < 9; i++) {
 				if (!usedSlots.containsKey(i)) {
@@ -64,12 +68,18 @@ public class InventoryUtils {
 				}
 			}
 		} else {
-			trackedSelectedSlot = -1;
-			previousItem = null;
-			handlingItem = null;
-			usedSlots.clear();
-			slotCounts.clear();
+			clearCache();
 		}
+	}
+
+	public static void clearCache(){
+		if (!usedSlots.isEmpty()) MessageHolder.sendOrderMessage("Clearing cache");
+		trackedSelectedSlot = -1;
+		previousItem = null;
+		handlingItem = null;
+		usedSlots.clear();
+		slotCounts.clear();
+		lastWorkedTick = tickCount;
 	}
 
 
@@ -281,6 +291,7 @@ public class InventoryUtils {
 		ClientPlayerEntity player = client.player;
 		int maxChange = LitematicaMixinMod.PRINTER_MAX_ITEM_CHANGES.getIntegerValue();
 		if (player == null || client.interactionManager == null) {
+			MessageHolder.sendOrderMessage("Player or interaction manager was null");
 			return false;
 		}
 		//getInventory(player).updateItems();
@@ -305,6 +316,7 @@ public class InventoryUtils {
 			usedSlots.put(getInventory(player).selectedSlot, getMainHandStack(player).getItem());
 			slotCounts.put(getInventory(player).selectedSlot, lastCount);
 			previousItem = stack.getItem();
+			lastWorkedTick = tickCount;
 			return true;
 		}
 		if (usedSlots.containsValue(stack.getItem())) {
@@ -317,11 +329,16 @@ public class InventoryUtils {
 				lastCount = stack.getCount();
 				previousItem = stack.getItem();
 				handlingItem = previousItem;
+				lastWorkedTick = tickCount;
 				MessageHolder.sendOrderMessage("Selected slot " + getInventory(player).selectedSlot + " based on cache for " + stack.getItem());
 				client.getNetworkHandler().sendPacket(new UpdateSelectedSlotC2SPacket(getInventory(player).selectedSlot));
 				return !getInventory(player).getMainHandStack().isEmpty();
 			}
+			else {
+				MessageHolder.sendOrderMessage("Used slot contains stack but cannot find " + stack.getItem());
+			}
 		}
+		MessageHolder.sendOrderMessage("Trying survival Swap");
 		if (survivalSwap(client, player, stack)) {
 			usedSlots.put(getInventory(player).selectedSlot, stack.getItem());
 			slotCounts.put(trackedSelectedSlot, getMainHandStack(player).getCount());
@@ -329,8 +346,10 @@ public class InventoryUtils {
 			handlingItem = stack.getItem();
 			previousItem = handlingItem;
 			itemChangeCount++;
+			lastWorkedTick = tickCount;
 			return true;
 		}
+		MessageHolder.sendOrderMessage("Survival swap failed, trying creative swap");
 		return creativeSwap(client, player, stack);
 	}
 
@@ -361,10 +380,12 @@ public class InventoryUtils {
 	@SuppressWarnings("ConstantConditions")
 	private static boolean creativeSwap(MinecraftClient client, ClientPlayerEntity player, ItemStack stack) {
 		if (!isCreative(player)) {
+			MessageHolder.sendOrderMessage("Player is not in creative mode");
 			return false;
 		}
 		int selectedSlot = getAvailableSlot(stack.getItem());
 		if (selectedSlot == -1) {
+			MessageHolder.sendOrderMessage("No available slot for " + stack.getItem());
 			return false;
 		}
 		MessageHolder.sendOrderMessage("Clicked creative stack " + stack.getItem() + " for slot " + selectedSlot);
@@ -380,6 +401,7 @@ public class InventoryUtils {
 		handlingItem = stack.getItem();
 		previousItem = handlingItem;
 		itemChangeCount++;
+		lastWorkedTick = tickCount;
 		return true;
 	}
 

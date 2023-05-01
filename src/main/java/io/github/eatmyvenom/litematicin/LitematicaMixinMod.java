@@ -11,6 +11,7 @@ import net.fabricmc.api.ModInitializer;
 public class LitematicaMixinMod implements ModInitializer {
 	public static ImmutableList.Builder<IConfigBase> originalList = new ImmutableList.Builder<IConfigBase>().addAll(Configs.Generic.OPTIONS);
 	public static final ConfigBoolean USE_INVENTORY_CACHE = new ConfigBoolean("printerUseInventoryCache", true, "Uses Inventory cache instead of litematica's inventory utils.");
+	public static final ConfigInteger INVENTORY_CACHE_TICKS = new ConfigInteger("printerInventoryCacheTicks", 20, 0, 100, "Ticks to wait before updating inventory cache.");
 	public static final ConfigBoolean VERIFY_INVENTORY = new ConfigBoolean("verifierFindInventoryContents", true, "Schematic verifier will show blocks with inventory as wrong state.");
 	public static final ConfigBoolean PRINTER_OFF = new ConfigBoolean("printerOff", false, "Disables printer.");
 	public static final ConfigBoolean PRINTER_ONLY_FAKE_ROTATION_MODE = new ConfigBoolean("easyPlaceMode++", false, "Disables printer and only make fake rotation work.");
@@ -68,6 +69,7 @@ public class LitematicaMixinMod implements ModInitializer {
 		PRINTER_SHOULD_SWING_HAND,
 		PRINTER_PRINT_DIRT_VARIANTS,
 		USE_INVENTORY_CACHE,
+		INVENTORY_CACHE_TICKS,
 		PRINTER_OFF,
 		PRINTER_ONLY_FAKE_ROTATION_MODE,
 		PRINTER_FAKE_ROTATION_AGGRESSIVE,

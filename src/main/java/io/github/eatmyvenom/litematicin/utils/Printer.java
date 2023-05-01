@@ -960,6 +960,8 @@ public class Printer {
 											MessageHolder.sendUniqueMessage(mc.player, "Observer at " + pos.toShortString() + " is causing self-blocking, checking if it can be placed");
 											if (checkObserverOutputs(mc, world, pos)) {
 												MessageHolder.sendUniqueMessage(mc.player, "Observer at " + pos.toShortString() + " can be placed, placing it");
+												// mark observer output positions as cached
+												markObserverOutputs(mc, world, pos);
 												markObserverToBePlaced = true;
 											}
 											else {
@@ -982,6 +984,7 @@ public class Printer {
 							if (observerPos != null) {
 								recordCause(pos, sBlock.getTranslationKey() + " at " + pos.toShortString() + " is waiting for preceded observer at " + observerPos.toShortString(), observerPos);
 								MessageHolder.sendUniqueMessage(mc.player, getReason(pos.asLong()));
+								cacheEasyPlacePosition(pos, false, 400); // cache for 400 ms
 								continue;
 							}
 							if (sBlock instanceof ObserverBlock && !markObserverToBePlaced) {
@@ -1393,6 +1396,16 @@ public class Printer {
 			return ActionResult.PASS;
 		}
 		return ActionResult.FAIL;
+	}
+
+	private static void markObserverOutputs(MinecraftClient mc, World world, BlockPos pos) {
+		// Caches all observer outputs
+		// using cacheEasyPlacePosition to cache the position
+		// default : 400ms
+		BlockPos observerOutput = pos.offset(world.getBlockState(pos).get(ObserverBlock.FACING));
+		BlockPos observerOutputDown = observerOutput.down();
+		cacheEasyPlacePosition(observerOutput, false, 400);
+		cacheEasyPlacePosition(observerOutputDown, false, 400);
 	}
 
 	private static boolean checkObserverOutputs(MinecraftClient mc, World world, BlockPos pos) {
