@@ -54,8 +54,25 @@ dependencies {
 	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabricapi_version}"
 	modCompileOnly files("../../external/${project.essentialclient_filename}") // shared external files.
-	modImplementation "curse.maven:malilib-${project.malilib_projectid}:${project.malilib_fileid}"
-	modImplementation "curse.maven:litematica-${project.litematica_projectid}:${project.litematica_fileid}"
+    // check project.malilib_projectid and project.malilib_fileid in gradle.properties.
+    // modImplementation "curse.maven:malilib-${project.malilib_projectid}:${project.malilib_fileid}"
+    // if malilib projectid and fileid are not defined, try to find malilib_filename in gradle.properties.
+    if (!project.hasProperty("malilib_projectid")) {
+        modImplementation files("../../external/${project.malilib_filename}")
+        // 1.20.1 then kosmolot-unofficial-malilib-fabric-1.20-0.15.4+ksm.3.jar
+    }
+    else {
+        modImplementation "curse.maven:malilib-${project.malilib_projectid}:${project.malilib_fileid}"
+    }
+    // check project.litematica_projectid and project.litematica_fileid in gradle.properties.
+	// modImplementation "curse.maven:litematica-${project.litematica_projectid}:${project.litematica_fileid}"
+    if (!project.hasProperty("litematica_projectid")) {
+        modImplementation files("../../external/${project.litematica_filename}")
+        // 1.20.1 then kosmolot-unofficial-litematica-fabric-1.20-0.14.3+ksm.3.jar
+    }
+    else {
+        modImplementation "curse.maven:litematica-${project.litematica_projectid}:${project.litematica_fileid}"
+    }
 	annotationProcessor "com.github.LlamaLad7:MixinExtras:0.1.1"
 }
 
