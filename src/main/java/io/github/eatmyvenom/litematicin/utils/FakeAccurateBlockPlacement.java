@@ -531,7 +531,11 @@ public class FakeAccurateBlockPlacement {
 		final MinecraftClient minecraftClient = MinecraftClient.getInstance();
 		final ClientPlayerEntity player = minecraftClient.player;
 		final ClientPlayerInteractionManager interactionManager = minecraftClient.interactionManager;
+		//#if MC>=12000
+		//$$ if (!minecraftClient.world.getBlockState(pos).isReplaceable()) {
+		//#else
 		if (!minecraftClient.world.getBlockState(pos).getMaterial().isReplaceable()) {
+		//#endif
 			MessageHolder.sendDebugMessage("Client block position was not replaceable at " + pos.toShortString());
 			return true;
 		}

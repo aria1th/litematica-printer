@@ -49,6 +49,14 @@ public class BedrockBreaker {
 		positionStorage.clear();
 	}
 
+	public static boolean isReplaceable(BlockState state) {
+		//#if MC>=12000
+		//$$ return state.isReplaceable();
+		//#else
+		return state.getMaterial().isReplaceable();
+		//#endif
+	}
+
 	private static boolean shouldExtend(World world, BlockPos pos, Direction pistonFace) {
 		for (Direction direction : Direction.values()) {
 			if (direction != pistonFace && world.isEmittingRedstonePower(pos.offset(direction), direction)) {
@@ -91,7 +99,7 @@ public class BedrockBreaker {
 				if (shouldExtend(mc.world, pistonPos, pistonFacing)) {
 					continue;
 				}
-				if (mc.world.getBlockState(checkAir).isAir() || mc.world.getBlockState(checkAir).getMaterial().isReplaceable()) {
+				if (mc.world.getBlockState(checkAir).isAir() || isReplaceable(mc.world.getBlockState(checkAir))) {
 					TorchData torchdata = getPossiblePowerableTorchPosFace(mc, bedrockPos, pistonPos, checkAir);
 					if (torchdata != null) {
 						TorchPath torchPath = new TorchPath(torchdata.TorchPos, torchdata.Torchfacing, pistonPos, pistonFacing, lv.getOpposite());
@@ -127,7 +135,7 @@ public class BedrockBreaker {
 				if (slimePos.equals(pos2)) {
 					continue;
 				}
-				if (world.getBlockState(slimePos).isAir() || world.getBlockState(slimePos).getMaterial().isReplaceable()) {
+				if (world.getBlockState(slimePos).isAir() || isReplaceable(world.getBlockState(slimePos))) {
 					//placeSlime(mc, slimePos);
 					TorchData torchData = new TorchData(torchCheck, Direction.UP);
 					torchData.registerSlimePos(slimePos);
@@ -160,7 +168,7 @@ public class BedrockBreaker {
 				if (!isBlockPosinYRange(slimePos)) {
 					continue;
 				}
-				if (world.getBlockState(slimePos).isAir() || world.getBlockState(slimePos).getMaterial().isReplaceable()) {
+				if (world.getBlockState(slimePos).isAir() || isReplaceable(world.getBlockState(slimePos))) {
 					TorchData torchData = new TorchData(torchCheck, Direction.UP);
 					//placeSlime(mc, slimePos);
 					torchData.registerSlimePos(slimePos);
@@ -182,7 +190,7 @@ public class BedrockBreaker {
 			if (torchCheck.equals(pos1) || torchCheck.equals(pos2)) {
 				return null;
 			}
-			if (!world.getBlockState(torchCheck).isAir() && !world.getBlockState(torchCheck).getMaterial().isReplaceable()) {
+			if (!world.getBlockState(torchCheck).isAir() && !isReplaceable(world.getBlockState(torchCheck))) {
 				return null;
 			}
 			if (!world.getBlockState(torchCheck.down()).isOf(Blocks.PISTON) && TorchBlock.sideCoversSmallSquare(world, torchCheck.down(), Direction.DOWN)) {
@@ -192,7 +200,7 @@ public class BedrockBreaker {
 				if (slimePos.equals(pos2)) {
 					return null;
 				}
-				if (isBlockPosinYRange(slimePos) && world.getBlockState(slimePos).isAir() || world.getBlockState(slimePos).getMaterial().isReplaceable()) {
+				if (isBlockPosinYRange(slimePos) && world.getBlockState(slimePos).isAir() || isReplaceable(world.getBlockState(slimePos))) {
 					TorchData torchData = new TorchData(torchCheck, Direction.UP);
 					torchData.registerSlimePos(slimePos);
 					return torchData;
@@ -209,7 +217,7 @@ public class BedrockBreaker {
 		if (torchCheck.equals(pos1) || torchCheck.equals(pos2)) {
 			return true;
 		}
-		return !world.getBlockState(torchCheck).isAir() && !world.getBlockState(torchCheck).getMaterial().isReplaceable();
+		return !world.getBlockState(torchCheck).isAir() && !isReplaceable(world.getBlockState(torchCheck));
 	}
 
 	public static void removeScheduledPos(MinecraftClient mc) {

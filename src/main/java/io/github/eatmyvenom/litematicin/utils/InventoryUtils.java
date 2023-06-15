@@ -445,7 +445,7 @@ public class InventoryUtils {
 
 		}
 		try {
-			assert getMainHandStack(player).isItemEqual(stack);
+			assert ItemStack.areEqual(getMainHandStack(player), stack);
 		} catch (Exception e) {
 			MessageHolder.sendMessageUncheckedUnique(player, stack.toString() + " does not match with " + player.getMainHandStack().toString() + "!");
 		}

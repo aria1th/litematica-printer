@@ -55,6 +55,7 @@ import java.util.function.Predicate;
 
 import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.*;
 import static io.github.eatmyvenom.litematicin.utils.BedrockBreaker.interactBlock;
+import static io.github.eatmyvenom.litematicin.utils.BedrockBreaker.isReplaceable;
 import static io.github.eatmyvenom.litematicin.utils.FakeAccurateBlockPlacement.getYaw;
 import static io.github.eatmyvenom.litematicin.utils.InventoryUtils.*;
 
@@ -162,7 +163,11 @@ public class Printer {
 				return io.github.eatmyvenom.litematicin.utils.InventoryUtils.swapToItem(mc, stack);
 			} else {
 				InventoryUtils.schematicWorldPickBlock(stack, pos, world, mc);
-				return mc.player.getMainHandStack().isItemEqual(stack);
+				//#if MC>11650
+				return mc.player.getMainHandStack().isOf(stack.getItem());
+				//#else
+				//$$ return mc.player.getMainHandStack().isItemEqual(stack);
+				//#endif
 			}
 		}
 		return false;
@@ -179,7 +184,11 @@ public class Printer {
 				return io.github.eatmyvenom.litematicin.utils.InventoryUtils.swapToItem(mc, stack);
 			} else {
 				fi.dy.masa.malilib.util.InventoryUtils.swapItemToMainHand(stack, mc);
-				return mc.player.getMainHandStack().isItemEqual(stack);
+				//#if MC>11650
+				return mc.player.getMainHandStack().isOf(stack.getItem());
+				//#else
+				//$$ return mc.player.getMainHandStack().isItemEqual(stack);
+				//#endif
 			}
 		}
 		return false;
@@ -603,7 +612,7 @@ public class Printer {
 									interact += BedrockBreaker.scheduledTickHandler(mc, null);
 									continue;
 								} else if (!positionStorage.hasPos(pos)) { // For survival
-									boolean replaceable = mc.world.getBlockState(pos).getMaterial().isReplaceable();
+									boolean replaceable = isReplaceable(mc.world.getBlockState(pos));
 									if (!replaceable && mc.world.getBlockState(pos).getHardness(world, pos) == -1) {
 										continue;
 									}
@@ -678,7 +687,7 @@ public class Printer {
 											}
 
 										} else if (sBlock instanceof TrapdoorBlock) {
-											if (stateSchematic.getMaterial() != Material.METAL && stateSchematic
+											if (!stateSchematic.isOf(Blocks.IRON_TRAPDOOR) && stateSchematic
 												.get(TrapdoorBlock.OPEN) != stateClient.get(TrapdoorBlock.OPEN)) {
 												clickTimes = 1;
 											}
@@ -688,7 +697,7 @@ public class Printer {
 												clickTimes = 1;
 											}
 										} else if (sBlock instanceof DoorBlock) {
-											if (stateClient.getMaterial() != Material.METAL && stateSchematic
+											if (!stateSchematic.isOf(Blocks.IRON_DOOR) && stateSchematic
 												.get(DoorBlock.OPEN) != stateClient.get(DoorBlock.OPEN)) {
 												clickTimes = 1;
 											}
@@ -868,7 +877,7 @@ public class Printer {
 						causeMap.remove(pos.asLong());
 						continue;
 					}
-					if (cBlock != sBlock && !stateClient.getMaterial().isReplaceable()) {
+					if (cBlock != sBlock && !isReplaceable(stateClient)) {
 						// Wrong block is in place, requires player action to fix
 						MessageHolder.sendUniqueMessage(mc.player, sBlock.getTranslationKey() + " at " + pos.toShortString() + " is blocking placement of " + cBlock.getTranslationKey() + "!!");
 						continue;
@@ -1069,8 +1078,8 @@ public class Printer {
 						//Don't place waterlogged block's original block before fluid since its painful
 						// 1. if
 						if (PRINTER_PLACE_ICE.getBooleanValue() &&
-							(isReplaceableWaterFluidSource(stateSchematic) && stateClient.getMaterial().isReplaceable() && !isReplaceableWaterFluidSource(stateClient) && !stateClient.isOf(Blocks.LAVA) ||
-								PRINTER_WATERLOGGED_WATER_FIRST.getBooleanValue() && stateClient.getMaterial().isReplaceable() && containsWaterloggable(stateSchematic))
+							(isReplaceableWaterFluidSource(stateSchematic) && isReplaceable(stateClient) && !isReplaceableWaterFluidSource(stateClient) && !stateClient.isOf(Blocks.LAVA) ||
+								PRINTER_WATERLOGGED_WATER_FIRST.getBooleanValue() && isReplaceable(stateClient) && containsWaterloggable(stateSchematic))
 						) {
 							ItemStack iceStack = Items.ICE.getDefaultStack();
 							if (!FakeAccurateBlockPlacement.canHandleOther(iceStack.getItem())) {
@@ -1158,7 +1167,7 @@ public class Printer {
 							//Any : if we have block in testPos, then we can place with wanted direction.
 							//Trapdoors : it can be placed in air with player direction's opposite.
 							//Else : can't be placed except End Rod.
-							if (!mc.world.getBlockState(npos).getMaterial().isReplaceable()) {
+							if (!isReplaceable(mc.world.getBlockState(npos))) {
 								//npos is blockPos to be hit.
 								//instead, hitVec should have 1 corresponding to direction property.
 								//but First check if its block with GUI*
@@ -2045,11 +2054,11 @@ public class Printer {
 		WallMountLocation location = state.get(WallMountedBlock.FACE);
 		//case ceil
 		if (location == WallMountLocation.CEILING) {
-			return !client.world.getBlockState(pos.up()).getMaterial().isReplaceable() && client.player.getHorizontalFacing() == facing.getOpposite() && !hasGui(client.world.getBlockState(pos.up()).getBlock()) || client.player.shouldCancelInteraction();
+			return !isReplaceable(client.world.getBlockState(pos.up())) && client.player.getHorizontalFacing() == facing.getOpposite() && !hasGui(client.world.getBlockState(pos.up()).getBlock()) || client.player.shouldCancelInteraction();
 		} else if (location == WallMountLocation.FLOOR) {
-			return !client.world.getBlockState(pos.down()).getMaterial().isReplaceable() && client.player.getHorizontalFacing() == facing.getOpposite() && !hasGui(client.world.getBlockState(pos.down()).getBlock()) || client.player.shouldCancelInteraction();
+			return !isReplaceable(client.world.getBlockState(pos.down())) && client.player.getHorizontalFacing() == facing.getOpposite() && !hasGui(client.world.getBlockState(pos.down()).getBlock()) || client.player.shouldCancelInteraction();
 		} else {
-			return !client.world.getBlockState(pos.offset(facing.getOpposite())).getMaterial().isReplaceable() && !hasGui(client.world.getBlockState(pos.offset(facing.getOpposite())).getBlock()) || client.player.shouldCancelInteraction();
+			return !isReplaceable(client.world.getBlockState(pos.offset(facing.getOpposite()))) && !hasGui(client.world.getBlockState(pos.offset(facing.getOpposite())).getBlock()) || client.player.shouldCancelInteraction();
 		}
 	}
 
@@ -2074,7 +2083,7 @@ public class Printer {
 		Direction side = state.get(TrapdoorBlock.FACING);
 		BlockPos clickPos;
 		Vec3d hitVec;
-		if (client.world.getBlockState(pos.offset(side.getOpposite())).getMaterial().isReplaceable()) {
+		if (isReplaceable(client.world.getBlockState(pos.offset(side.getOpposite())))) {
 			//place inside block
 			clickPos = pos;
 			if (client.player.getHorizontalFacing().getOpposite() == side) {
@@ -2098,7 +2107,7 @@ public class Printer {
 		BlockState stateB = mc.world.getBlockState(pos);
 		return stateA.isOf(Blocks.NOTE_BLOCK) && stateB.isOf(Blocks.NOTE_BLOCK) &&
 			stateA.get(NoteBlock.POWERED) == stateB.get(NoteBlock.POWERED) &&
-			world.getBlockState(pos.down()).getMaterial().isReplaceable() == mc.world.getBlockState(pos.offset(Direction.DOWN)).getMaterial().isReplaceable();
+			isReplaceable(world.getBlockState(pos.down())) == isReplaceable(mc.world.getBlockState(pos.offset(Direction.DOWN)));
 	}
 
 	private static boolean isDoorHingeError(MinecraftClient mc, World world, BlockPos pos) {
@@ -2256,14 +2265,14 @@ public class Printer {
 		return checkState.getBlock() instanceof FluidBlock && checkState.get(FluidBlock.LEVEL) == 0 ||
 			checkState.getBlock() instanceof BubbleColumnBlock ||
 			checkState.isOf(Blocks.SEAGRASS) || checkState.isOf(Blocks.TALL_SEAGRASS) ||
-			checkState.getBlock() instanceof Waterloggable && checkState.get(Properties.WATERLOGGED) && checkState.getMaterial().isReplaceable();
+			checkState.getBlock() instanceof Waterloggable && checkState.get(Properties.WATERLOGGED) && isReplaceable(checkState);
 	}
 
 	static boolean isReplaceableWaterFluidSource(BlockState checkState) {
 		return checkState.isOf(Blocks.SEAGRASS) || checkState.isOf(Blocks.TALL_SEAGRASS) ||
 			checkState.isOf(Blocks.WATER) && checkState.contains(FluidBlock.LEVEL) && checkState.get(FluidBlock.LEVEL) == 0 ||
 			checkState.getBlock() instanceof BubbleColumnBlock ||
-			checkState.getBlock() instanceof Waterloggable && checkState.contains(Properties.WATERLOGGED) && checkState.get(Properties.WATERLOGGED) && checkState.getMaterial().isReplaceable();
+			checkState.getBlock() instanceof Waterloggable && checkState.contains(Properties.WATERLOGGED) && checkState.get(Properties.WATERLOGGED) && isReplaceable(checkState);
 	}
 
 	private static boolean containsWaterloggable(BlockState state) {
@@ -2305,7 +2314,7 @@ public class Printer {
 			return true;
 		}
 		// finally
-		return !stateClient.isAir() && !stateClient.getMaterial().isReplaceable();
+		return !stateClient.isAir() && !isReplaceable(stateClient);
 	}
 
 	/**
@@ -2468,7 +2477,30 @@ public class Printer {
 		if (clientEntity == null) {
 			return;
 		}
-		//#if MC>=11900
+		//#if MC>=12000
+		//$$ if (entity instanceof SignBlockEntity signBlockEntity && clientEntity instanceof SignBlockEntity clientSignEntity) {
+		//$$ 	if (clientSignEntity.getText(false).getMessage(0, false).getContent() != TextContent.EMPTY ||
+		//$$ 		clientSignEntity.getText(false).getMessage(1, false).getContent() != TextContent.EMPTY ||
+		//$$ 		clientSignEntity.getText(false).getMessage(2, false).getContent() != TextContent.EMPTY ||
+		//$$ 		clientSignEntity.getText(false).getMessage(3, false).getContent() != TextContent.EMPTY ) {
+		//$$ 		MessageHolder.sendDebugMessage("Text already exists in " + pos.toShortString());
+		//$$ 		signCache.add(pos.asLong());
+		//$$ 		return;
+		//$$ 	}
+		//$$ 	MessageHolder.sendDebugMessage("Tries to copy sign text in " + pos.toShortString());
+		//$$ 	signCache.add(pos.asLong());
+		//$$ 	mc.getNetworkHandler().sendPacket(
+		//$$ 		new UpdateSignC2SPacket(
+		//$$ 			signBlockEntity.getPos(),
+		//$$ 			true,
+		//$$ 			signBlockEntity.getText(false).getMessage(0, false).getString(),
+		//$$ 			signBlockEntity.getText(false).getMessage(1, false).getString(),
+		//$$ 			signBlockEntity.getText(false).getMessage(2, false).getString(),
+		//$$ 			signBlockEntity.getText(false).getMessage(3, false).getString()
+		//$$ 		)
+		//$$ 	);
+		//$$ }
+		//#elseif MC>=11900
 		if (entity instanceof SignBlockEntity signBlockEntity && clientEntity instanceof SignBlockEntity clientSignEntity) {
 			if (clientSignEntity.getTextOnRow(0, false).getContent() != TextContent.EMPTY || clientSignEntity.getTextOnRow(1, false).getContent() != TextContent.EMPTY ||
 				clientSignEntity.getTextOnRow(2, false).getContent() != TextContent.EMPTY ||

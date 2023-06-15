@@ -33,6 +33,10 @@ public abstract class ClientPlayerEntityMixin extends PlayerEntity {
 	//$$	public ClientPlayerEntityMixin(World world, BlockPos pos, float yaw, GameProfile gameProfile) {
 	//$$		super(world, pos, yaw, gameProfile);
 	//$$	}
+	//#elseif MC>= 12000
+	//$$	public ClientPlayerEntityMixin(World world, BlockPos pos, float yaw, GameProfile gameProfile) {
+	//$$		super(world, pos, yaw, gameProfile);
+	//$$	}
 	//#else
 	//$$public ClientPlayerEntityMixin(World world, BlockPos pos, float yaw, GameProfile gameProfile, @Nullable PlayerPublicKey publicKey) {
 	//$$	super(world, pos, yaw, gameProfile, publicKey);

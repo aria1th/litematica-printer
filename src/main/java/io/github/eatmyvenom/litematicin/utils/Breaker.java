@@ -41,7 +41,11 @@ public class Breaker implements IClientTickHandler {
 		}
 		// Start breaking
 		BlockState blockState = mc.world.getBlockState(pos);
-		if (blockState.calcBlockBreakingDelta(mc.player, mc.player.world, pos) >= 1.0F) {
+		//#if MC>=11800
+		if (blockState.calcBlockBreakingDelta(mc.player, mc.player.getWorld(), pos) >= 1.0F) {
+		//#else
+		//$$ if (blockState.calcBlockBreakingDelta(mc.player, mc.player.world, pos) >= 1.0F) {
+		//#endif
 			mc.interactionManager.attackBlock(pos, Direction.UP);
 			return false;
 		}
@@ -53,7 +57,7 @@ public class Breaker implements IClientTickHandler {
 		if (this.pos == null || MinecraftClient.getInstance().world == null) {
 			return false;
 		}
-		if (MinecraftClient.getInstance().world.getBlockState(pos).getMaterial().isReplaceable()) {
+		if (BedrockBreaker.isReplaceable(MinecraftClient.getInstance().world.getBlockState(pos))) {
 			this.breakingBlock = false;
 		}
 		return this.breakingBlock;
@@ -114,7 +118,7 @@ public class Breaker implements IClientTickHandler {
 			}
 		}
 
-		if (!mc.world.getBlockState(pos).getMaterial().isReplaceable()) {
+		if (!BedrockBreaker.isReplaceable(mc.world.getBlockState(pos))) {
 			this.breakingBlock = false;
 			return;
 		} // If block isn't broken yet, dont stop
