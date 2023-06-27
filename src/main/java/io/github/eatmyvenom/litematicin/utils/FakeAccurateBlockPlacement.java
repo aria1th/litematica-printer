@@ -118,7 +118,9 @@ public class FakeAccurateBlockPlacement {
 			return;
 		}
 		if (requestedTicks >= -1) {
+			MessageHolder.sendOrderMessage("Requested ticks: " + requestedTicks);
 			if (PRINTER_FAKE_ROTATION_AGGRESSIVE.getBooleanValue() || fakeYaw != previousFakeYaw || fakePitch != previousFakePitch) {
+				MessageHolder.sendOrderMessage("Sending look packet" + fakeYaw + " " + fakePitch + " " + fakeDirection);
 				sendLookPacket(clientPlayNetworkHandler, playerEntity);
 				previousFakePitch = fakePitch;
 				previousFakeYaw = fakeYaw;
@@ -196,6 +198,7 @@ public class FakeAccurateBlockPlacement {
 	public static boolean request(float yaw, float pitch, Direction direction, int duration, boolean force) {
 		if (isHandling()) {
 			if (!force) {
+				MessageHolder.sendOrderMessage("Already handling " + handlingState + " for " + requestedTicks + " ticks");
 				return false;
 			}
 		}
@@ -203,6 +206,7 @@ public class FakeAccurateBlockPlacement {
 		fakeYaw = yaw;
 		fakePitch = pitch;
 		requestedTicks = duration;
+		MessageHolder.sendOrderMessage("Requested " + duration + " ticks of handling " + handlingState + " with yaw " + yaw + " pitch " + pitch + " direction " + direction);
 		// we might need it instantly
 		final MinecraftClient minecraftClient = MinecraftClient.getInstance();
 		final ClientPlayNetworkHandler networkHandler = minecraftClient.getNetworkHandler();
@@ -582,7 +586,7 @@ public class FakeAccurateBlockPlacement {
 		if (Printer.doSchematicWorldPickBlock(minecraftClient, blockState, pos)) {
 			currentHandling = getStackForState(minecraftClient, blockState, minecraftClient.world, pos).getItem();
 			handlingState = blockState;
-			requestedTicks = 0;
+			requestedTicks = Math.max(requestedTicks,0);
 			return true;
 		}
 		return false;
