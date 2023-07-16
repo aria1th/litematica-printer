@@ -116,12 +116,25 @@ public class Printer {
 		if (!stack.isEmpty() && stack.getItem() != Items.AIR) {
 			PlayerInventory inv = getInventory(mc.player);
 			if (!isCreative(mc.player)) {
-				int slot = inv.getSlotWithStack(stack);
-				if (slot == -1) {
-					return false;
+				if (stack.getItem() instanceof ToolItem || stack.getItem() instanceof FlintAndSteelItem) {
+					// manually search through inventories
+					int slot = io.github.eatmyvenom.litematicin.utils.InventoryUtils.getSlotWithItem(inv, stack);
+					if (slot == -1) {
+						return false;
+					}
+					if (EASY_PLACE_MODE_HOTBAR_ONLY.getBooleanValue()) {
+						return slot < 9;
+					}
+					return true;
 				}
-				if (EASY_PLACE_MODE_HOTBAR_ONLY.getBooleanValue()) {
-					return slot < 9;
+				else {
+					int slot = getSlotWithStack(inv, stack);
+					if (slot == -1) {
+						return false;
+					}
+					if (EASY_PLACE_MODE_HOTBAR_ONLY.getBooleanValue()) {
+						return slot < 9;
+					}
 				}
 			}
 			return true;
@@ -133,7 +146,7 @@ public class Printer {
 		if (!stack.isEmpty()) {
 			PlayerInventory inv = getInventory(mc.player);
 			if (!isCreative(mc.player)) {
-				int slot = inv.getSlotWithStack(stack);
+				int slot = getSlotWithStack(inv, stack);
 				if (slot == -1) {
 					return false;
 				}
@@ -1013,13 +1026,13 @@ public class Printer {
 							//#endif
 						) {
 							ItemStack lightStack = Items.FIRE_CHARGE.getDefaultStack();
-							if (getInventory(mc.player).getSlotWithStack(lightStack) == -1) {
+							if (getSlotWithStack(mc.player, lightStack) == -1) {
 								lightStack = Items.FLINT_AND_STEEL.getDefaultStack();
 							}
 							BlockPos offsetPos = new BlockPos(x, y - 1, z);
 							BlockState offsetStateSchematic = world.getBlockState(offsetPos);
 							BlockState offsetStateClient = mc.world.getBlockState(offsetPos);
-							if (getInventory(mc.player).getSlotWithStack(lightStack) == -1 || offsetStateClient.isAir() || (!offsetStateClient.getBlock().getName().equals(offsetStateSchematic.getBlock().getName()))) {
+							if (getSlotWithStack(mc.player, lightStack) == -1 || offsetStateClient.isAir() || (!offsetStateClient.getBlock().getName().equals(offsetStateSchematic.getBlock().getName()))) {
 								continue;
 							}
 							if (doSchematicWorldPickBlock(mc, lightStack)) {

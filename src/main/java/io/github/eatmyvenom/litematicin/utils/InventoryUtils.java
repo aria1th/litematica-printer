@@ -146,7 +146,7 @@ public class InventoryUtils {
 	}
 	public static void decrementCount(boolean isCreative) {
 		if (isCreative) lastCount = 65536;
-		if (lastCount > 0) {
+		if (lastCount > 0 && usedSlots.get(trackedSelectedSlot) != null && usedSlots.get(trackedSelectedSlot).getMaxCount() != 1) {
 			lastCount--;
 			slotCounts.computeIfPresent(trackedSelectedSlot, (key, value) -> value - 1);
 		}
@@ -220,12 +220,20 @@ public class InventoryUtils {
 	}
 
 	public static boolean areItemsExact(ItemStack a, ItemStack b) {
-		return ItemStack.areItemsEqual(a, b) && ItemStack.areNbtEqual(a, b);
+		// ToolItem or FlintAndSteelItem
+		return exceptToolItems(a, b);
 	}
 
 	public static boolean areItemsExact(ItemStack a, ItemStack b, boolean allowNamed) {
 		if (allowNamed) {
 			return areItemsExactAllowNamed(a, b);
+		}
+		return exceptToolItems(a, b);
+	}
+
+	private static boolean exceptToolItems(ItemStack a, ItemStack b) {
+		if (a.getItem() instanceof ToolItem && b.getItem() instanceof ToolItem || a.getItem() instanceof FlintAndSteelItem && b.getItem() instanceof FlintAndSteelItem) {
+			return a.getItem() == b.getItem();
 		}
 		return ItemStack.areItemsEqual(a, b) && ItemStack.areNbtEqual(a, b);
 	}
@@ -257,8 +265,12 @@ public class InventoryUtils {
 	}
 
 	public static boolean areItemsExactAllowNamed(ItemStack a, ItemStack b) {
-		if (a.getItem() instanceof ToolItem || b.getItem() instanceof ToolItem) { //safety
-			return false;
+		// ToolItem or FlintAndSteelItem
+		if (a.getItem() instanceof ToolItem && b.getItem() instanceof ToolItem || a.getItem() instanceof FlintAndSteelItem && b.getItem() instanceof FlintAndSteelItem) {
+			return a.getItem() == b.getItem();
+		}
+		else if (a.getItem() instanceof ToolItem || b.getItem() instanceof ToolItem) {
+			return false; // safety
 		}
 		return ItemStack.areItemsEqual(a, b) || a.getMaxCount() == b.getMaxCount() && a.hasCustomName() && b.hasCustomName();
 	}
@@ -275,8 +287,17 @@ public class InventoryUtils {
 		if (isCreative(player)) {
 			return true;
 		}
-		int slotNum = getInventory(player).getSlotWithStack(stack);
-		return slotNum != -1 && areItemsExact(getInventory(player).getStack(slotNum), stack);
+		int slotNum = getSlotWithStack(player, stack);
+		return slotNum != -1;
+	}
+
+	public static int getSlotWithItem(PlayerInventory inv, ItemStack stack) {
+		for (int i = 0; i < inv.main.size(); i++) {
+			if (ItemStack.areItemsEqual(inv.getStack(i), stack)) {
+				return i;
+			}
+		}
+		return -1;
 	}
 
 	public static boolean canSwap(ClientPlayerEntity player, Predicate<ItemStack> predicate) {
@@ -381,7 +402,12 @@ public class InventoryUtils {
 	}
 
 	public static int getSlotWithStack(ClientPlayerEntity player, ItemStack stack) {
-		return getInventory(player).getSlotWithStack(stack);
+		PlayerInventory inv = getInventory(player);
+		return stack.getItem() instanceof ToolItem || stack.getItem() instanceof FlintAndSteelItem ? getSlotWithItem(inv, stack) :inv.getSlotWithStack(stack);
+	}
+
+	public static int getSlotWithStack(PlayerInventory inv, ItemStack stack) {
+		return stack.getItem() instanceof ToolItem || stack.getItem() instanceof FlintAndSteelItem ? getSlotWithItem(inv, stack) :inv.getSlotWithStack(stack);
 	}
 
 	@SuppressWarnings("ConstantConditions")

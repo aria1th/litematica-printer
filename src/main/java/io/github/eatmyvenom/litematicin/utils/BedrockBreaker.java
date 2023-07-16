@@ -27,6 +27,7 @@ import java.util.*;
 //#endif
 
 import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.*;
+import static io.github.eatmyvenom.litematicin.utils.InventoryUtils.getSlotWithStack;
 
 // since 1.19, you can't swap items too fast (huh)
 @SuppressWarnings("ConstantConditions")
@@ -416,13 +417,13 @@ public class BedrockBreaker {
 		PlayerInventory inv = getInventory(mc);
 		ItemStack PistonStack = Items.PISTON.getDefaultStack();
 		ItemStack RedstoneTorchStack = Items.REDSTONE_TORCH.getDefaultStack();
-		return inv.getSlotWithStack(PistonStack) != -1 && inv.getSlotWithStack(RedstoneTorchStack) != -1;
+		return getSlotWithStack(inv, PistonStack) != -1 && getSlotWithStack(inv, RedstoneTorchStack) != -1;
 	}
 
 	public static boolean canPlaceSlime(MinecraftClient mc) {
 		PlayerInventory inv = getInventory(mc);
 		ItemStack SlimeStack = Items.SLIME_BLOCK.getDefaultStack();
-		return inv.getSlotWithStack(SlimeStack) != -1;
+		return getSlotWithStack(inv, SlimeStack) != -1;
 	}
 
 	public static void switchTool(MinecraftClient mc) {
