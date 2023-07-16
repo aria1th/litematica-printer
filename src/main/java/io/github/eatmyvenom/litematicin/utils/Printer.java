@@ -2566,8 +2566,12 @@ public class Printer {
 			SchematicBlock instanceof AbstractRailBlock || SchematicBlock instanceof TorchBlock || SchematicBlock instanceof DeadCoralFanBlock) {
 			return false;
 		}
-		return ADVANCED_ACCURATE_BLOCK_PLACEMENT.getBooleanValue() || SchematicBlock instanceof GlazedTerracottaBlock || SchematicBlock instanceof ObserverBlock || SchematicBlock instanceof RepeaterBlock || SchematicBlock instanceof TrapdoorBlock ||
-			SchematicBlock instanceof ComparatorBlock || SchematicBlock instanceof DispenserBlock || SchematicBlock instanceof PistonBlock || SchematicBlock instanceof StairsBlock;
+		//#if MC>=12000
+		return true;
+		//#else
+		//$$ return ADVANCED_ACCURATE_BLOCK_PLACEMENT.getBooleanValue() || SchematicBlock instanceof GlazedTerracottaBlock || SchematicBlock instanceof ObserverBlock || SchematicBlock instanceof RepeaterBlock || SchematicBlock instanceof TrapdoorBlock ||
+		//$$ 	SchematicBlock instanceof ComparatorBlock || SchematicBlock instanceof DispenserBlock || SchematicBlock instanceof PistonBlock || SchematicBlock instanceof StairsBlock;
+		//#endif
 	} //Current carpet extra does not handle other facingBlocks, gnembon please update it
 
 	static Direction applyPlacementFacing(BlockState stateSchematic, Direction side, BlockState stateClient) {
