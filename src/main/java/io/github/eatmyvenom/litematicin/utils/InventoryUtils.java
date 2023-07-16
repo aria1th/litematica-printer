@@ -241,6 +241,13 @@ public class InventoryUtils {
 	}
 
 	public static ItemStack getStackForState(MinecraftClient client, BlockState state, World world, BlockPos pos) {
+		// if state is nether portal block, return FLINT_AND_STEEL
+		if (state.isOf(Blocks.NETHER_PORTAL)) {
+			if (!PRINTER_LIT_PORTAL_USE_FIRECHARGE.getBooleanValue()) return Items.FLINT_AND_STEEL.getDefaultStack();
+			else {
+				return Items.FIRE_CHARGE.getDefaultStack();
+			}
+		}
 		ItemStack stack = isReplaceableWaterFluidSource(state) && PRINTER_PLACE_ICE.getBooleanValue() ? Items.ICE.getDefaultStack() : MaterialCache.getInstance().getRequiredBuildItemForState(state, world, pos);
 		if (PRINTER_PRINT_DIRT_VARIANTS.getBooleanValue() && !canPickItem(client, stack)) {
 			if (state.isOf(Blocks.FARMLAND)) stack = Items.DIRT.getDefaultStack();

@@ -14,6 +14,8 @@ public class LitematicaMixinMod implements ModInitializer {
 	public static final ConfigInteger INVENTORY_CACHE_TICKS = new ConfigInteger("printerInventoryCacheTicks", 20, 0, 100, "Ticks to wait before updating inventory cache.");
 	public static final ConfigBoolean VERIFY_INVENTORY = new ConfigBoolean("verifierFindInventoryContents", true, "Schematic verifier will show blocks with inventory as wrong state.");
 	public static final ConfigBoolean PRINTER_OFF = new ConfigBoolean("printerOff", false, "Disables printer.");
+
+	public static final ConfigBoolean PRINTER_LIT_PORTAL_USE_FIRECHARGE = new ConfigBoolean("printerLitPortalUseFireCharge", false, "Uses fire charge to light portal instead of flint and steel.");
 	public static final ConfigBoolean PRINTER_ONLY_FAKE_ROTATION_MODE = new ConfigBoolean("easyPlaceMode++", false, "Disables printer and only make fake rotation work.");
 	public static final ConfigBoolean PRINTER_SHOULD_SWING_HAND = new ConfigBoolean("printerSwingHand", false, "Swings hand when placing/attacking blocks.");
 	public static final ConfigBoolean PRINTER_PRINT_DIRT_VARIANTS = new ConfigBoolean("printerPrintDirtVariant", false, "Uses shovel/hoe on dirt to make variants. Also tries to place dirt instead first");
@@ -94,6 +96,7 @@ public class LitematicaMixinMod implements ModInitializer {
 		EASY_PLACE_MODE_DELAY,
 		EASY_PLACE_MODE_HOTBAR_ONLY,
 		PRINTER_FLIPPINCACTUS,
+		PRINTER_LIT_PORTAL_USE_FIRECHARGE,
 		PRINTER_ALLOW_INVENTORY_OPERATIONS,
 		PRINTER_INVENTORY_SCREEN_WAIT,
 		PRINTER_INVENTORY_OPERATIONS_RETRY,
