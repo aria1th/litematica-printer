@@ -1,6 +1,8 @@
 # Litematica-Printer
 ![ezgif-4-f05ee71350](https://user-images.githubusercontent.com/35677394/194375066-0a636c33-a5fd-4cfc-abb1-e9c86c4cb21b.gif)
 
+[Modrinth Link ](https://modrinth.com/mod/litematica-printer-easyplace-extension/versions)
+
 ## Redstone-Aware Fast Block Auto Placement
 ## Setup
 
