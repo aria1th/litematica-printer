@@ -2378,19 +2378,19 @@ public class Printer {
 		dz = clickPos.z;
 		if (block instanceof StairsBlock) {
 			if (state.get(StairsBlock.HALF) == BlockHalf.TOP) {
-				dy += 0.9;
+				dy += 0.99;
 			} else {
 				dy += 0;
 			}
 		} else if (block instanceof SlabBlock && state.get(SlabBlock.TYPE) != SlabType.DOUBLE) {
 			if (state.get(SlabBlock.TYPE) == SlabType.TOP) {
-				dy += 0.9;
+				dy += 0.99;
 			} else {
 				dy += 0;
 			}
 		} else if (block instanceof TrapdoorBlock) {
 			if (state.get(TrapdoorBlock.HALF) == BlockHalf.TOP) {
-				dy += 0.9;
+				dy += 0.99;
 			} else {
 				dy += 0;
 			}
@@ -2746,41 +2746,47 @@ public class Printer {
 		//#endif
 			return WorldUtils.applyPlacementProtocolV3(pos, state, new Vec3d(pos.getX(), pos.getY(), pos.getZ()));
 		}
-
-		double code = 0;
-		double y = pos.getY();
-		double z = pos.getZ();
-		Block block = state.getBlock();
-		Direction facing = fi.dy.masa.malilib.util.BlockUtils.getFirstPropertyFacingValue(state);
-		int railEnumCode = getRailShapeOrder(state);
-		final int propertyIncrement = 16;
-		if (facing == null && railEnumCode == 32 && !(block instanceof SlabBlock)) {
-			return new Vec3d(pos.getX(), y, z);
-		}
-		if (facing != null) {
-			code = facing.getId();
-		} else if (railEnumCode != 32) {
-			code = railEnumCode;
-		}
-		if (block instanceof RepeaterBlock) {
-			code += ((state.get(RepeaterBlock.DELAY))) * (propertyIncrement);
-		} else if (block instanceof TrapdoorBlock && state.get(TrapdoorBlock.HALF) == BlockHalf.TOP) {
-			code += propertyIncrement;
-		} else if (block instanceof ComparatorBlock && state.get(ComparatorBlock.MODE) == ComparatorMode.SUBTRACT) {
-			code += propertyIncrement;
-		} else if (block instanceof StairsBlock && state.get(StairsBlock.HALF) == BlockHalf.TOP) {
-			code += propertyIncrement;
-		} else if (block instanceof SlabBlock && state.get(SlabBlock.TYPE) != SlabType.DOUBLE) {
-			if (state.get(SlabBlock.TYPE) == SlabType.TOP) //side should not be down
-			{
-				y += 0.9;
-				//code += propertyIncrement; //slab type by protocol soon?
-			}
-		}
-		if (code >= 0) {
-			return new Vec3d(code * 2 + 2 + pos.getX(), y, z);
-		}
-		return new Vec3d(pos.getX(), y, z);
+		Vec3d hitVec = new Vec3d(pos.getX(), pos.getY(), pos.getZ());
+		//#if MC >= 12000
+		hitVec = WorldUtils.applyCarpetProtocolHitVec(pos, state, hitVec);
+		return hitVec;
+		//#else
+		//$$ double code = 0;
+		//$$ double y = pos.getY();
+		//$$ double z = pos.getZ();
+		//$$ Block block = state.getBlock();
+		//$$ Direction facing = fi.dy.masa.malilib.util.BlockUtils.getFirstPropertyFacingValue(state);
+		//$$ int railEnumCode = getRailShapeOrder(state);
+		//$$ final int propertyIncrement = 16;
+		//$$ if (facing == null && railEnumCode == 32 && !(block instanceof SlabBlock)) {
+		//$$ 	return new Vec3d(pos.getX(), y, z);
+		//$$ }
+		//$$ if (facing != null) {
+		//$$ 	code = facing.getId();
+		//$$ } else if (railEnumCode != 32) {
+		//$$ 	code = railEnumCode;
+		//$$ }
+		//$$ if (block instanceof RepeaterBlock) {
+		//$$ 	code += ((state.get(RepeaterBlock.DELAY))) * (propertyIncrement);
+		//$$ } else if (block instanceof TrapdoorBlock && state.get(TrapdoorBlock.HALF) == BlockHalf.TOP) {
+		//$$ 	code += propertyIncrement;
+		//$$ } else if (block instanceof ComparatorBlock && state.get(ComparatorBlock.MODE) == ComparatorMode.SUBTRACT) {
+		//$$ 	code += propertyIncrement;
+		//$$ } else if (block instanceof StairsBlock && state.get(StairsBlock.HALF) == BlockHalf.TOP) {
+		//$$ 	code += propertyIncrement;
+		//$$ } else if (block instanceof SlabBlock && state.get(SlabBlock.TYPE) != SlabType.DOUBLE) {
+		//$$ 	if (state.get(SlabBlock.TYPE) == SlabType.TOP) //side should not be down
+		//$$ 	{
+		//$$ 		y += 0.99;
+		//$$ 		//code += propertyIncrement; //slab type by protocol soon?
+		//$$ 	}
+		//$$ }
+		//$$ if (code >= 0) {
+		//$$ 	return new Vec3d(code * 2 + 2 + pos.getX(), y, z);
+		//$$ }
+		//$$ hitVec = new Vec3d(pos.getX(), y, z);
+		//$$ return hitVec;
+		//#endif
 	}
 
 	public static Integer getRailShapeOrder(BlockState state) {
