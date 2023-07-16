@@ -83,6 +83,7 @@ public class InventoryUtils {
 	}
 
 
+	@SuppressWarnings("PatternVariableCanBeUsed") // because for compatibility with 1.16.5
 	private static void calculateCache() {
 		ITEMS.clear();
 		MinecraftClient client = MinecraftClient.getInstance();
@@ -137,16 +138,18 @@ public class InventoryUtils {
 		//#endif
 	}
 
-
-	public static void decrementCount() {
-		if (lastCount > 0) {
-			lastCount--;
-			slotCounts.computeIfPresent(trackedSelectedSlot, (key, value) -> value - 1);
-		}
+	public static boolean isToolLikeItem(Item item) {
+		// ToolItem or FlintAndSteelItem or ShearsItem
+		return item instanceof ToolItem || item instanceof FlintAndSteelItem || item instanceof ShearsItem;
 	}
+
 	public static void decrementCount(boolean isCreative) {
-		if (isCreative) lastCount = 65536;
-		if (lastCount > 0 && usedSlots.get(trackedSelectedSlot) != null && usedSlots.get(trackedSelectedSlot).getMaxCount() != 1) {
+		if (isCreative) {
+			lastCount = 65536;
+			slotCounts.computeIfPresent(trackedSelectedSlot, (key, value) -> 65536);
+			return;
+		}
+		if (lastCount > 0 && usedSlots.get(trackedSelectedSlot) != null && !isToolLikeItem(usedSlots.get(trackedSelectedSlot))) {
 			lastCount--;
 			slotCounts.computeIfPresent(trackedSelectedSlot, (key, value) -> value - 1);
 		}
@@ -211,10 +214,6 @@ public class InventoryUtils {
 		return -1;
 	}
 
-	public static boolean hasEmptyHotbar() {
-		return usedSlots.size() < pickBlockableSlots.size();
-	}
-
 	public static ItemStack getMainHandStack(ClientPlayerEntity player) {
 		return player.getMainHandStack();
 	}
@@ -232,7 +231,7 @@ public class InventoryUtils {
 	}
 
 	private static boolean exceptToolItems(ItemStack a, ItemStack b) {
-		if (a.getItem() instanceof ToolItem && b.getItem() instanceof ToolItem || a.getItem() instanceof FlintAndSteelItem && b.getItem() instanceof FlintAndSteelItem) {
+		if (isToolLikeItem(a.getItem()) || isToolLikeItem(b.getItem())) {
 			return a.getItem() == b.getItem();
 		}
 		return ItemStack.areItemsEqual(a, b) && ItemStack.areNbtEqual(a, b);
@@ -266,7 +265,7 @@ public class InventoryUtils {
 
 	public static boolean areItemsExactAllowNamed(ItemStack a, ItemStack b) {
 		// ToolItem or FlintAndSteelItem
-		if (a.getItem() instanceof ToolItem && b.getItem() instanceof ToolItem || a.getItem() instanceof FlintAndSteelItem && b.getItem() instanceof FlintAndSteelItem) {
+		if (isToolLikeItem(a.getItem()) || isToolLikeItem(b.getItem())) {
 			return a.getItem() == b.getItem();
 		}
 		else if (a.getItem() instanceof ToolItem || b.getItem() instanceof ToolItem) {
@@ -403,11 +402,11 @@ public class InventoryUtils {
 
 	public static int getSlotWithStack(ClientPlayerEntity player, ItemStack stack) {
 		PlayerInventory inv = getInventory(player);
-		return stack.getItem() instanceof ToolItem || stack.getItem() instanceof FlintAndSteelItem ? getSlotWithItem(inv, stack) :inv.getSlotWithStack(stack);
+		return stack.getItem() instanceof ToolItem || isToolLikeItem(stack.getItem()) ? getSlotWithItem(inv, stack) :inv.getSlotWithStack(stack);
 	}
 
 	public static int getSlotWithStack(PlayerInventory inv, ItemStack stack) {
-		return stack.getItem() instanceof ToolItem || stack.getItem() instanceof FlintAndSteelItem ? getSlotWithItem(inv, stack) :inv.getSlotWithStack(stack);
+		return stack.getItem() instanceof ToolItem || isToolLikeItem(stack.getItem()) ? getSlotWithItem(inv, stack) :inv.getSlotWithStack(stack);
 	}
 
 	@SuppressWarnings("ConstantConditions")
