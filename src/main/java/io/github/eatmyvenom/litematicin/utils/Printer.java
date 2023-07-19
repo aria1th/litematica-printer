@@ -1046,8 +1046,9 @@ public class Printer {
 									lastPlaced = Math.max(lastPlaced, new Date().getTime() + 200 + PRINTER_SLEEP_STACK_EMPTIED.getIntegerValue());
 								} else {
 									lastPlaced = Math.max(lastPlaced, new Date().getTime() + 200);
+									interact++;
 								}
-								interact++;
+								return ActionResult.SUCCESS;
 							}
 						}
 						Direction facing = fi.dy.masa.malilib.util.BlockUtils.getFirstPropertyFacingValue(stateSchematic);
