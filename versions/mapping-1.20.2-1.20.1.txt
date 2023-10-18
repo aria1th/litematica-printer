@@ -1,0 +1,1 @@
+net.minecraft.network.packet.s2c.play.ScreenHandlerSlotUpdateS2CPacket getStack() getItemStack()

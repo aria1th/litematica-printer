@@ -69,11 +69,12 @@ public class ClientPlayNetworkHandlerMixin {
 		}
 		cancelIfRequired(ci);
 	}
-
+	//#if MC<=12001
 	@Inject(method = "onDisconnect", at = @At("HEAD"))
 	private void handleDisconnect(DisconnectS2CPacket packet, CallbackInfo ci) {
 		isSynced = false;
 	}
+	//#endif
 
 	@Inject(method = "onUpdateSelectedSlot", at = @At("HEAD"), cancellable = true, require = 0)
 	private void onUpdateSelectSlots(UpdateSelectedSlotS2CPacket packet, CallbackInfo ci) {
