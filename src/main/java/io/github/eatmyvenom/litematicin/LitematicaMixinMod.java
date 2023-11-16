@@ -2,14 +2,18 @@ package io.github.eatmyvenom.litematicin;
 
 import com.google.common.collect.ImmutableList;
 import fi.dy.masa.litematica.config.Configs;
+import fi.dy.masa.litematica.config.Hotkeys;
 import fi.dy.masa.malilib.config.IConfigBase;
 import fi.dy.masa.malilib.config.options.ConfigBoolean;
 import fi.dy.masa.malilib.config.options.ConfigDouble;
+import fi.dy.masa.malilib.config.options.ConfigHotkey;
 import fi.dy.masa.malilib.config.options.ConfigInteger;
+import fi.dy.masa.malilib.hotkeys.KeyCallbackToggleBooleanConfigWithMessage;
 import net.fabricmc.api.ModInitializer;
 
 public class LitematicaMixinMod implements ModInitializer {
 	public static ImmutableList.Builder<IConfigBase> originalList = new ImmutableList.Builder<IConfigBase>().addAll(Configs.Generic.OPTIONS);
+	public static ImmutableList.Builder<ConfigHotkey> hotkeyListBuilder = new ImmutableList.Builder<ConfigHotkey>().addAll(Hotkeys.HOTKEY_LIST);
 	public static final ConfigBoolean USE_INVENTORY_CACHE = new ConfigBoolean("printerUseInventoryCache", true, "Uses Inventory cache instead of litematica's inventory utils.");
 	public static final ConfigInteger INVENTORY_CACHE_TICKS = new ConfigInteger("printerInventoryCacheTicks", 20, 0, 100, "Ticks to wait before updating inventory cache.");
 	public static final ConfigBoolean VERIFY_INVENTORY = new ConfigBoolean("verifierFindInventoryContents", true, "Schematic verifier will show blocks with inventory as wrong state.");
@@ -66,6 +70,23 @@ public class LitematicaMixinMod implements ModInitializer {
 	public static final ConfigBoolean PRINTER_FAKE_ROTATION = new ConfigBoolean("printerFakeRotation", true, "Printer will use fake rotations to place block correctly, at least in vanilla.");
 	public static final ConfigInteger PRINTER_FAKE_ROTATION_DELAY = new ConfigInteger("printerFakeRotationTicks", 1, 0, 1000000, "Ticks between fake block packets");
 	public static final ConfigInteger PRINTER_FAKE_ROTATION_LIMIT_PER_TICKS = new ConfigInteger("printerFakeRotationLimitPerTicks", 1, 1, 1000000, "Maximum fake placement per tick, prone to cause error(require:FakeRotationTick = 0)");
+	public static final ConfigHotkey PRINTER_OFF_HOTKEY = new ConfigHotkey("printerToggleKey", "", "Printer will be toggled ON/OFF");
+	public static final ConfigHotkey PRINTER_ALLOW_INVENTORY_OPERATIONS_HOTKEY = new ConfigHotkey("printerInventoryOperationsToggleKey", "", "Printer inventory operations will be toggled ON/OFF");
+	public static final ConfigHotkey PRINTER_BREAK_BLOCKS_HOTKEY = new ConfigHotkey("printerBreakBlocksToggleKey", "", "Printer break blocks will be toggled ON/OFF");
+	public static final ConfigHotkey PRINTER_CLEAR_FLUIDS_HOTKEY = new ConfigHotkey("printerClearFluidsToggleKey", "", "Printer clear fluids will be toggled ON/OFF");
+	public static final ConfigHotkey PRINTER_CLEAR_SNOW_LAYER_HOTKEY = new ConfigHotkey("printerClearSnowLayerToggleKey", "", "Printer clear snow layer will be toggled ON/OFF");
+	public static final ConfigHotkey PRINTER_CLEAR_FLUIDS_USE_COBBLESTONE_HOTKEY = new ConfigHotkey("printerClearFluidsUseCobblestoneToggleKey", "", "Printer clear fluids use cobblestone will be toggled ON/OFF");
+	public static final ConfigHotkey PRINTER_BEDROCK_BREAKING_HOTKEY = new ConfigHotkey("printerBedrockBreakingToggleKey", "", "Printer bedrock breaking will be toggled ON/OFF");
+
+	public static final ImmutableList<ConfigHotkey> hotkeyList = hotkeyListBuilder.addAll(ImmutableList.of(
+		PRINTER_OFF_HOTKEY,
+		PRINTER_ALLOW_INVENTORY_OPERATIONS_HOTKEY,
+		PRINTER_BREAK_BLOCKS_HOTKEY,
+		PRINTER_CLEAR_FLUIDS_HOTKEY,
+		PRINTER_CLEAR_SNOW_LAYER_HOTKEY,
+		PRINTER_CLEAR_FLUIDS_USE_COBBLESTONE_HOTKEY,
+		PRINTER_BEDROCK_BREAKING_HOTKEY
+	)).build();
 	public static final ImmutableList<IConfigBase> betterList = originalList.addAll(ImmutableList.of(
 		VERIFY_INVENTORY,
 		PRINTER_SHOULD_SWING_HAND,
@@ -126,6 +147,13 @@ public class LitematicaMixinMod implements ModInitializer {
 
 	@Override
 	public void onInitialize() {
+		PRINTER_OFF_HOTKEY.getKeybind().setCallback(new KeyCallbackToggleBooleanConfigWithMessage(PRINTER_OFF));
+		PRINTER_ALLOW_INVENTORY_OPERATIONS_HOTKEY.getKeybind().setCallback(new KeyCallbackToggleBooleanConfigWithMessage(PRINTER_ALLOW_INVENTORY_OPERATIONS));
+		PRINTER_BREAK_BLOCKS_HOTKEY.getKeybind().setCallback(new KeyCallbackToggleBooleanConfigWithMessage(PRINTER_BREAK_BLOCKS));
+		PRINTER_CLEAR_FLUIDS_HOTKEY.getKeybind().setCallback(new KeyCallbackToggleBooleanConfigWithMessage(PRINTER_CLEAR_FLUIDS));
+		PRINTER_CLEAR_SNOW_LAYER_HOTKEY.getKeybind().setCallback(new KeyCallbackToggleBooleanConfigWithMessage(PRINTER_CLEAR_SNOW_LAYER));
+		PRINTER_CLEAR_FLUIDS_USE_COBBLESTONE_HOTKEY.getKeybind().setCallback(new KeyCallbackToggleBooleanConfigWithMessage(PRINTER_CLEAR_FLUIDS_USE_COBBLESTONE));
+		PRINTER_BEDROCK_BREAKING_HOTKEY.getKeybind().setCallback(new KeyCallbackToggleBooleanConfigWithMessage(PRINTER_BEDROCK_BREAKING));
 		System.out.println("[Printer] : YeeFuckinHaw");
 	}
 }
