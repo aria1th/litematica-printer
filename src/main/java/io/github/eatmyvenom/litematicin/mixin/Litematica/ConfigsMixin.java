@@ -20,7 +20,7 @@ public class ConfigsMixin {
 
     @Redirect(method = "loadFromFile", at = @At(value = "FIELD", target = "Lfi/dy/masa/litematica/config/Hotkeys;HOTKEY_LIST:Ljava/util/List;"))
     private static List<ConfigHotkey> moreHotkeyOptions() {
-        return LitematicaMixinMod.hotkeyList;
+        return LitematicaMixinMod.getHotkeyList();
     }
 
     @Redirect(method = "saveToFile", at = @At(value = "FIELD", target = "Lfi/dy/masa/litematica/config/Configs$Generic;OPTIONS:Lcom/google/common/collect/ImmutableList;"))
@@ -30,6 +30,6 @@ public class ConfigsMixin {
 
     @Redirect(method = "saveToFile", at = @At(value = "FIELD", target = "Lfi/dy/masa/litematica/config/Hotkeys;HOTKEY_LIST:Ljava/util/List;"))
     private static List<ConfigHotkey> moreeHotkeyOptions() {
-        return LitematicaMixinMod.hotkeyList;
+        return LitematicaMixinMod.getHotkeyList();
     }
 }

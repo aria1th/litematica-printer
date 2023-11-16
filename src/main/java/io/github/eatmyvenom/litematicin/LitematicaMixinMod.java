@@ -13,7 +13,6 @@ import net.fabricmc.api.ModInitializer;
 
 public class LitematicaMixinMod implements ModInitializer {
 	public static ImmutableList.Builder<IConfigBase> originalList = new ImmutableList.Builder<IConfigBase>().addAll(Configs.Generic.OPTIONS);
-	public static ImmutableList.Builder<ConfigHotkey> hotkeyListBuilder = new ImmutableList.Builder<ConfigHotkey>().addAll(Hotkeys.HOTKEY_LIST);
 	public static final ConfigBoolean USE_INVENTORY_CACHE = new ConfigBoolean("printerUseInventoryCache", true, "Uses Inventory cache instead of litematica's inventory utils.");
 	public static final ConfigInteger INVENTORY_CACHE_TICKS = new ConfigInteger("printerInventoryCacheTicks", 20, 0, 100, "Ticks to wait before updating inventory cache.");
 	public static final ConfigBoolean VERIFY_INVENTORY = new ConfigBoolean("verifierFindInventoryContents", true, "Schematic verifier will show blocks with inventory as wrong state.");
@@ -78,15 +77,19 @@ public class LitematicaMixinMod implements ModInitializer {
 	public static final ConfigHotkey PRINTER_CLEAR_FLUIDS_USE_COBBLESTONE_HOTKEY = new ConfigHotkey("printerClearFluidsUseCobblestoneToggleKey", "", "Printer clear fluids use cobblestone will be toggled ON/OFF");
 	public static final ConfigHotkey PRINTER_BEDROCK_BREAKING_HOTKEY = new ConfigHotkey("printerBedrockBreakingToggleKey", "", "Printer bedrock breaking will be toggled ON/OFF");
 
-	public static final ImmutableList<ConfigHotkey> hotkeyList = hotkeyListBuilder.addAll(ImmutableList.of(
-		PRINTER_OFF_HOTKEY,
-		PRINTER_ALLOW_INVENTORY_OPERATIONS_HOTKEY,
-		PRINTER_BREAK_BLOCKS_HOTKEY,
-		PRINTER_CLEAR_FLUIDS_HOTKEY,
-		PRINTER_CLEAR_SNOW_LAYER_HOTKEY,
-		PRINTER_CLEAR_FLUIDS_USE_COBBLESTONE_HOTKEY,
-		PRINTER_BEDROCK_BREAKING_HOTKEY
-	)).build();
+	public static ImmutableList<ConfigHotkey> getHotkeyList() {
+		ImmutableList.Builder<ConfigHotkey> hotkeyList = new ImmutableList.Builder<ConfigHotkey>().addAll(Hotkeys.HOTKEY_LIST);
+		hotkeyList.addAll(ImmutableList.of(
+				PRINTER_OFF_HOTKEY,
+				PRINTER_ALLOW_INVENTORY_OPERATIONS_HOTKEY,
+				PRINTER_BREAK_BLOCKS_HOTKEY,
+				PRINTER_CLEAR_FLUIDS_HOTKEY,
+				PRINTER_CLEAR_SNOW_LAYER_HOTKEY,
+				PRINTER_CLEAR_FLUIDS_USE_COBBLESTONE_HOTKEY,
+				PRINTER_BEDROCK_BREAKING_HOTKEY)
+		);
+		return hotkeyList.build();
+	}
 	public static final ImmutableList<IConfigBase> betterList = originalList.addAll(ImmutableList.of(
 		VERIFY_INVENTORY,
 		PRINTER_SHOULD_SWING_HAND,
