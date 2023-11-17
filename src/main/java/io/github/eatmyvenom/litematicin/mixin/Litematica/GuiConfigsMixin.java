@@ -19,7 +19,7 @@ public class GuiConfigsMixin {
     }
 
     @Redirect(method="getConfigs", at=@At(value="FIELD", target="Lfi/dy/masa/litematica/config/Hotkeys;HOTKEY_LIST:Ljava/util/List;"))
-    private static List<ConfigHotkey> moreHotkeyOptions() {
+    private List<ConfigHotkey> moreHotkeyOptions() {
         return LitematicaMixinMod.getHotkeyList();
     }
 }
