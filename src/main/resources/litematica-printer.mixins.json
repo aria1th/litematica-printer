@@ -21,6 +21,7 @@
   },
   "mixins": [
     "Litematica.ChunkRendererSchematicVboMixin",
+    "Litematica.InputHandlerMixin",
     "Litematica.SchematicVerifierMixin"
   ]
 }
