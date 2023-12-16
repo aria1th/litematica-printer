@@ -912,7 +912,7 @@ public class Printer {
 							recordCause(pos, stateSchematic.getBlock().getTranslationKey() + " at " + pos.toShortString() + " is lava", pos);
 							MessageHolder.sendUniqueMessage(mc.player, getReason(pos.asLong()));
 							continue;
-						} else if (sBlock instanceof SandBlock || sBlock instanceof DragonEggBlock || sBlock instanceof ConcretePowderBlock || sBlock instanceof GravelBlock || sBlock instanceof AnvilBlock) {
+						} else if (sBlock instanceof FallingBlock) {
 							// Falling blocks, check if they have support
 							BlockPos Offsetpos = new BlockPos(x, y - 1, z);
 							BlockState OffsetstateSchematic = world.getBlockState(Offsetpos);
