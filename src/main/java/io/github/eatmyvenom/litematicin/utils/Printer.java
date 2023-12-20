@@ -111,7 +111,12 @@ public class Printer {
 		World world = SchematicWorldHandler.getSchematicWorld();
 		ItemStack stack = getStackForState(mc, preference, world, pos);
 		if (stack.isEmpty()) {
+			MessageHolder.sendDebugMessage(mc.player, "Cannot pick block " + preference.getBlock().getName() + " at " + pos.toShortString() + " because no stack");
 			return false;
+		}
+		// Inventory Cache
+		if (USE_INVENTORY_CACHE.getBooleanValue() && !ITEMS.isEmpty()) { // if cache is enabled and cache is not empty
+			return io.github.eatmyvenom.litematicin.utils.InventoryUtils.swapToItem(mc, stack);
 		}
 		if (!stack.isEmpty() && stack.getItem() != Items.AIR) {
 			PlayerInventory inv = getInventory(mc.player);
@@ -120,20 +125,30 @@ public class Printer {
 					// manually search through inventories
 					int slot = io.github.eatmyvenom.litematicin.utils.InventoryUtils.getSlotWithItem(inv, stack);
 					if (slot == -1) {
+						MessageHolder.sendDebugMessage(mc.player, "Cannot pick block " + preference.getBlock().getName() + " at " + pos.toShortString() + " because no slot");
 						return false;
 					}
 					if (EASY_PLACE_MODE_HOTBAR_ONLY.getBooleanValue()) {
-						return slot < 9;
+						boolean isHotbar = slot < 9;
+						if (!isHotbar) {
+							MessageHolder.sendDebugMessage(mc.player, "Cannot pick block " + preference.getBlock().getName() + " at " + pos.toShortString() + " because not in hotbar");
+						}
+						return isHotbar;
 					}
 					return true;
 				}
 				else {
 					int slot = getSlotWithStack(inv, stack);
 					if (slot == -1) {
+						MessageHolder.sendDebugMessage(mc.player, "Cannot pick block " + preference.getBlock().getName() + " at " + pos.toShortString() + " because no slot");
 						return false;
 					}
 					if (EASY_PLACE_MODE_HOTBAR_ONLY.getBooleanValue()) {
-						return slot < 9;
+						boolean isHotbar = slot < 9;
+						if (!isHotbar) {
+							MessageHolder.sendDebugMessage(mc.player, "Cannot pick block " + preference.getBlock().getName() + " at " + pos.toShortString() + " because not in hotbar");
+						}
+						return isHotbar;
 					}
 				}
 			}

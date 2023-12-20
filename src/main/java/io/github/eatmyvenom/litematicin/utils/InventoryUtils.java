@@ -405,8 +405,36 @@ public class InventoryUtils {
 		return stack.getItem() instanceof ToolItem || isToolLikeItem(stack.getItem()) ? getSlotWithItem(inv, stack) :inv.getSlotWithStack(stack);
 	}
 
+	public static void printAllItems(PlayerInventory inv, ItemStack stack) {
+		// Debug
+		for (int i = 0; i < inv.main.size(); i++) {
+			boolean areNbtsEqual = ItemStack.areNbtEqual(inv.getStack(i), stack);
+			boolean areItemsEqual = ItemStack.areItemsEqual(inv.getStack(i), stack);
+			MessageHolder.sendDebugMessage("Slot " + i + ", " + inv.getStack(i).getItem() + " : " + areItemsEqual + " : " + areNbtsEqual);
+		}
+	}
+
+	public static int getSlotWIthStackIgnoreNbt(PlayerInventory inv, ItemStack stack) {
+		// Debug
+		int defaultSlot = inv.getSlotWithStack(stack);
+		if (defaultSlot != -1) {
+			return defaultSlot;
+		}
+		if (!PRINTER_IGNORE_NBT.getBooleanValue()) {
+			return defaultSlot;
+		}
+		for (int i = 0; i < inv.main.size(); i++) {
+			boolean areItemsEqual = ItemStack.areItemsEqual(inv.getStack(i), stack);
+			if (areItemsEqual) {
+				return i;
+			}
+		}
+		return -1;
+	}
+
 	public static int getSlotWithStack(PlayerInventory inv, ItemStack stack) {
-		return stack.getItem() instanceof ToolItem || isToolLikeItem(stack.getItem()) ? getSlotWithItem(inv, stack) :inv.getSlotWithStack(stack);
+		int findingStack = getSlotWIthStackIgnoreNbt(inv, stack);
+		return stack.getItem() instanceof ToolItem || isToolLikeItem(stack.getItem()) ? getSlotWithItem(inv, stack) :findingStack;
 	}
 
 	@SuppressWarnings("ConstantConditions")

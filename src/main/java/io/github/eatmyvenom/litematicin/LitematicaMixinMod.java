@@ -77,6 +77,8 @@ public class LitematicaMixinMod implements ModInitializer {
 	public static final ConfigHotkey PRINTER_CLEAR_FLUIDS_USE_COBBLESTONE_HOTKEY = new ConfigHotkey("printerClearFluidsUseCobblestoneToggleKey", "", "Printer clear fluids use cobblestone will be toggled ON/OFF");
 	public static final ConfigHotkey PRINTER_BEDROCK_BREAKING_HOTKEY = new ConfigHotkey("printerBedrockBreakingToggleKey", "", "Printer bedrock breaking will be toggled ON/OFF");
 
+	public static final ConfigBoolean PRINTER_IGNORE_NBT = new ConfigBoolean("printerIgnoreNBT", false, "Printer will ignore NBT data when placing blocks");
+
 	public static ImmutableList<ConfigHotkey> getHotkeyList() {
 		ImmutableList.Builder<ConfigHotkey> hotkeyList = new ImmutableList.Builder<ConfigHotkey>().addAll(Hotkeys.HOTKEY_LIST);
 		hotkeyList.addAll(ImmutableList.of(
@@ -145,7 +147,8 @@ public class LitematicaMixinMod implements ModInitializer {
 		PRINTER_BEDROCK_DELAY,
 		PRINTER_FAKE_ROTATION,
 		PRINTER_FAKE_ROTATION_DELAY,
-		PRINTER_FAKE_ROTATION_LIMIT_PER_TICKS)
+		PRINTER_FAKE_ROTATION_LIMIT_PER_TICKS,
+		PRINTER_IGNORE_NBT)
 	).build();
 
 	@Override
