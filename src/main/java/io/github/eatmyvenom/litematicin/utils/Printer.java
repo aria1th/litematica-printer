@@ -188,7 +188,9 @@ public class Printer {
 		}
 		if (!stack.isEmpty()) {
 			if (USE_INVENTORY_CACHE.getBooleanValue()) {
-				return io.github.eatmyvenom.litematicin.utils.InventoryUtils.swapToItem(mc, stack);
+				boolean swapResult = io.github.eatmyvenom.litematicin.utils.InventoryUtils.swapToItem(mc, stack);
+				MessageHolder.sendDebugMessage(mc.player, "Swapped to " + stack.getItem().getName() + " at " + pos.toShortString() + " with result " + swapResult);
+				return swapResult;
 			} else {
 				InventoryUtils.schematicWorldPickBlock(stack, pos, world, mc);
 				//#if MC>11650

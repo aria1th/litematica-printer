@@ -234,7 +234,9 @@ public class InventoryUtils {
 		if (isToolLikeItem(a.getItem()) || isToolLikeItem(b.getItem())) {
 			return a.getItem() == b.getItem();
 		}
-		return ItemStack.areItemsEqual(a, b) && ItemStack.areNbtEqual(a, b);
+		boolean isItemEqual = ItemStack.areItemsEqual(a, b);
+		boolean nbtCondition = PRINTER_IGNORE_NBT.getBooleanValue() || ItemStack.areNbtEqual(a, b);
+		return isItemEqual && nbtCondition;
 	}
 
 	public static boolean areItemsExactCount(ItemStack a, ItemStack b, boolean allowNamed) {
@@ -244,7 +246,8 @@ public class InventoryUtils {
 		if (allowNamed) {
 			return areItemsExactAllowNamed(a, b);
 		}
-		return ItemStack.areItemsEqual(a, b) && ItemStack.areNbtEqual(a, b);
+		boolean nbtCondition = PRINTER_IGNORE_NBT.getBooleanValue() || ItemStack.areNbtEqual(a, b);
+		return ItemStack.areItemsEqual(a, b) && nbtCondition;
 	}
 
 	public static ItemStack getStackForState(MinecraftClient client, BlockState state, World world, BlockPos pos) {
@@ -402,7 +405,7 @@ public class InventoryUtils {
 
 	public static int getSlotWithStack(ClientPlayerEntity player, ItemStack stack) {
 		PlayerInventory inv = getInventory(player);
-		return stack.getItem() instanceof ToolItem || isToolLikeItem(stack.getItem()) ? getSlotWithItem(inv, stack) :inv.getSlotWithStack(stack);
+		return stack.getItem() instanceof ToolItem || isToolLikeItem(stack.getItem()) ? getSlotWithItem(inv, stack) :getSlotWIthStackIgnoreNbt(getInventory(player), stack);
 	}
 
 	public static void printAllItems(PlayerInventory inv, ItemStack stack) {
@@ -410,12 +413,13 @@ public class InventoryUtils {
 		for (int i = 0; i < inv.main.size(); i++) {
 			boolean areNbtsEqual = ItemStack.areNbtEqual(inv.getStack(i), stack);
 			boolean areItemsEqual = ItemStack.areItemsEqual(inv.getStack(i), stack);
-			MessageHolder.sendDebugMessage("Slot " + i + ", " + inv.getStack(i).getItem() + " : " + areItemsEqual + " : " + areNbtsEqual);
+			MessageHolder.sendUniqueDebugMessage("Slot " + i + ", " + inv.getStack(i).getItem() + " : " + areItemsEqual + " : " + areNbtsEqual);
 		}
 	}
 
 	public static int getSlotWIthStackIgnoreNbt(PlayerInventory inv, ItemStack stack) {
 		// Debug
+		//printAllItems(inv, stack);
 		int defaultSlot = inv.getSlotWithStack(stack);
 		if (defaultSlot != -1) {
 			return defaultSlot;
