@@ -62,7 +62,7 @@ public class InventoryUtils {
 				if (!usedSlots.containsKey(i)) {
 					continue;
 				}
-				if (slotCounts.get(i) <= 0) {
+				if (slotCounts.getOrDefault(i,0) <= 0) {
 					usedSlots.remove(i);
 					slotCounts.remove(i);
 				}
