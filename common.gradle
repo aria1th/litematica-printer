@@ -34,10 +34,14 @@ repositories {
     maven { url "https://maven.terraformersmc.com/releases/" }
     maven { url "https://jitpack.io" }
     maven { url "https://pkgs.dev.azure.com/djtheredstoner/DevAuth/_packaging/public/maven/v1" }
-    maven { url 'https://masa.dy.fi/maven' }
+    maven {
+        url 'https://masa.dy.fi/maven'
+        mavenLocal()
+    }
     maven { url = "https://www.cursemaven.com" }
 	maven {
 		url "https://maven.terraformersmc.com/releases/"
+        mavenLocal()
 	}
 	maven {
 		url "https://jitpack.io"
@@ -45,6 +49,7 @@ repositories {
 	maven {
 		url "https://pkgs.dev.azure.com/djtheredstoner/DevAuth/_packaging/public/maven/v1"
 	}
+    flatDir { dirs 'libs' }
 }
 
 dependencies {
@@ -63,6 +68,7 @@ dependencies {
     }
     else {
         modImplementation "curse.maven:malilib-${project.malilib_projectid}:${project.malilib_fileid}"
+        //modImplementation "fi.dy.masa.malilib:malilib-fabric-${project.minecraft_version_out}:${project.malilib_version}"
     }
     // check project.litematica_projectid and project.litematica_fileid in gradle.properties.
 	// modImplementation "curse.maven:litematica-${project.litematica_projectid}:${project.litematica_fileid}"
@@ -72,7 +78,11 @@ dependencies {
     }
     else {
         modImplementation "curse.maven:litematica-${project.litematica_projectid}:${project.litematica_fileid}"
+        //modImplementation "fi.dy.masa.litematica:litematica-fabric-${project.minecraft_version_out}:${project.litematica_version}"
     }
+    //if (!project.hasProperty("mod_menu_filename")) {
+        //modCompileOnly files("../../external/${project.mod_menu_filename}")
+    //}
 	annotationProcessor "com.github.LlamaLad7:MixinExtras:0.1.1"
 }
 
