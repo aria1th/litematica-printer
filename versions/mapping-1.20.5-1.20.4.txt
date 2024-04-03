@@ -1,2 +1,1 @@
-net.minecraft.item.ItemStack canCombine() areItemsAndComponentsEqual()
 net.minecraft.item.ItemStack areNbtEqual() areItemsAndComponentsEqual()
