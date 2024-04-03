@@ -16,7 +16,6 @@ if (mcVersion > 12004) {
 	targetCompatibility = JavaVersion.VERSION_21
 }
 else if (mcVersion >= 11800) {
-//if (mcVersion >= 11800) {
 	sourceCompatibility = JavaVersion.VERSION_17
 	targetCompatibility = JavaVersion.VERSION_17
 }
@@ -39,22 +38,15 @@ repositories {
     maven { url "https://maven.terraformersmc.com/releases/" }
     maven { url "https://jitpack.io" }
     maven { url "https://pkgs.dev.azure.com/djtheredstoner/DevAuth/_packaging/public/maven/v1" }
-    maven {
-        url 'https://masa.dy.fi/maven'
-        mavenLocal()
-    }
+    maven { url 'https://masa.dy.fi/maven' }
     maven { url = "https://www.cursemaven.com" }
-	maven {
-		url "https://maven.terraformersmc.com/releases/"
-        mavenLocal()
-	}
+	maven { url "https://maven.terraformersmc.com/releases/" }
 	maven {
 		url "https://jitpack.io"
 	}
 	maven {
 		url "https://pkgs.dev.azure.com/djtheredstoner/DevAuth/_packaging/public/maven/v1"
 	}
-    flatDir { dirs 'libs' }
 }
 
 dependencies {
@@ -85,9 +77,6 @@ dependencies {
         modImplementation "curse.maven:litematica-${project.litematica_projectid}:${project.litematica_fileid}"
         //modImplementation "fi.dy.masa.litematica:litematica-fabric-${project.minecraft_version_out}:${project.litematica_version}"
     }
-    //if (!project.hasProperty("mod_menu_filename")) {
-        //modCompileOnly files("../../external/${project.mod_menu_filename}")
-    //}
 	annotationProcessor "com.github.LlamaLad7:MixinExtras:0.1.1"
 }
 
@@ -114,7 +103,6 @@ tasks.withType(JavaCompile).configureEach {
         it.options.release = 21
     }
     else if (mcVersion >= 11800) {
-    //if (mcVersion >= 11800) {
         it.options.release = 17
     }
     else if (mcVersion >= 11700) {
