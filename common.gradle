@@ -1,6 +1,6 @@
 // common.gradle is a file that called separately by each module.
 plugins {
-    id 'fabric-loom' version '1.0-SNAPSHOT'
+    id 'fabric-loom' version '1.6-SNAPSHOT'
     id 'com.replaymod.preprocess' version '6989e16efc'
 }
 
@@ -11,7 +11,11 @@ preprocess {
     tabIndentation = true
 }
 
-if (mcVersion >= 11800) {
+if (mcVersion > 12004) {
+	sourceCompatibility = JavaVersion.VERSION_21
+	targetCompatibility = JavaVersion.VERSION_21
+}
+else if (mcVersion >= 11800) {
 	sourceCompatibility = JavaVersion.VERSION_17
 	targetCompatibility = JavaVersion.VERSION_17
 }
@@ -36,9 +40,7 @@ repositories {
     maven { url "https://pkgs.dev.azure.com/djtheredstoner/DevAuth/_packaging/public/maven/v1" }
     maven { url 'https://masa.dy.fi/maven' }
     maven { url = "https://www.cursemaven.com" }
-	maven {
-		url "https://maven.terraformersmc.com/releases/"
-	}
+	maven { url "https://maven.terraformersmc.com/releases/" }
 	maven {
 		url "https://jitpack.io"
 	}
@@ -63,6 +65,7 @@ dependencies {
     }
     else {
         modImplementation "curse.maven:malilib-${project.malilib_projectid}:${project.malilib_fileid}"
+        //modImplementation "fi.dy.masa.malilib:malilib-fabric-${project.minecraft_version_out}:${project.malilib_version}"
     }
     // check project.litematica_projectid and project.litematica_fileid in gradle.properties.
 	// modImplementation "curse.maven:litematica-${project.litematica_projectid}:${project.litematica_fileid}"
@@ -72,6 +75,7 @@ dependencies {
     }
     else {
         modImplementation "curse.maven:litematica-${project.litematica_projectid}:${project.litematica_fileid}"
+        //modImplementation "fi.dy.masa.litematica:litematica-fabric-${project.minecraft_version_out}:${project.litematica_version}"
     }
 	annotationProcessor "com.github.LlamaLad7:MixinExtras:0.1.1"
 }
@@ -95,8 +99,10 @@ tasks.withType(JavaCompile).configureEach {
 	// If Javadoc is generated, this must be specified in that task too.
 	it.options.encoding = "UTF-8"
 
-	// Minecraft 1.17 (21w19a) upwards uses Java 16.
-    if (mcVersion >= 11800) {
+    if (mcVersion > 12004) {
+        it.options.release = 21
+    }
+    else if (mcVersion >= 11800) {
         it.options.release = 17
     }
     else if (mcVersion >= 11700) {
