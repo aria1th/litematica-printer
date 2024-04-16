@@ -11,7 +11,6 @@ import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.LootableContainerBlockEntity;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.component.ComponentMap;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.ContainerComponent;
 import net.minecraft.entity.player.PlayerInventory;
@@ -104,28 +103,14 @@ public class InventoryUtils {
 				BlockItem blockItem = (BlockItem) item;
 				if (blockItem.getBlock() instanceof ShulkerBoxBlock) {
 					int invSize = 27;
-					//NbtCompound compound = stack.getSubNbt("BlockEntityTag");
-					//if (compound == null) {
-						//continue;
-					//}
 					DefaultedList<ItemStack> returnStacks = DefaultedList.ofSize(invSize, ItemStack.EMPTY);
-
-					ComponentMap data = stack.getComponents();
-					if (data != null && data.contains(DataComponentTypes.CONTAINER))
-					{
-						ContainerComponent container = data.get(DataComponentTypes.CONTAINER);
-						//if (compound.contains("Items")) {
-						//Inventories.readNbt(compound, returnStacks, client.player.getRegistryManager());
-						//}
-						if (container != null) {
-							container.copyTo(returnStacks);
-							for (ItemStack returnStack : returnStacks)
-							{
-								Item returnItem = returnStack.getItem();
-								if (returnItem != null)
-								{
-									ITEMS.add(returnItem);
-								}
+					ContainerComponent container = stack.getComponents().get(DataComponentTypes.CONTAINER);
+					if (container != null) {
+						container.copyTo(returnStacks);
+						for (ItemStack returnStack : returnStacks) {
+							Item returnItem = returnStack.getItem();
+							if (returnItem != null)	{
+								ITEMS.add(returnItem);
 							}
 						}
 					}
