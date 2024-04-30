@@ -27,9 +27,6 @@ import net.minecraft.world.World;
 import java.util.*;
 import java.util.function.Predicate;
 
-import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.*;
-import static io.github.eatmyvenom.litematicin.utils.Printer.*;
-
 public class InventoryUtils {
 	private static int ptr = -1;
 
@@ -51,13 +48,13 @@ public class InventoryUtils {
 
 	public static void tick() {
 		tickCount++;
-		if (RENDER_ONLY_HOLDING_ITEMS.getBooleanValue() && tickCount % 20 == 0) {
+		if (LitematicaMixinMod.RENDER_ONLY_HOLDING_ITEMS.getBooleanValue() && tickCount % 20 == 0) {
 			calculateCache();
 		}
-		if (INVENTORY_CACHE_TICKS.getIntegerValue() != 0 && tickCount - lastWorkedTick > INVENTORY_CACHE_TICKS.getIntegerValue()){
+		if (LitematicaMixinMod.INVENTORY_CACHE_TICKS.getIntegerValue() != 0 && tickCount - lastWorkedTick > LitematicaMixinMod.INVENTORY_CACHE_TICKS.getIntegerValue()){
 			clearCache();
 		}
-		if (!isSleeping && Configs.Generic.EASY_PLACE_MODE.getBooleanValue() && Configs.Generic.EASY_PLACE_HOLD_ENABLED.getBooleanValue() && Hotkeys.EASY_PLACE_ACTIVATION.getKeybind().isKeybindHeld()) {
+		if (!Printer.isSleeping && Configs.Generic.EASY_PLACE_MODE.getBooleanValue() && Configs.Generic.EASY_PLACE_HOLD_ENABLED.getBooleanValue() && Hotkeys.EASY_PLACE_ACTIVATION.getKeybind().isKeybindHeld()) {
 			for (int i = 0; i < 9; i++) {
 				if (!usedSlots.containsKey(i)) {
 					continue;
@@ -232,7 +229,7 @@ public class InventoryUtils {
 			return a.getItem() == b.getItem();
 		}
 		boolean isItemEqual = ItemStack.areItemsEqual(a, b);
-		boolean nbtCondition = PRINTER_IGNORE_NBT.getBooleanValue() || ItemStack.areItemsAndComponentsEqual(a, b);
+		boolean nbtCondition = LitematicaMixinMod.PRINTER_IGNORE_NBT.getBooleanValue() || ItemStack.areItemsAndComponentsEqual(a, b);
 		return isItemEqual && nbtCondition;
 	}
 
@@ -243,20 +240,20 @@ public class InventoryUtils {
 		if (allowNamed) {
 			return areItemsExactAllowNamed(a, b);
 		}
-		boolean nbtCondition = PRINTER_IGNORE_NBT.getBooleanValue() || ItemStack.areItemsAndComponentsEqual(a, b);
+		boolean nbtCondition = LitematicaMixinMod.PRINTER_IGNORE_NBT.getBooleanValue() || ItemStack.areItemsAndComponentsEqual(a, b);
 		return ItemStack.areItemsEqual(a, b) && nbtCondition;
 	}
 
 	public static ItemStack getStackForState(MinecraftClient client, BlockState state, World world, BlockPos pos) {
 		// if state is nether portal block, return FLINT_AND_STEEL
 		if (state.isOf(Blocks.NETHER_PORTAL)) {
-			if (!PRINTER_LIT_PORTAL_USE_FIRECHARGE.getBooleanValue()) return Items.FLINT_AND_STEEL.getDefaultStack();
+			if (!LitematicaMixinMod.PRINTER_LIT_PORTAL_USE_FIRECHARGE.getBooleanValue()) return Items.FLINT_AND_STEEL.getDefaultStack();
 			else {
 				return Items.FIRE_CHARGE.getDefaultStack();
 			}
 		}
-		ItemStack stack = isReplaceableWaterFluidSource(state) && PRINTER_PLACE_ICE.getBooleanValue() ? Items.ICE.getDefaultStack() : MaterialCache.getInstance().getRequiredBuildItemForState(state, world, pos);
-		if (PRINTER_PRINT_DIRT_VARIANTS.getBooleanValue() && !canPickItem(client, stack)) {
+		ItemStack stack = Printer.isReplaceableWaterFluidSource(state) && LitematicaMixinMod.PRINTER_PLACE_ICE.getBooleanValue() ? Items.ICE.getDefaultStack() : MaterialCache.getInstance().getRequiredBuildItemForState(state, world, pos);
+		if (LitematicaMixinMod.PRINTER_PRINT_DIRT_VARIANTS.getBooleanValue() && !Printer.canPickItem(client, stack)) {
 			if (state.isOf(Blocks.FARMLAND)) stack = Items.DIRT.getDefaultStack();
 			else if (state.isOf(Blocks.DIRT_PATH)) stack = Items.DIRT.getDefaultStack();
 		}
@@ -421,7 +418,7 @@ public class InventoryUtils {
 		if (defaultSlot != -1) {
 			return defaultSlot;
 		}
-		if (!PRINTER_IGNORE_NBT.getBooleanValue()) {
+		if (!LitematicaMixinMod.PRINTER_IGNORE_NBT.getBooleanValue()) {
 			return defaultSlot;
 		}
 		for (int i = 0; i < inv.main.size(); i++) {

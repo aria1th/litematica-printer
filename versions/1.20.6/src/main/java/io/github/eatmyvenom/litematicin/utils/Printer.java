@@ -53,10 +53,7 @@ import net.minecraft.world.dimension.NetherPortal;
 import java.util.*;
 import java.util.function.Predicate;
 
-import static io.github.eatmyvenom.litematicin.LitematicaMixinMod.*;
-import static io.github.eatmyvenom.litematicin.utils.BedrockBreaker.interactBlock;
-import static io.github.eatmyvenom.litematicin.utils.BedrockBreaker.isReplaceable;
-import static io.github.eatmyvenom.litematicin.utils.FakeAccurateBlockPlacement.getYaw;
+import io.github.eatmyvenom.litematicin.LitematicaMixinMod;
 import static io.github.eatmyvenom.litematicin.utils.InventoryUtils.*;
 
 @SuppressWarnings("ConstantConditions")
@@ -115,7 +112,7 @@ public class Printer {
             return false;
         }
         // Inventory Cache
-        if (USE_INVENTORY_CACHE.getBooleanValue() && !ITEMS.isEmpty()) { // if cache is enabled and cache is not empty
+        if (LitematicaMixinMod.USE_INVENTORY_CACHE.getBooleanValue() && !ITEMS.isEmpty()) { // if cache is enabled and cache is not empty
             return io.github.eatmyvenom.litematicin.utils.InventoryUtils.swapToItem(mc, stack);
         }
         if (!stack.isEmpty() && stack.getItem() != Items.AIR) {
@@ -128,7 +125,7 @@ public class Printer {
                         MessageHolder.sendDebugMessage(mc.player, "Cannot pick block " + preference.getBlock().getName() + " at " + pos.toShortString() + " because no slot");
                         return false;
                     }
-                    if (EASY_PLACE_MODE_HOTBAR_ONLY.getBooleanValue()) {
+                    if (LitematicaMixinMod.EASY_PLACE_MODE_HOTBAR_ONLY.getBooleanValue()) {
                         boolean isHotbar = slot < 9;
                         if (!isHotbar) {
                             MessageHolder.sendDebugMessage(mc.player, "Cannot pick block " + preference.getBlock().getName() + " at " + pos.toShortString() + " because not in hotbar");
@@ -143,7 +140,7 @@ public class Printer {
                         MessageHolder.sendDebugMessage(mc.player, "Cannot pick block " + preference.getBlock().getName() + " at " + pos.toShortString() + " because no slot");
                         return false;
                     }
-                    if (EASY_PLACE_MODE_HOTBAR_ONLY.getBooleanValue()) {
+                    if (LitematicaMixinMod.EASY_PLACE_MODE_HOTBAR_ONLY.getBooleanValue()) {
                         boolean isHotbar = slot < 9;
                         if (!isHotbar) {
                             MessageHolder.sendDebugMessage(mc.player, "Cannot pick block " + preference.getBlock().getName() + " at " + pos.toShortString() + " because not in hotbar");
@@ -165,7 +162,7 @@ public class Printer {
                 if (slot == -1) {
                     return false;
                 }
-                if (EASY_PLACE_MODE_HOTBAR_ONLY.getBooleanValue()) {
+                if (LitematicaMixinMod.EASY_PLACE_MODE_HOTBAR_ONLY.getBooleanValue()) {
                     return slot < 9;
                 }
             }
@@ -187,7 +184,7 @@ public class Printer {
             return false;
         }
         if (!stack.isEmpty()) {
-            if (USE_INVENTORY_CACHE.getBooleanValue()) {
+            if (LitematicaMixinMod.USE_INVENTORY_CACHE.getBooleanValue()) {
                 boolean swapResult = io.github.eatmyvenom.litematicin.utils.InventoryUtils.swapToItem(mc, stack);
                 MessageHolder.sendDebugMessage(mc.player, "Swapped to " + stack.getItem().getName() + " at " + pos.toShortString() + " with result " + swapResult);
                 return swapResult;
@@ -210,7 +207,7 @@ public class Printer {
             return false;
         }
         if (!stack.isEmpty()) {
-            if (USE_INVENTORY_CACHE.getBooleanValue()) {
+            if (LitematicaMixinMod.USE_INVENTORY_CACHE.getBooleanValue()) {
                 return io.github.eatmyvenom.litematicin.utils.InventoryUtils.swapToItem(mc, stack);
             } else {
                 fi.dy.masa.malilib.util.InventoryUtils.swapItemToMainHand(stack, mc);
@@ -292,15 +289,15 @@ public class Printer {
             Vec3d hitPos;
             Direction sideOrig = trace.getSide();
             Direction side = applyPlacementFacing(schematicState, sideOrig, clientState);
-            if (PRINTER_ACCURATE_BLOCK_PLACEMENT.getBooleanValue()) {
+            if (LitematicaMixinMod.PRINTER_ACCURATE_BLOCK_PLACEMENT.getBooleanValue()) {
                 hitPos = applyCarpetProtocolHitVec(blockPos, schematicState);
             } else {
                 hitPos = applyHitVec(blockPos, schematicState, side);
             }
             BlockHitResult hitResult = new BlockHitResult(hitPos, side, blockPos, false);
             boolean canContinue;
-            if (!PRINTER_FAKE_ROTATION.getBooleanValue() || PRINTER_ACCURATE_BLOCK_PLACEMENT.getBooleanValue()) { //Accurateblockplacement, or vanilla but no fake
-                canContinue = interactBlock(mc, hitResult).isAccepted(); //PLACE block
+            if (!LitematicaMixinMod.PRINTER_FAKE_ROTATION.getBooleanValue() || LitematicaMixinMod.PRINTER_ACCURATE_BLOCK_PLACEMENT.getBooleanValue()) { //Accurateblockplacement, or vanilla but no fake
+                canContinue = BedrockBreaker.interactBlock(mc, hitResult).isAccepted(); //PLACE block
                 cacheEasyPlacePosition(blockPos, false);
             } else {
                 canContinue = FakeAccurateBlockPlacement.request(schematicState, blockPos);
@@ -391,10 +388,10 @@ public class Printer {
     @Environment(EnvType.CLIENT)
     synchronized public static ActionResult doPrinterAction(MinecraftClient mc) {
         io.github.eatmyvenom.litematicin.utils.InventoryUtils.itemChangeCount = 0;
-        if (!DEBUG_MESSAGE.getBooleanValue()) {
+        if (!LitematicaMixinMod.DEBUG_MESSAGE.getBooleanValue()) {
             causeMap.clear(); //reduce ram usage
         }
-        if (!PRINTER_BEDROCK_BREAKING.getBooleanValue()) {
+        if (!LitematicaMixinMod.PRINTER_BEDROCK_BREAKING.getBooleanValue()) {
             BedrockBreaker.clear();
         }
         FakeAccurateBlockPlacement.requestedTicks = Math.max(-2, FakeAccurateBlockPlacement.requestedTicks);
@@ -402,14 +399,14 @@ public class Printer {
             mc.player.sendMessage(Text.of("Handling breakBlock!"), true);
             return ActionResult.SUCCESS;
         }
-        if (PRINTER_ALLOW_INVENTORY_OPERATIONS.getBooleanValue()) {
+        if (LitematicaMixinMod.PRINTER_ALLOW_INVENTORY_OPERATIONS.getBooleanValue()) {
             ItemInputs.execute(mc);
             mc.player.sendMessage(Text.of("Handling inventory operation!"), true);
             return ActionResult.PASS;
         } else {
             ItemInputs.clear();
         }
-        if (new Date().getTime() < lastPlaced + 1000.0 * EASY_PLACE_MODE_DELAY.getDoubleValue()) {
+        if (new Date().getTime() < lastPlaced + 1000.0 * LitematicaMixinMod.EASY_PLACE_MODE_DELAY.getDoubleValue()) {
             mc.player.sendMessage(Text.of("Handling delay"), true);
             return ActionResult.PASS;
         } else {
@@ -431,11 +428,11 @@ public class Printer {
             posZ = tracePos.getZ();
         }
 
-        boolean ClearArea = PRINTER_CLEAR_FLUIDS.getBooleanValue(); // if it's true, will ignore everything and remove fluids.
-        boolean UseCobble = PRINTER_CLEAR_FLUIDS_USE_COBBLESTONE.getBooleanValue() && ClearArea;
-        boolean ClearSnow = PRINTER_CLEAR_SNOW_LAYER.getBooleanValue() && ClearArea;
-        boolean CanUseProtocol = PRINTER_ACCURATE_BLOCK_PLACEMENT.getBooleanValue();
-        boolean FillInventory = PRINTER_PUMPKIN_PIE_FOR_COMPOSTER.getBooleanValue();
+        boolean ClearArea = LitematicaMixinMod.PRINTER_CLEAR_FLUIDS.getBooleanValue(); // if it's true, will ignore everything and remove fluids.
+        boolean UseCobble = LitematicaMixinMod.PRINTER_CLEAR_FLUIDS_USE_COBBLESTONE.getBooleanValue() && ClearArea;
+        boolean ClearSnow = LitematicaMixinMod.PRINTER_CLEAR_SNOW_LAYER.getBooleanValue() && ClearArea;
+        boolean CanUseProtocol = LitematicaMixinMod.PRINTER_ACCURATE_BLOCK_PLACEMENT.getBooleanValue();
+        boolean FillInventory = LitematicaMixinMod.PRINTER_PUMPKIN_PIE_FOR_COMPOSTER.getBooleanValue();
         ItemStack composableItem = Items.PUMPKIN_PIE.getDefaultStack();
         //#if MC>=11902
         List<PlacementPart> allPlacementsTouchingSubChunk = DataManager.getSchematicPlacementManager().getAllPlacementsTouchingChunk(tracePos);
@@ -445,7 +442,7 @@ public class Printer {
         Box selectedBox = null;
         Printer.CURRENT_BOX = null;
         if (allPlacementsTouchingSubChunk.isEmpty() && !ClearArea) {
-            if (PRINTER_BEDROCK_BREAKING.getBooleanValue()) {
+            if (LitematicaMixinMod.PRINTER_BEDROCK_BREAKING.getBooleanValue()) {
                 BedrockBreaker.scheduledTickHandler(mc, null);
             }
             return ActionResult.PASS;
@@ -456,9 +453,9 @@ public class Printer {
         int minX = 0;
         int minY = 0;
         int minZ = 0;
-        int rangeX = EASY_PLACE_MODE_RANGE_X.getIntegerValue();
-        int rangeY = EASY_PLACE_MODE_RANGE_Y.getIntegerValue();
-        int rangeZ = EASY_PLACE_MODE_RANGE_Z.getIntegerValue();
+        int rangeX = LitematicaMixinMod.EASY_PLACE_MODE_RANGE_X.getIntegerValue();
+        int rangeY = LitematicaMixinMod.EASY_PLACE_MODE_RANGE_Y.getIntegerValue();
+        int rangeZ = LitematicaMixinMod.EASY_PLACE_MODE_RANGE_Z.getIntegerValue();
         if (rangeX == 0 && rangeY == 0 && rangeZ == 0 && traceWrapper != null) {
             return doEasyPlaceNormally(mc);
         }
@@ -509,17 +506,17 @@ public class Printer {
         }
 
         if (!foundBox) {
-            if (PRINTER_BEDROCK_BREAKING.getBooleanValue()) {
+            if (LitematicaMixinMod.PRINTER_BEDROCK_BREAKING.getBooleanValue()) {
                 BedrockBreaker.scheduledTickHandler(mc, null);
             }
             return ActionResult.PASS;
         }
         LayerRange range = DataManager.getRenderLayerRange(); //add range following
         int MaxReach = Math.max(Math.max(rangeX, rangeY), rangeZ);
-        boolean breakBlocks = PRINTER_BREAK_BLOCKS.getBooleanValue();
-        boolean ExplicitObserver = PRINTER_OBSERVER_AVOID_ALL.getBooleanValue();
-        boolean flipBlocks = mc.player.getMainHandStack().getItem().equals(Items.CACTUS) && PRINTER_FLIPPINCACTUS.getBooleanValue(); //if true, will flip blocks with cactus
-        boolean smartRedstone = PRINTER_SMART_REDSTONE_AVOID.getBooleanValue();
+        boolean breakBlocks = LitematicaMixinMod.PRINTER_BREAK_BLOCKS.getBooleanValue();
+        boolean ExplicitObserver = LitematicaMixinMod.PRINTER_OBSERVER_AVOID_ALL.getBooleanValue();
+        boolean flipBlocks = mc.player.getMainHandStack().getItem().equals(Items.CACTUS) && LitematicaMixinMod.PRINTER_FLIPPINCACTUS.getBooleanValue(); //if true, will flip blocks with cactus
+        boolean smartRedstone = LitematicaMixinMod.PRINTER_SMART_REDSTONE_AVOID.getBooleanValue();
         Direction[] facingSides = Direction.getEntityFacingOrder(mc.player);
         Direction primaryFacing = facingSides[0];
         Direction horizontalFacing = primaryFacing; // For use in blocks with only horizontal rotation
@@ -537,7 +534,7 @@ public class Printer {
          * MC works)
          */
 
-        int maxInteract = PRINTER_MAX_BLOCKS.getIntegerValue();
+        int maxInteract = LitematicaMixinMod.PRINTER_MAX_BLOCKS.getIntegerValue();
         int interact = 0;
 
         int fromX = Math.max(posX - rangeX, minX);
@@ -564,7 +561,7 @@ public class Printer {
                     if (interact >= maxInteract) {
                         if (shouldSleepLonger) {
                             shouldSleepLonger = false;
-                            lastPlaced = Math.max(lastPlaced, new Date().getTime() + PRINTER_SLEEP_STACK_EMPTIED.getIntegerValue());
+                            lastPlaced = Math.max(lastPlaced, new Date().getTime() + LitematicaMixinMod.PRINTER_SLEEP_STACK_EMPTIED.getIntegerValue());
                         } else {
                             lastPlaced = Math.max(lastPlaced, new Date().getTime());
                         }
@@ -586,13 +583,13 @@ public class Printer {
                     }
 
                     BlockPos pos = new BlockPos(x, y, z);
-                    if (PRINTER_ALLOW_INVENTORY_OPERATIONS.getBooleanValue() && io.github.eatmyvenom.litematicin.utils.InventoryUtils.hasItemInSchematic(world, pos)) {
+                    if (LitematicaMixinMod.PRINTER_ALLOW_INVENTORY_OPERATIONS.getBooleanValue() && io.github.eatmyvenom.litematicin.utils.InventoryUtils.hasItemInSchematic(world, pos)) {
                         MessageHolder.sendUniqueMessageAlways("Inventory in " + pos.toShortString() + " has Item inside!");
                     }
                     BlockState stateSchematic;
                     BlockState stateClient;
                     updateSignText(mc, world, pos);
-                    if (!breakBlocks && !ClearArea && !flipBlocks && !PRINTER_BEDROCK_BREAKING.getBooleanValue()) {
+                    if (!breakBlocks && !ClearArea && !flipBlocks && !LitematicaMixinMod.PRINTER_BEDROCK_BREAKING.getBooleanValue()) {
                         if (world.isAir(pos)) {
                             continue;
                         } else {
@@ -602,7 +599,7 @@ public class Printer {
                         }
                     }
                     if (breakBlocks) {
-                        if (PRINTER_BREAK_IGNORE_EXTRA.getBooleanValue() && world.isAir(pos)) {
+                        if (LitematicaMixinMod.PRINTER_BREAK_IGNORE_EXTRA.getBooleanValue() && world.isAir(pos)) {
                             continue;
                         }
                     }
@@ -627,22 +624,22 @@ public class Printer {
                                     if (interact >= maxInteract) {
                                         if (shouldSleepLonger) {
                                             shouldSleepLonger = false;
-                                            lastPlaced = Math.max(lastPlaced, new Date().getTime() + PRINTER_SLEEP_STACK_EMPTIED.getIntegerValue());
+                                            lastPlaced = Math.max(lastPlaced, new Date().getTime() + LitematicaMixinMod.PRINTER_SLEEP_STACK_EMPTIED.getIntegerValue());
                                         } else {
                                             lastPlaced = Math.max(lastPlaced, new Date().getTime());
                                         }
                                         return ActionResult.SUCCESS;
                                     }
-                                } else if (BedrockBreaker.isBlockNotInstantBreakable(stateClient.getBlock()) && PRINTER_BEDROCK_BREAKING.getBooleanValue()) {
+                                } else if (BedrockBreaker.isBlockNotInstantBreakable(stateClient.getBlock()) && LitematicaMixinMod.PRINTER_BEDROCK_BREAKING.getBooleanValue()) {
                                     mc.player.sendMessage(Text.of("Handling printerBedrockBreaking!"), true);
                                     interact += BedrockBreaker.scheduledTickHandler(mc, pos);
                                     continue;
-                                } else if (PRINTER_BEDROCK_BREAKING.getBooleanValue()) {
+                                } else if (LitematicaMixinMod.PRINTER_BEDROCK_BREAKING.getBooleanValue()) {
                                     mc.player.sendMessage(Text.of("Handling printerBedrockBreaking!"), true);
                                     interact += BedrockBreaker.scheduledTickHandler(mc, null);
                                     continue;
                                 } else if (!positionStorage.hasPos(pos)) { // For survival
-                                    boolean replaceable = isReplaceable(mc.world.getBlockState(pos));
+                                    boolean replaceable = BedrockBreaker.isReplaceable(mc.world.getBlockState(pos));
                                     if (!replaceable && mc.world.getBlockState(pos).getHardness(world, pos) == -1) {
                                         continue;
                                     }
@@ -679,7 +676,7 @@ public class Printer {
                                     if (facingSchematic == facingClient) {
                                         int clickTimes = 0;
                                         Direction side = Direction.NORTH;
-                                        if (sBlock instanceof RepeaterBlock && !PRINTER_ACCURATE_BLOCK_PLACEMENT.getBooleanValue()) {
+                                        if (sBlock instanceof RepeaterBlock && !LitematicaMixinMod.PRINTER_ACCURATE_BLOCK_PLACEMENT.getBooleanValue()) {
                                             int clientDelay = stateClient.get(RepeaterBlock.DELAY);
                                             int schematicDelay = stateSchematic.get(RepeaterBlock.DELAY);
                                             if (clientDelay != schematicDelay) {
@@ -691,7 +688,7 @@ public class Printer {
                                                 }
                                             }
                                             side = Direction.UP;
-                                        } else if (sBlock instanceof ComparatorBlock && !PRINTER_ACCURATE_BLOCK_PLACEMENT.getBooleanValue()) {
+                                        } else if (sBlock instanceof ComparatorBlock && !LitematicaMixinMod.PRINTER_ACCURATE_BLOCK_PLACEMENT.getBooleanValue()) {
                                             if (stateSchematic.get(ComparatorBlock.MODE) != stateClient
                                                     .get(ComparatorBlock.MODE)) {
                                                 clickTimes = 1;
@@ -751,12 +748,12 @@ public class Printer {
                                                 if (doSchematicWorldPickBlock(mc, composableItem)) {
                                                     Vec3d hitPos = new Vec3d(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5);
                                                     BlockHitResult hitResult = new BlockHitResult(hitPos, side, pos, false);
-                                                    interactBlock(mc, hitResult); //COMPOSTER
+                                                    BedrockBreaker.interactBlock(mc, hitResult); //COMPOSTER
                                                     io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount(isCreative);
                                                     cacheEasyPlacePosition(pos, false);
                                                     if (shouldSleepLonger) {
                                                         shouldSleepLonger = false;
-                                                        lastPlaced = Math.max(lastPlaced, new Date().getTime() + 200 + PRINTER_SLEEP_STACK_EMPTIED.getIntegerValue());
+                                                        lastPlaced = Math.max(lastPlaced, new Date().getTime() + 200 + LitematicaMixinMod.PRINTER_SLEEP_STACK_EMPTIED.getIntegerValue());
                                                     } else {
                                                         lastPlaced = Math.max(lastPlaced, new Date().getTime() + 200);
                                                     }
@@ -765,7 +762,7 @@ public class Printer {
                                             } else {
                                                 cacheEasyPlacePosition(pos, true);
                                             }
-                                        } else if (!isPositionCached(pos, false) && PRINTER_PLACE_MINECART.getBooleanValue() && sBlock instanceof DetectorRailBlock && cBlock instanceof DetectorRailBlock) {
+                                        } else if (!isPositionCached(pos, false) && LitematicaMixinMod.PRINTER_PLACE_MINECART.getBooleanValue() && sBlock instanceof DetectorRailBlock && cBlock instanceof DetectorRailBlock) {
                                             if (!shouldAvoidPlaceCart(pos, world) && placeCart(stateSchematic, mc, pos)) {
                                                 continue;
                                             }
@@ -776,7 +773,7 @@ public class Printer {
 
                                             BlockHitResult hitResult = new BlockHitResult(hitPos, side, pos, false);
 
-                                            interactBlock(mc, hitResult); //NOTEBLOCK, REPEATER...
+                                            BedrockBreaker.interactBlock(mc, hitResult); //NOTEBLOCK, REPEATER...
                                             interact++;
                                         }
 
@@ -788,19 +785,19 @@ public class Printer {
                                 }
                                 // Blocks are not equal, but can be converted. example: dirt -> dirt path
                                 if (stateClient.isOf(Blocks.DIRT)) {
-                                    if (stateSchematic.isOf(Blocks.DIRT_PATH) && PRINTER_PRINT_DIRT_VARIANTS.getBooleanValue() && io.github.eatmyvenom.litematicin.utils.InventoryUtils.canSwap(mc.player, item -> item.getItem() instanceof ShovelItem)) {
+                                    if (stateSchematic.isOf(Blocks.DIRT_PATH) && LitematicaMixinMod.PRINTER_PRINT_DIRT_VARIANTS.getBooleanValue() && io.github.eatmyvenom.litematicin.utils.InventoryUtils.canSwap(mc.player, item -> item.getItem() instanceof ShovelItem)) {
                                         if (doSchematicWorldPickBlock(mc, stack -> stack.getItem() instanceof ShovelItem)){
                                             Vec3d hitPos = new Vec3d(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5);
                                             BlockHitResult hitResult = new BlockHitResult(hitPos, Direction.UP, pos, false);
-                                            interactBlock(mc, hitResult);
+                                            BedrockBreaker.interactBlock(mc, hitResult);
                                         }
                                     }
                                     // farmland
-                                    else if (stateSchematic.isOf(Blocks.FARMLAND) && PRINTER_PRINT_DIRT_VARIANTS.getBooleanValue() && io.github.eatmyvenom.litematicin.utils.InventoryUtils.canSwap(mc.player, item -> item.getItem() instanceof HoeItem)) {
+                                    else if (stateSchematic.isOf(Blocks.FARMLAND) && LitematicaMixinMod.PRINTER_PRINT_DIRT_VARIANTS.getBooleanValue() && io.github.eatmyvenom.litematicin.utils.InventoryUtils.canSwap(mc.player, item -> item.getItem() instanceof HoeItem)) {
                                         if (doSchematicWorldPickBlock(mc, stack -> stack.getItem() instanceof HoeItem)){
                                             Vec3d hitPos = new Vec3d(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5);
                                             BlockHitResult hitResult = new BlockHitResult(hitPos, Direction.UP, pos, false);
-                                            interactBlock(mc, hitResult);
+                                            BedrockBreaker.interactBlock(mc, hitResult);
                                         }
                                     }
                                 }
@@ -837,7 +834,7 @@ public class Printer {
                                     if (ShapeBoolean) {
                                         Vec3d hitPos = Vec3d.ofCenter(pos);
                                         BlockHitResult hitResult = new BlockHitResult(hitPos, side, pos, false);
-                                        interactBlock(mc, hitResult); //CACTUS
+                                        BedrockBreaker.interactBlock(mc, hitResult); //CACTUS
                                         cacheEasyPlacePosition(pos, true);
                                         interact++;
                                     } else if (breakBlocks && ShouldFix) { //cannot fix via flippincactus
@@ -855,7 +852,7 @@ public class Printer {
                         mc.player.sendMessage(Text.of("Handling printerFlippinCactus!"), true);
                         continue;
                     }
-                    if (isPositionCached(pos, false) || PRINTER_BEDROCK_BREAKING.getBooleanValue() || (!(stateSchematic.getBlock() instanceof NetherPortalBlock) && stateSchematic.isAir() && !ClearArea)) {
+                    if (isPositionCached(pos, false) || LitematicaMixinMod.PRINTER_BEDROCK_BREAKING.getBooleanValue() || (!(stateSchematic.getBlock() instanceof NetherPortalBlock) && stateSchematic.isAir() && !ClearArea)) {
                         continue;
                     }
                     ItemStack stack = MaterialCache.getInstance().getRequiredBuildItemForState(stateSchematic);
@@ -885,7 +882,7 @@ public class Printer {
                         if (ClearArea && doSchematicWorldPickBlock(mc, stack)) {
                             Vec3d hitPos = Vec3d.ofCenter(pos).add(0, 0.5, 0);
                             BlockHitResult hitResult = new BlockHitResult(hitPos, Direction.UP, pos, false);
-                            interactBlock(mc, hitResult); //FLUID REMOVAL
+                            BedrockBreaker.interactBlock(mc, hitResult); //FLUID REMOVAL
                             io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount(isCreative);
                             interact++;
                             cacheEasyPlacePosition(pos, false);
@@ -907,7 +904,7 @@ public class Printer {
                         causeMap.remove(pos.asLong());
                         continue;
                     }
-                    if (cBlock != sBlock && !isReplaceable(stateClient)) {
+                    if (cBlock != sBlock && !BedrockBreaker.isReplaceable(stateClient)) {
                         // Wrong block is in place, requires player action to fix
                         MessageHolder.sendUniqueMessage(mc.player, sBlock.getTranslationKey() + " at " + pos.toShortString() + " is blocking placement of " + cBlock.getTranslationKey() + "!!");
                         continue;
@@ -919,12 +916,12 @@ public class Printer {
                             recordCause(pos, stateSchematic.getBlock().getTranslationKey() + " at " + pos.toShortString() + " is Falling block", pos.down());
                             MessageHolder.sendUniqueMessage(mc.player, getReason(pos.asLong()));
                             continue;
-                        } else if (!PRINTER_PLACE_ICE.getBooleanValue() && stateSchematic.isOf(Blocks.WATER)) {
+                        } else if (!LitematicaMixinMod.PRINTER_PLACE_ICE.getBooleanValue() && stateSchematic.isOf(Blocks.WATER)) {
                             // Block is water, don't place it
                             recordCause(pos, stateSchematic.getBlock().getTranslationKey() + " at " + pos.toShortString() + " is water", pos);
                             MessageHolder.sendUniqueMessage(mc.player, getReason(pos.asLong()));
                             continue;
-                        } else if (!PRINTER_PLACE_ICE.getBooleanValue() && stateSchematic.isOf(Blocks.LAVA)) {
+                        } else if (!LitematicaMixinMod.PRINTER_PLACE_ICE.getBooleanValue() && stateSchematic.isOf(Blocks.LAVA)) {
                             // Block is lava, don't place it
                             recordCause(pos, stateSchematic.getBlock().getTranslationKey() + " at " + pos.toShortString() + " is lava", pos);
                             MessageHolder.sendUniqueMessage(mc.player, getReason(pos.asLong()));
@@ -976,7 +973,7 @@ public class Printer {
                                     continue;
                                 }
                                 if (willExtendInWorld(world, pos, stateSchematic.get(PistonBlock.FACING)) != stateSchematic.get(PistonBlock.EXTENDED) && directlyPowered(world, pos, stateSchematic.get(PistonBlock.FACING))) {
-                                    if (PRINTER_SUPPRESS_PUSH_LIMIT.getBooleanValue()) {
+                                    if (LitematicaMixinMod.PRINTER_SUPPRESS_PUSH_LIMIT.getBooleanValue()) {
                                         recordCause(pos, sBlock.getTranslationKey() + " at " + pos.toShortString() + " should respect push limit because its directly powered", pos);
                                         MessageHolder.sendUniqueMessage(mc.player, getReason(pos.asLong()));
                                         continue;
@@ -985,7 +982,7 @@ public class Printer {
                                 }
                             } else if (sBlock instanceof ObserverBlock) {
                                 if (ObserverUpdateOrder(mc, world, pos, selectedBox)) {
-                                    if (PRINTER_FLIPPINCACTUS.getBooleanValue() && canBypass(mc, world, pos)) {
+                                    if (LitematicaMixinMod.PRINTER_FLIPPINCACTUS.getBooleanValue() && canBypass(mc, world, pos)) {
                                         stateSchematic = stateSchematic.with(ObserverBlock.FACING, stateSchematic.get(ObserverBlock.FACING).getOpposite());
                                     } else {
                                         BlockPos causedPos = ObserverUpdateOrderPos(mc, world, pos);
@@ -1055,12 +1052,12 @@ public class Printer {
                             if (doSchematicWorldPickBlock(mc, lightStack)) {
                                 Vec3d hitPos = Vec3d.ofCenter(new BlockPos(x, y - 1, z)).add(0, 0.5, 0);
                                 BlockHitResult hitResult = new BlockHitResult(hitPos, Direction.UP, new BlockPos(x, y - 1, z), false);
-                                interactBlock(mc, hitResult); //LIGHT
+                                BedrockBreaker.interactBlock(mc, hitResult); //LIGHT
                                 cacheEasyPlacePosition(pos, false);
                                 sleepWhenRequired(mc);
                                 if (shouldSleepLonger) {
                                     shouldSleepLonger = false;
-                                    lastPlaced = Math.max(lastPlaced, new Date().getTime() + 200 + PRINTER_SLEEP_STACK_EMPTIED.getIntegerValue());
+                                    lastPlaced = Math.max(lastPlaced, new Date().getTime() + 200 + LitematicaMixinMod.PRINTER_SLEEP_STACK_EMPTIED.getIntegerValue());
                                 } else {
                                     lastPlaced = Math.max(lastPlaced, new Date().getTime() + 200);
                                     interact++;
@@ -1079,10 +1076,10 @@ public class Printer {
                             FacingData facedata = FacingData.getFacingData(stateSchematic);
                             if (facedata == null && !(stateSchematic.getBlock() instanceof AbstractRailBlock) && !simulateFacingData(stateSchematic, pos, Vec3d.ofCenter(pos)) ) {
                                 MessageHolder.sendMessageUncheckedUnique(mc.player, stateSchematic.getBlock() + " does not have facing data, please add this!");
-                                if (PRINTER_SKIP_UNKNOWN_BLOCKSTATE.getBooleanValue()) continue;
+                                if (LitematicaMixinMod.PRINTER_SKIP_UNKNOWN_BLOCKSTATE.getBooleanValue()) continue;
 
                             }
-                            if (!(CanUseProtocol && IsBlockSupportedCarpet(stateSchematic.getBlock())) && !PRINTER_FAKE_ROTATION.getBooleanValue() && !canPlaceFace(facedata, stateSchematic, primaryFacing, horizontalFacing)) {
+                            if (!(CanUseProtocol && IsBlockSupportedCarpet(stateSchematic.getBlock())) && !LitematicaMixinMod.PRINTER_FAKE_ROTATION.getBooleanValue() && !canPlaceFace(facedata, stateSchematic, primaryFacing, horizontalFacing)) {
                                 continue;
                             }
 
@@ -1097,7 +1094,7 @@ public class Printer {
                         // Exception for signs (edge case)
                         if (stateSchematic.getBlock() instanceof SignBlock
                                 && !(stateSchematic.getBlock() instanceof WallSignBlock)) {
-                            if ((MathHelper.floor((double) ((180.0F + getYaw(mc.player)) * 16.0F / 360.0F) + 0.5D)
+                            if ((MathHelper.floor((double) ((180.0F + FakeAccurateBlockPlacement.getYaw(mc.player)) * 16.0F / 360.0F) + 0.5D)
                                     & 15) != stateSchematic.get(SignBlock.ROTATION)) {
                                 continue;
                             }
@@ -1108,16 +1105,16 @@ public class Printer {
                         Block blockSchematic = stateSchematic.getBlock();
                         //Don't place waterlogged block's original block before fluid since its painful
                         // 1. if
-                        if (PRINTER_PLACE_ICE.getBooleanValue() &&
-                                (isReplaceableWaterFluidSource(stateSchematic) && isReplaceable(stateClient) && !isReplaceableWaterFluidSource(stateClient) && !stateClient.isOf(Blocks.LAVA) ||
-                                        PRINTER_WATERLOGGED_WATER_FIRST.getBooleanValue() && isReplaceable(stateClient) && containsWaterloggable(stateSchematic))
+                        if (LitematicaMixinMod.PRINTER_PLACE_ICE.getBooleanValue() &&
+                                (isReplaceableWaterFluidSource(stateSchematic) && BedrockBreaker.isReplaceable(stateClient) && !isReplaceableWaterFluidSource(stateClient) && !stateClient.isOf(Blocks.LAVA) ||
+                                        LitematicaMixinMod.PRINTER_WATERLOGGED_WATER_FIRST.getBooleanValue() && BedrockBreaker.isReplaceable(stateClient) && containsWaterloggable(stateSchematic))
                         ) {
                             ItemStack iceStack = Items.ICE.getDefaultStack();
                             if (!FakeAccurateBlockPlacement.canHandleOther(iceStack.getItem())) {
                                 continue;
                             }
                             if (doSchematicWorldPickBlock(mc, iceStack)) {
-                                interactBlock(mc, new BlockHitResult(new Vec3d(pos.getX(), pos.getY(), pos.getZ()), Direction.DOWN, pos, false));
+                                BedrockBreaker.interactBlock(mc, new BlockHitResult(new Vec3d(pos.getX(), pos.getY(), pos.getZ()), Direction.DOWN, pos, false));
                                 io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount(isCreative);
                                 cacheEasyPlacePosition(pos, false);
                                 sleepWhenRequired(mc);
@@ -1145,12 +1142,12 @@ public class Printer {
                             interact++;
                             continue;
                         }
-                        if (blockSchematic instanceof TrapdoorBlock && !CanUseProtocol && !PRINTER_FAKE_ROTATION.getBooleanValue()) {
+                        if (blockSchematic instanceof TrapdoorBlock && !CanUseProtocol && !LitematicaMixinMod.PRINTER_FAKE_ROTATION.getBooleanValue()) {
                             placeTrapDoor(stateSchematic, mc, pos);
                             interact++;
                             continue;
                         }
-                        int miliseconds = EASY_PLACE_CACHE_TIME.getIntegerValue();
+                        int miliseconds = LitematicaMixinMod.EASY_PLACE_CACHE_TIME.getIntegerValue();
                         if (blockSchematic instanceof WallMountedBlock || blockSchematic instanceof TorchBlock || blockSchematic instanceof WallSkullBlock
                                 || blockSchematic instanceof LadderBlock
                                 || blockSchematic instanceof TripwireHookBlock || blockSchematic instanceof WallSignBlock ||
@@ -1177,7 +1174,7 @@ public class Printer {
                                     npos = pos.down();
                                 }
                                 if (hasGui(world.getBlockState(npos).getBlock())) {
-                                    if (PRINTER_FAKE_ROTATION.getBooleanValue() && interact < maxInteract) {
+                                    if (LitematicaMixinMod.PRINTER_FAKE_ROTATION.getBooleanValue() && interact < maxInteract) {
                                         if (FakeAccurateBlockPlacement.request(stateSchematic, pos)) {
                                             interact++;
                                         }
@@ -1199,13 +1196,13 @@ public class Printer {
                             //Any : if we have block in testPos, then we can place with wanted direction.
                             //Trapdoors : it can be placed in air with player direction's opposite.
                             //Else : can't be placed except End Rod.
-                            if (!isReplaceable(mc.world.getBlockState(npos))) {
+                            if (!BedrockBreaker.isReplaceable(mc.world.getBlockState(npos))) {
                                 //npos is blockPos to be hit.
                                 //instead, hitVec should have 1 corresponding to direction property.
                                 //but First check if its block with GUI*
                                 Block checkGui = mc.world.getBlockState(npos).getBlock();
                                 if (!mc.player.shouldCancelInteraction() && hasGui(checkGui)) {
-                                    if (blockSchematic instanceof TrapdoorBlock && PRINTER_FAKE_ROTATION.getBooleanValue() && interact < maxInteract) {
+                                    if (blockSchematic instanceof TrapdoorBlock && LitematicaMixinMod.PRINTER_FAKE_ROTATION.getBooleanValue() && interact < maxInteract) {
                                         if (FakeAccurateBlockPlacement.request(stateSchematic, pos)) {
                                             interact++;
                                         }
@@ -1230,7 +1227,7 @@ public class Printer {
                                             if (stateSchematic.contains(RedstoneTorchBlock.LIT) && !stateSchematic.get(RedstoneTorchBlock.LIT)) {
                                                 cacheEasyPlacePosition(pos.up(), false, miliseconds);
                                             }
-                                            interactBlock(mc, new BlockHitResult(hitVec, required, npos, false)); //place block
+                                            BedrockBreaker.interactBlock(mc, new BlockHitResult(hitVec, required, npos, false)); //place block
                                             io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount(isCreative);
                                             sleepWhenRequired(mc);
                                         }
@@ -1247,7 +1244,7 @@ public class Printer {
                                         if (stateSchematic.contains(RedstoneTorchBlock.LIT) && !stateSchematic.get(RedstoneTorchBlock.LIT)) {
                                             cacheEasyPlacePosition(pos.up(), false, miliseconds);
                                         }
-                                        interactBlock(mc, new BlockHitResult(hitVec, Direction.UP, npos, false)); //place block
+                                        BedrockBreaker.interactBlock(mc, new BlockHitResult(hitVec, Direction.UP, npos, false)); //place block
                                         io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount(isCreative);
                                         sleepWhenRequired(mc);
                                     }
@@ -1262,7 +1259,7 @@ public class Printer {
                                         if (stateSchematic.contains(RedstoneTorchBlock.LIT) && !stateSchematic.get(RedstoneTorchBlock.LIT)) {
                                             cacheEasyPlacePosition(pos.up(), false, 700);
                                         }
-                                        interactBlock(mc, new BlockHitResult(hitVec, required, npos, false)); //place block
+                                        BedrockBreaker.interactBlock(mc, new BlockHitResult(hitVec, required, npos, false)); //place block
                                         io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount(isCreative);
                                         sleepWhenRequired(mc);
                                     }
@@ -1273,7 +1270,7 @@ public class Printer {
                                 if (horizontalFacing.getOpposite() == trapdoor) {
                                     if (doSchematicWorldPickBlock(mc, stateSchematic, pos)) {
                                         cacheEasyPlacePosition(pos, false);
-                                        interactBlock(mc, new BlockHitResult(Vec3d.of(pos),
+                                        BedrockBreaker.interactBlock(mc, new BlockHitResult(Vec3d.of(pos),
                                                 stateSchematic.get(TrapdoorBlock.FACING).getOpposite(), pos, false)); //place block
                                         io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount(isCreative);
                                         sleepWhenRequired(mc);
@@ -1286,7 +1283,7 @@ public class Printer {
                                 if ((primaryFacing.getAxis() == Direction.Axis.Y && horizontalFacing == direction) || (primaryFacing.getAxis() != Direction.Axis.Y && horizontalFacing == direction.getOpposite())) {
                                     if (doSchematicWorldPickBlock(mc, stateSchematic, pos)) {
                                         cacheEasyPlacePosition(pos, false);
-                                        interactBlock(mc, new BlockHitResult(Vec3d.of(pos),
+                                        BedrockBreaker.interactBlock(mc, new BlockHitResult(Vec3d.of(pos),
                                                 stateSchematic.get(GrindstoneBlock.FACING).getOpposite(), pos, false)); //place block
                                         io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount(isCreative);
                                         sleepWhenRequired(mc);
@@ -1298,7 +1295,7 @@ public class Printer {
                                 if (blockSchematic instanceof EndRodBlock) {
                                     if (doSchematicWorldPickBlock(mc, stateSchematic, pos)) {
                                         cacheEasyPlacePosition(pos, false);
-                                        interactBlock(mc, new BlockHitResult(Vec3d.ofCenter(pos),
+                                        BedrockBreaker.interactBlock(mc, new BlockHitResult(Vec3d.ofCenter(pos),
                                                 stateSchematic.get(EndRodBlock.FACING), pos, false)); //place block
                                         io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount(isCreative);
                                         interact++;
@@ -1333,7 +1330,7 @@ public class Printer {
                                 if (doSchematicWorldPickBlock(mc, stateSchematic, pos)) {
                                     cacheEasyPlacePosition(pos, false);
                                     interact++;
-                                    interactBlock(mc, hitResult); //SNOW LAYERS
+                                    BedrockBreaker.interactBlock(mc, hitResult); //SNOW LAYERS
                                     io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount(isCreative);
                                     sleepWhenRequired(mc);
                                 }
@@ -1353,10 +1350,10 @@ public class Printer {
                                 });
                             }
                         }
-                        if (!PRINTER_FAKE_ROTATION.getBooleanValue() || PRINTER_ACCURATE_BLOCK_PLACEMENT.getBooleanValue()) { //Accurateblockplacement, or vanilla but no fake
+                        if (!LitematicaMixinMod.PRINTER_FAKE_ROTATION.getBooleanValue() || LitematicaMixinMod.PRINTER_ACCURATE_BLOCK_PLACEMENT.getBooleanValue()) { //Accurateblockplacement, or vanilla but no fake
                             if (doSchematicWorldPickBlock(mc, stateSchematic, pos)) {
                                 MessageHolder.sendOrderMessage("Places block " + blockSchematic + " at " + pos.toShortString());
-                                interactBlock(mc, hitResult); //PLACE BLOCK
+                                BedrockBreaker.interactBlock(mc, hitResult); //PLACE BLOCK
                                 io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount(isCreative);
                                 cacheEasyPlacePosition(pos, false);
                                 sleepWhenRequired(mc);
@@ -1379,7 +1376,7 @@ public class Printer {
                                 side = applyPlacementFacing(stateSchematic, sideOrig, stateClient);
                                 hitResult = new BlockHitResult(hitPos, side, npos, false);
                                 if (doSchematicWorldPickBlock(mc, stateSchematic, pos)) {
-                                    interactBlock(mc, hitResult); //double slab
+                                    BedrockBreaker.interactBlock(mc, hitResult); //double slab
                                     io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount(isCreative);
                                     cacheEasyPlacePosition(pos, false);
                                     sleepWhenRequired(mc);
@@ -1396,7 +1393,7 @@ public class Printer {
                                 side = applyPlacementFacing(stateSchematic, sideOrig, stateClient);
                                 hitResult = new BlockHitResult(hitPos, side, npos, false);
                                 if (doSchematicWorldPickBlock(mc, stateSchematic, pos)) {
-                                    interactBlock(mc, hitResult); //double slab
+                                    BedrockBreaker.interactBlock(mc, hitResult); //double slab
                                     io.github.eatmyvenom.litematicin.utils.InventoryUtils.decrementCount(isCreative);
                                     cacheEasyPlacePosition(pos, false);
                                     sleepWhenRequired(mc);
@@ -1409,7 +1406,7 @@ public class Printer {
                         if (interact >= maxInteract) {
                             if (shouldSleepLonger) {
                                 shouldSleepLonger = false;
-                                lastPlaced = Math.max(lastPlaced, new Date().getTime() + PRINTER_SLEEP_STACK_EMPTIED.getIntegerValue());
+                                lastPlaced = Math.max(lastPlaced, new Date().getTime() + LitematicaMixinMod.PRINTER_SLEEP_STACK_EMPTIED.getIntegerValue());
                             } else {
                                 lastPlaced = Math.max(lastPlaced, new Date().getTime());
                             }
@@ -1427,7 +1424,7 @@ public class Printer {
         if (interact > 0) {
             if (shouldSleepLonger) {
                 shouldSleepLonger = false;
-                lastPlaced = Math.max(lastPlaced, new Date().getTime() + PRINTER_SLEEP_STACK_EMPTIED.getIntegerValue());
+                lastPlaced = Math.max(lastPlaced, new Date().getTime() + LitematicaMixinMod.PRINTER_SLEEP_STACK_EMPTIED.getIntegerValue());
             } else {
                 lastPlaced = Math.max(lastPlaced, new Date().getTime());
             }
@@ -1765,12 +1762,12 @@ public class Printer {
     }
 
     private static void sleepWhenRequired(MinecraftClient mc) {
-        if (!USE_INVENTORY_CACHE.getBooleanValue()) {
+        if (!LitematicaMixinMod.USE_INVENTORY_CACHE.getBooleanValue()) {
             return;
         }
-        if (PRINTER_SLEEP_STACK_EMPTIED.getIntegerValue() > 0 && io.github.eatmyvenom.litematicin.utils.InventoryUtils.lastCount <= 0) {
+        if (LitematicaMixinMod.PRINTER_SLEEP_STACK_EMPTIED.getIntegerValue() > 0 && io.github.eatmyvenom.litematicin.utils.InventoryUtils.lastCount <= 0) {
             shouldSleepLonger = true;
-            lastPlaced = new Date().getTime() + PRINTER_SLEEP_STACK_EMPTIED.getIntegerValue();
+            lastPlaced = new Date().getTime() + LitematicaMixinMod.PRINTER_SLEEP_STACK_EMPTIED.getIntegerValue();
             MessageHolder.sendUniqueMessageActionBar(mc.player, "Sleeping because stack is emptied!");
             isSleeping = true;
         }
@@ -1778,12 +1775,12 @@ public class Printer {
 
     private static boolean isQCableBlock(World world, BlockPos pos) {
         Block block = world.getBlockState(pos).getBlock();
-        return (!PRINTER_AVOID_CHECK_ONLY_PISTONS.getBooleanValue() && block instanceof DispenserBlock) || block instanceof PistonBlock;
+        return (!LitematicaMixinMod.PRINTER_AVOID_CHECK_ONLY_PISTONS.getBooleanValue() && block instanceof DispenserBlock) || block instanceof PistonBlock;
     }
 
     private static boolean isQCableBlock(BlockState blockState) {
         Block block = blockState.getBlock();
-        return (!PRINTER_AVOID_CHECK_ONLY_PISTONS.getBooleanValue() && block instanceof DispenserBlock) || block instanceof PistonBlock;
+        return (!LitematicaMixinMod.PRINTER_AVOID_CHECK_ONLY_PISTONS.getBooleanValue() && block instanceof DispenserBlock) || block instanceof PistonBlock;
     }
 
     /***
@@ -1901,16 +1898,16 @@ public class Printer {
 
         } else if (state.getBlock() instanceof PoweredRailBlock) {
             switch (watching) {
-                case NORTH : {
+                case Direction.NORTH : {
                     return state.get(PoweredRailBlock.SHAPE) == RailShape.ASCENDING_SOUTH;
                 }
-                case SOUTH : {
+                case Direction.SOUTH : {
                     return state.get(PoweredRailBlock.SHAPE) == RailShape.ASCENDING_NORTH;
                 }
-                case EAST : {
+                case Direction.EAST : {
                     return state.get(PoweredRailBlock.SHAPE) == RailShape.ASCENDING_WEST;
                 }
-                case WEST : {
+                case Direction.WEST : {
                     return state.get(PoweredRailBlock.SHAPE) == RailShape.ASCENDING_EAST;
                 }
                 default : {
@@ -2026,7 +2023,7 @@ public class Printer {
                 return false;
             }
             if (doSchematicWorldPickBlock(client, Items.MINECART.getDefaultStack())) {
-                ActionResult actionResult = interactBlock(client, new BlockHitResult(clickPos, Direction.UP, pos, false)); //place block
+                ActionResult actionResult = BedrockBreaker.interactBlock(client, new BlockHitResult(clickPos, Direction.UP, pos, false)); //place block
                 if (actionResult.isAccepted()) {
                     cacheEasyPlacePosition(pos, false, 600);
                     return true;
@@ -2039,7 +2036,7 @@ public class Printer {
 
     @SuppressWarnings({"ConstantConditions"})
     private static void placeGrindStone(BlockState state, MinecraftClient client, BlockPos pos) {
-        if (PRINTER_FAKE_ROTATION.getBooleanValue()) {
+        if (LitematicaMixinMod.PRINTER_FAKE_ROTATION.getBooleanValue()) {
             FakeAccurateBlockPlacement.request(state, pos);
             return;
             //place in air
@@ -2063,7 +2060,7 @@ public class Printer {
             hitVec = Vec3d.ofCenter(clickPos).add(Vec3d.of(side.getVector()).multiply(0.5));
             if (doSchematicWorldPickBlock(client, state, pos)) {
                 cacheEasyPlacePosition(pos, false);
-                interactBlock(client, new BlockHitResult(hitVec, side, clickPos, false)); //place block
+                BedrockBreaker.interactBlock(client, new BlockHitResult(hitVec, side, clickPos, false)); //place block
             }
         } else {
             if (isFacingCorrectly(state, client.player)) {
@@ -2071,7 +2068,7 @@ public class Printer {
                 clickPos = pos;
                 if (doSchematicWorldPickBlock(client, state, pos)) {
                     cacheEasyPlacePosition(pos, false);
-                    interactBlock(client, new BlockHitResult(hitVec, side, clickPos, false)); //place block
+                    BedrockBreaker.interactBlock(client, new BlockHitResult(hitVec, side, clickPos, false)); //place block
                 }
             }
         }
@@ -2079,7 +2076,7 @@ public class Printer {
 
     @SuppressWarnings({"ConstantConditions"})
     private static boolean canAttachGrindstone(BlockState state, MinecraftClient client, BlockPos pos) {
-        if (PRINTER_FAKE_ROTATION.getBooleanValue()) {
+        if (LitematicaMixinMod.PRINTER_FAKE_ROTATION.getBooleanValue()) {
             return true;
             //place in air.
         }
@@ -2087,11 +2084,11 @@ public class Printer {
         BlockFace location = state.get(WallMountedBlock.FACE);
         //case ceil
         if (location == BlockFace.CEILING) {
-            return !isReplaceable(client.world.getBlockState(pos.up())) && client.player.getHorizontalFacing() == facing.getOpposite() && !hasGui(client.world.getBlockState(pos.up()).getBlock()) || client.player.shouldCancelInteraction();
+            return !BedrockBreaker.isReplaceable(client.world.getBlockState(pos.up())) && client.player.getHorizontalFacing() == facing.getOpposite() && !hasGui(client.world.getBlockState(pos.up()).getBlock()) || client.player.shouldCancelInteraction();
         } else if (location == BlockFace.FLOOR) {
-            return !isReplaceable(client.world.getBlockState(pos.down())) && client.player.getHorizontalFacing() == facing.getOpposite() && !hasGui(client.world.getBlockState(pos.down()).getBlock()) || client.player.shouldCancelInteraction();
+            return !BedrockBreaker.isReplaceable(client.world.getBlockState(pos.down())) && client.player.getHorizontalFacing() == facing.getOpposite() && !hasGui(client.world.getBlockState(pos.down()).getBlock()) || client.player.shouldCancelInteraction();
         } else {
-            return !isReplaceable(client.world.getBlockState(pos.offset(facing.getOpposite()))) && !hasGui(client.world.getBlockState(pos.offset(facing.getOpposite())).getBlock()) || client.player.shouldCancelInteraction();
+            return !BedrockBreaker.isReplaceable(client.world.getBlockState(pos.offset(facing.getOpposite()))) && !hasGui(client.world.getBlockState(pos.offset(facing.getOpposite())).getBlock()) || client.player.shouldCancelInteraction();
         }
     }
 
@@ -2116,7 +2113,7 @@ public class Printer {
         Direction side = state.get(TrapdoorBlock.FACING);
         BlockPos clickPos;
         Vec3d hitVec;
-        if (isReplaceable(client.world.getBlockState(pos.offset(side.getOpposite())))) {
+        if (BedrockBreaker.isReplaceable(client.world.getBlockState(pos.offset(side.getOpposite())))) {
             //place inside block
             clickPos = pos;
             if (client.player.getHorizontalFacing().getOpposite() == side) {
@@ -2131,7 +2128,7 @@ public class Printer {
         }
         if (doSchematicWorldPickBlock(client, state, pos)) {
             cacheEasyPlacePosition(pos, false);
-            interactBlock(client, new BlockHitResult(hitVec, side, clickPos, false)); //place block
+            BedrockBreaker.interactBlock(client, new BlockHitResult(hitVec, side, clickPos, false)); //place block
         }
     }
 
@@ -2140,7 +2137,7 @@ public class Printer {
         BlockState stateB = mc.world.getBlockState(pos);
         return stateA.isOf(Blocks.NOTE_BLOCK) && stateB.isOf(Blocks.NOTE_BLOCK) &&
                 stateA.get(NoteBlock.POWERED) == stateB.get(NoteBlock.POWERED) &&
-                isReplaceable(world.getBlockState(pos.down())) == isReplaceable(mc.world.getBlockState(pos.offset(Direction.DOWN)));
+                BedrockBreaker.isReplaceable(world.getBlockState(pos.down())) == BedrockBreaker.isReplaceable(mc.world.getBlockState(pos.offset(Direction.DOWN)));
     }
 
     private static boolean isDoorHingeError(MinecraftClient mc, World world, BlockPos pos) {
@@ -2155,7 +2152,7 @@ public class Printer {
 
     private static boolean ObserverUpdateOrder(MinecraftClient mc, World world, BlockPos pos, Box selectedBox) {
         //returns true if observer should not be placed
-        boolean ExplicitObserver = PRINTER_OBSERVER_AVOID_ALL.getBooleanValue();
+        boolean ExplicitObserver = LitematicaMixinMod.PRINTER_OBSERVER_AVOID_ALL.getBooleanValue();
         BlockState stateSchematic = world.getBlockState(pos);
         BlockPos posOffset;
         BlockState OffsetStateSchematic;
@@ -2200,7 +2197,7 @@ public class Printer {
 
     private static BlockPos ObserverUpdateOrderPos(MinecraftClient mc, World world, BlockPos pos) {
         //returns true if observer should not be placed
-        boolean ExplicitObserver = PRINTER_OBSERVER_AVOID_ALL.getBooleanValue();
+        boolean ExplicitObserver = LitematicaMixinMod.PRINTER_OBSERVER_AVOID_ALL.getBooleanValue();
         BlockState stateSchematic = world.getBlockState(pos);
         BlockPos posOffset;
         BlockState OffsetStateSchematic;
@@ -2298,14 +2295,14 @@ public class Printer {
         return checkState.getBlock() instanceof FluidBlock && checkState.get(FluidBlock.LEVEL) == 0 ||
                 checkState.getBlock() instanceof BubbleColumnBlock ||
                 checkState.isOf(Blocks.SEAGRASS) || checkState.isOf(Blocks.TALL_SEAGRASS) ||
-                checkState.getBlock() instanceof Waterloggable && checkState.get(Properties.WATERLOGGED) && isReplaceable(checkState);
+                checkState.getBlock() instanceof Waterloggable && checkState.get(Properties.WATERLOGGED) && BedrockBreaker.isReplaceable(checkState);
     }
 
     static boolean isReplaceableWaterFluidSource(BlockState checkState) {
         return checkState.isOf(Blocks.SEAGRASS) || checkState.isOf(Blocks.TALL_SEAGRASS) ||
                 checkState.isOf(Blocks.WATER) && checkState.contains(FluidBlock.LEVEL) && checkState.get(FluidBlock.LEVEL) == 0 ||
                 checkState.getBlock() instanceof BubbleColumnBlock ||
-                checkState.getBlock() instanceof Waterloggable && checkState.contains(Properties.WATERLOGGED) && checkState.get(Properties.WATERLOGGED) && isReplaceable(checkState);
+                checkState.getBlock() instanceof Waterloggable && checkState.contains(Properties.WATERLOGGED) && checkState.get(Properties.WATERLOGGED) && BedrockBreaker.isReplaceable(checkState);
     }
 
     private static boolean containsWaterloggable(BlockState state) {
@@ -2347,7 +2344,7 @@ public class Printer {
             return true;
         }
         // finally
-        return !stateClient.isAir() && !isReplaceable(stateClient);
+        return !stateClient.isAir() && !BedrockBreaker.isReplaceable(stateClient);
     }
 
     /**
@@ -2658,7 +2655,7 @@ public class Printer {
         } else if (blockSchematic instanceof LadderBlock) {
             return stateSchematic.get(LadderBlock.FACING);
         } else if (blockSchematic instanceof TrapdoorBlock) {
-            if (PRINTER_ACCURATE_BLOCK_PLACEMENT.getBooleanValue()) {
+            if (LitematicaMixinMod.PRINTER_ACCURATE_BLOCK_PLACEMENT.getBooleanValue()) {
                 return Direction.UP; //Placement State fixing first
             }
             return stateSchematic.get(TrapdoorBlock.FACING);
@@ -2667,7 +2664,7 @@ public class Printer {
         } else if (blockSchematic instanceof EndRodBlock) {
             return stateSchematic.get(EndRodBlock.FACING);
         } else if (blockSchematic instanceof AnvilBlock) {
-            if (ADVANCED_ACCURATE_BLOCK_PLACEMENT.getBooleanValue() || PRINTER_ACCURATE_BLOCK_PLACEMENT.getBooleanValue() && IsBlockSupportedCarpet(blockSchematic)) {
+            if (LitematicaMixinMod.ADVANCED_ACCURATE_BLOCK_PLACEMENT.getBooleanValue() || LitematicaMixinMod.PRINTER_ACCURATE_BLOCK_PLACEMENT.getBooleanValue() && IsBlockSupportedCarpet(blockSchematic)) {
                 return stateSchematic.get(AnvilBlock.FACING);
             }
             return stateSchematic.get(AnvilBlock.FACING).rotateYCounterclockwise();
@@ -2723,7 +2720,7 @@ public class Printer {
     }
 
     public static void cacheEasyPlacePosition(BlockPos pos, boolean useClicked) {
-        PositionCache item = new PositionCache(pos, System.nanoTime(), useClicked ? EASY_PLACE_CACHE_TIME.getIntegerValue() * 1000000L : 2800000000L);
+        PositionCache item = new PositionCache(pos, System.nanoTime(), useClicked ? LitematicaMixinMod.EASY_PLACE_CACHE_TIME.getIntegerValue() * 1000000L : 2800000000L);
         // TODO: Create a separate cache for clickable items, as this just makes
         // duplicates
         if (useClicked) {
