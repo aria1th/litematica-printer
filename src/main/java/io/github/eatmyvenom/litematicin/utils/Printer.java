@@ -18,12 +18,14 @@ import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.block.*;
+import net.minecraft.block.entity.BeaconBlockEntity;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.SignBlockEntity;
 import net.minecraft.block.enums.*;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.SignEditScreen;
 import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.fluid.LavaFluid;
 import net.minecraft.item.*;
@@ -924,6 +926,11 @@ public class Printer {
 							recordCause(pos, stateSchematic.getBlock().getTranslationKey() + " at " + pos.toShortString() + " is water", pos);
 							MessageHolder.sendUniqueMessage(mc.player, getReason(pos.asLong()));
 							continue;
+						} else if (PRINTER_AVOID_BLOCKING_BEACONS.getBooleanValue() && isBlockingBeacon(stateSchematic, pos, mc.world)) {
+							// Block is above beacon, don't place it
+							recordCause(pos, stateSchematic.getBlock().getTranslationKey() + " at " + pos.toShortString() + " is above beacon", pos);
+							MessageHolder.sendUniqueMessage(mc.player, getReason(pos.asLong()));
+							continue;
 						} else if (!PRINTER_PLACE_ICE.getBooleanValue() && stateSchematic.isOf(Blocks.LAVA)) {
 							// Block is lava, don't place it
 							recordCause(pos, stateSchematic.getBlock().getTranslationKey() + " at " + pos.toShortString() + " is lava", pos);
@@ -1436,6 +1443,35 @@ public class Printer {
 			return ActionResult.PASS;
 		}
 		return ActionResult.FAIL;
+	}
+
+	/**
+	 * Checks if the block being placed is blocking a beacon
+	 * @param stateSchematic the block being placed
+	 * @param pos the position in the world
+	 * @param world the world the block is being placed in
+	 * @return true if the block is blocking a beacon
+	 */
+	private static boolean isBlockingBeacon(BlockState stateSchematic, BlockPos pos, ClientWorld world) {
+		if(stateSchematic.isTransparent(world, pos)) {
+			return false;
+		}
+		int minY = world.getBottomY();
+		int maxY = pos.getY();
+		for(int y = minY; y < maxY; y++) {
+			BlockPos bp = new BlockPos(pos.getX(), y, pos.getZ());
+			BlockState state = world.getBlockState(bp);
+			if(!state.isOf(Blocks.BEACON) ) {
+				continue;
+			}
+			BlockEntity blockEntity = world.getBlockEntity(bp);
+			BeaconBlockEntity beacon = (BeaconBlockEntity) blockEntity;
+			if (beacon.getBeamSegments().isEmpty()) {
+				continue;
+			}
+			return true;
+		}
+		return false;
 	}
 
 	private static void markObserverOutputs(MinecraftClient mc, World world, BlockPos pos) {
