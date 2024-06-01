@@ -11,7 +11,7 @@ preprocess {
     tabIndentation = true
 }
 
-if (mcVersion > 12004) {
+if (mcVersion >= 12005) {
 	sourceCompatibility = JavaVersion.VERSION_21
 	targetCompatibility = JavaVersion.VERSION_21
 }
@@ -99,7 +99,7 @@ tasks.withType(JavaCompile).configureEach {
 	// If Javadoc is generated, this must be specified in that task too.
 	it.options.encoding = "UTF-8"
 
-    if (mcVersion > 12004) {
+    if (mcVersion >= 12005) {
         it.options.release = 21
     }
     else if (mcVersion >= 11800) {
