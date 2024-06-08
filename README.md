@@ -5,7 +5,7 @@
 
 ## Redstone-Aware Fast Block Auto Placement
 
-README：*English* | [中文](README.md)
+README：*English* | [中文](README_cn.md)
 
 ## Setup
 
