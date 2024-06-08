@@ -5,7 +5,7 @@
 
 ## Redstone-Aware Fast Block Auto Placement
 
-README：*English* | [中文](https://github.com/aria1th/litematica-printer/blob/multiversion/README_cn.md)
+README：*English* | [中文](README.md)
 
 ## Setup
 
