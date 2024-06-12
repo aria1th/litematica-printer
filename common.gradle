@@ -42,9 +42,6 @@ repositories {
     maven { url = "https://www.cursemaven.com" }
 	maven { url "https://maven.terraformersmc.com/releases/" }
 	maven {
-		url "https://jitpack.io"
-	}
-	maven {
 		url "https://pkgs.dev.azure.com/djtheredstoner/DevAuth/_packaging/public/maven/v1"
 	}
 }
@@ -64,7 +61,12 @@ dependencies {
         // 1.20.1 then kosmolot-unofficial-malilib-fabric-1.20-0.15.4+ksm.3.jar
     }
     else {
-        modImplementation "curse.maven:malilib-${project.malilib_projectid}:${project.malilib_fileid}"
+        if (mcVersion >= 12005) {
+            modImplementation "com.github.sakura-ryoko:malilib:${project.malilib_fileid}"
+        }
+        else {
+            modImplementation "curse.maven:malilib-${project.malilib_projectid}:${project.malilib_fileid}"
+        }
         //modImplementation "fi.dy.masa.malilib:malilib-fabric-${project.minecraft_version_out}:${project.malilib_version}"
     }
     // check project.litematica_projectid and project.litematica_fileid in gradle.properties.
@@ -74,7 +76,12 @@ dependencies {
         // 1.20.1 then kosmolot-unofficial-litematica-fabric-1.20-0.14.3+ksm.3.jar
     }
     else {
-        modImplementation "curse.maven:litematica-${project.litematica_projectid}:${project.litematica_fileid}"
+        if (mcVersion >= 12005) {
+            modImplementation "com.github.sakura-ryoko:litematica:${project.litematica_fileid}"
+        }
+        else {
+            modImplementation "curse.maven:litematica-${project.litematica_projectid}:${project.litematica_fileid}"
+        }
         //modImplementation "fi.dy.masa.litematica:litematica-fabric-${project.minecraft_version_out}:${project.litematica_version}"
     }
 	annotationProcessor "com.github.LlamaLad7:MixinExtras:0.1.1"

@@ -1,9 +1,6 @@
 package io.github.eatmyvenom.litematicin.mixin.Litematica;
 
-import fi.dy.masa.litematica.render.schematic.BufferBuilderCache;
-import fi.dy.masa.litematica.render.schematic.ChunkCacheSchematic;
-import fi.dy.masa.litematica.render.schematic.ChunkRenderDataSchematic;
-import fi.dy.masa.litematica.render.schematic.ChunkRendererSchematicVbo;
+import fi.dy.masa.litematica.render.schematic.*;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.client.render.RenderLayer;
@@ -28,7 +25,11 @@ public class ChunkRendererSchematicVboMixin {
 	protected ChunkCacheSchematic schematicWorldView;
 
 	@Inject(method = "renderBlocksAndOverlay", at = @At("HEAD"), cancellable = true, remap = false)
+	//#if MC >= 12100
+	//$$ private void onRenderBlocksAndOverlay(BlockPos pos, ChunkRenderDataSchematic data, BufferAllocatorCache allocators, Set<BlockEntity> tileEntities, Set<RenderLayer> usedLayers, MatrixStack matrixStack, CallbackInfo ci) {
+	//#else
 	private void onRenderBlocksAndOverlay(BlockPos pos, ChunkRenderDataSchematic data, Set<BlockEntity> tileEntities, Set<RenderLayer> usedLayers, MatrixStack matrices, BufferBuilderCache buffers, CallbackInfo ci) {
+	//#endif
 		if (!RENDER_ONLY_HOLDING_ITEMS.getBooleanValue()) return;
 		BlockState stateSchematic = this.schematicWorldView.getBlockState(pos);
 		Item item = stateSchematic.getBlock().asItem();
