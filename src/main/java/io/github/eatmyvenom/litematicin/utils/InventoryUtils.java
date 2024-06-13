@@ -11,6 +11,10 @@ import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.LootableContainerBlockEntity;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
+//#if MC >= 12006
+//$$ import net.minecraft.component.DataComponentTypes;
+//$$ import net.minecraft.component.type.ContainerComponent;
+//#endif
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.Inventories;
 import net.minecraft.inventory.Inventory;
@@ -103,6 +107,19 @@ public class InventoryUtils {
 				BlockItem blockItem = (BlockItem) item;
 				if (blockItem.getBlock() instanceof ShulkerBoxBlock) {
 					int invSize = 27;
+					//#if MC >= 12006
+					//$$ DefaultedList<ItemStack> returnStacks = DefaultedList.ofSize(invSize, ItemStack.EMPTY);
+					//$$ ContainerComponent container = stack.getComponents().get(DataComponentTypes.CONTAINER);
+					//$$ if (container != null) {
+						//$$ container.copyTo(returnStacks);
+						//$$ for (ItemStack returnStack : returnStacks) {
+							//$$ Item returnItem = returnStack.getItem();
+							//$$ if (returnItem != null) {
+								//$$ ITEMS.add(returnItem);
+							//$$ }
+						//$$ }
+					//$$ }
+					//#else
 					NbtCompound compound = stack.getSubNbt("BlockEntityTag");
 					if (compound == null) {
 						continue;
@@ -117,6 +134,7 @@ public class InventoryUtils {
 							ITEMS.add(returnItem);
 						}
 					}
+					//#endif
 				}
 			}
 		}
@@ -235,7 +253,11 @@ public class InventoryUtils {
 			return a.getItem() == b.getItem();
 		}
 		boolean isItemEqual = ItemStack.areItemsEqual(a, b);
+		//#if MC >= 12006
+		//$$ boolean nbtCondition = LitematicaMixinMod.PRINTER_IGNORE_NBT.getBooleanValue() || ItemStack.areItemsAndComponentsEqual(a, b);
+		//#else
 		boolean nbtCondition = PRINTER_IGNORE_NBT.getBooleanValue() || ItemStack.areNbtEqual(a, b);
+		//#endif
 		return isItemEqual && nbtCondition;
 	}
 
@@ -246,7 +268,11 @@ public class InventoryUtils {
 		if (allowNamed) {
 			return areItemsExactAllowNamed(a, b);
 		}
+		//#if MC >= 12006
+		//$$ boolean nbtCondition = LitematicaMixinMod.PRINTER_IGNORE_NBT.getBooleanValue() || ItemStack.areItemsAndComponentsEqual(a, b);
+		//#else
 		boolean nbtCondition = PRINTER_IGNORE_NBT.getBooleanValue() || ItemStack.areNbtEqual(a, b);
+		//#endif
 		return ItemStack.areItemsEqual(a, b) && nbtCondition;
 	}
 
@@ -274,7 +300,11 @@ public class InventoryUtils {
 		else if (a.getItem() instanceof ToolItem || b.getItem() instanceof ToolItem) {
 			return false; // safety
 		}
+		//#if MC >= 12006
+		//$$ return ItemStack.areItemsEqual(a, b) || a.getMaxCount() == b.getMaxCount() && a.contains(DataComponentTypes.CUSTOM_NAME) && b.contains(DataComponentTypes.CUSTOM_NAME);
+		//#else
 		return ItemStack.areItemsEqual(a, b) || a.getMaxCount() == b.getMaxCount() && a.hasCustomName() && b.hasCustomName();
+		//#endif
 	}
 
 	public static boolean requiresSwap(ClientPlayerEntity player, ItemStack stack) {
@@ -411,7 +441,11 @@ public class InventoryUtils {
 	public static void printAllItems(PlayerInventory inv, ItemStack stack) {
 		// Debug
 		for (int i = 0; i < inv.main.size(); i++) {
+			//#if MC >= 12006
+			//$$ boolean areNbtsEqual = ItemStack.areItemsAndComponentsEqual(inv.getStack(i), stack);
+			//#else
 			boolean areNbtsEqual = ItemStack.areNbtEqual(inv.getStack(i), stack);
+			//#endif
 			boolean areItemsEqual = ItemStack.areItemsEqual(inv.getStack(i), stack);
 			MessageHolder.sendUniqueDebugMessage("Slot " + i + ", " + inv.getStack(i).getItem() + " : " + areItemsEqual + " : " + areNbtsEqual);
 		}

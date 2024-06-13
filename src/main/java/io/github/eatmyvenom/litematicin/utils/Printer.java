@@ -1134,7 +1134,11 @@ public class Printer {
 							MessageHolder.sendUniqueMessage(mc.player, "Can't pick item " + stateSchematic.getBlock().asItem().getTranslationKey() + " at " + pos.toShortString());
 							continue;
 						}
+						//#if MC >= 12006
+						//$$ if (!stateSchematic.canPlaceAt(mc.world, pos)) {
+						//#else
 						if (!blockSchematic.canPlaceAt(stateSchematic, mc.world, pos)) {
+						//#endif
 							recordCause(pos, stateSchematic.getBlock().toString() + "(" + pos.toShortString() + ", can't be placed)", pos);
 							MessageHolder.sendUniqueMessage(mc.player, stateSchematic.getBlock().getTranslationKey() + " can't be placed at " + pos.toShortString());
 							continue;
@@ -1473,7 +1477,11 @@ public class Printer {
 
 	private static boolean willFall(BlockState stateSchematic, World clientWorld, BlockPos pos) {
 		if (stateSchematic.getBlock() instanceof ScaffoldingBlock) {
+			//#if MC >= 12006
+			//$$ return !stateSchematic.canPlaceAt(clientWorld, pos);
+			//#else
 			return !stateSchematic.getBlock().canPlaceAt(stateSchematic, clientWorld, pos);
+			//#endif
 		}
 		return false;
 	}

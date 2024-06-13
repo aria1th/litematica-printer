@@ -2,6 +2,9 @@ package io.github.eatmyvenom.litematicin.mixin.Litematica;
 
 import io.github.eatmyvenom.litematicin.utils.*;
 import net.minecraft.client.MinecraftClient;
+//#if MC >= 12006
+//$$ import net.minecraft.client.gui.screen.DownloadingTerrainScreen;
+//#endif
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.world.ClientWorld;
@@ -34,7 +37,11 @@ public abstract class MinecraftClientMixin {
 
 	// On join a new world/server
 	@Inject(at = @At("HEAD"), method = "joinWorld")
+	//#if MC >= 12006
+	//$$ public void joinWorld(ClientWorld world, DownloadingTerrainScreen.WorldEntryReason worldEntryReason, CallbackInfo ci) {
+	//#else
 	public void joinWorld(ClientWorld world, CallbackInfo ci) {
+	//#endif
 		Printer.worldBottomY = world.getBottomY();
 		Printer.worldTopY = world.getTopY();
 	}

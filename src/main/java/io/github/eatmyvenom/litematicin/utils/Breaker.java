@@ -10,6 +10,13 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
+//#if MC >= 12100
+//$$ import java.util.Optional;
+//$$ import net.minecraft.enchantment.Enchantment;
+//$$ import net.minecraft.enchantment.Enchantments;
+//$$ import net.minecraft.registry.RegistryKeys;
+//$$ import net.minecraft.registry.entry.RegistryEntry;
+//#endif
 
 /**
  * The breaking needs to be done every tick, since the WorldUtils.easyPlaceOnUseTick (which calls our Printer)
@@ -94,8 +101,14 @@ public class Breaker implements IClientTickHandler {
 		}
 		float f = InventoryUtils.getInventory(mc.player).main.get(slotId).getMiningSpeedMultiplier(block);
 		if (f > 1.0F) {
+			//#if MC >= 12100
+			//$$ ItemStack itemStack = mc.player.getInventory().getMainHandStack();
+			//$$ Optional<RegistryEntry.Reference<Enchantment>> optional = mc.world.getRegistryManager().get(RegistryKeys.ENCHANTMENT).getEntry(Enchantments.EFFICIENCY);
+			//$$ int i =  optional.map(enchantmentReference -> EnchantmentHelper.getLevel(enchantmentReference, itemStack)).orElse(0);
+			//#else
 			int i = EnchantmentHelper.getEfficiency(mc.player);
 			ItemStack itemStack = mc.player.getInventory().getMainHandStack();
+			//#endif
 			if (i > 0 && !itemStack.isEmpty()) {
 				f += (float) (i * i + 1);
 			}

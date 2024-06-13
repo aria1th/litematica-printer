@@ -124,7 +124,11 @@ class ItemInputs {
 			ItemStack cursorStack = player.currentScreenHandler.getCursorStack();
 			ScreenHandler handler = player.currentScreenHandler;
 			for (int i = 0; i < handler.slots.size(); i++) {
+				//#if MC >= 12006
+				//$$ if (ItemStack.areItemsAndComponentsEqual(cursorStack, handler.getSlot(i).getStack())) {
+				//#else
 				if (ItemStack.canCombine(cursorStack, handler.getSlot(i).getStack())) {
+				//#endif
 					client.interactionManager.clickSlot(handler.syncId, handler.getSlot(i).id, 0, SlotActionType.PICKUP, player);
 					return;
 				}
