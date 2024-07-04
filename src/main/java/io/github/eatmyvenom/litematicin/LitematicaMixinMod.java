@@ -10,6 +10,11 @@ import fi.dy.masa.malilib.config.options.ConfigHotkey;
 import fi.dy.masa.malilib.config.options.ConfigInteger;
 import fi.dy.masa.malilib.hotkeys.KeyCallbackToggleBooleanConfigWithMessage;
 import net.fabricmc.api.ModInitializer;
+import net.minecraft.client.MinecraftClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.List;
 
 public class LitematicaMixinMod implements ModInitializer {
 	public static ImmutableList.Builder<IConfigBase> originalList = new ImmutableList.Builder<IConfigBase>().addAll(Configs.Generic.OPTIONS);
@@ -76,12 +81,13 @@ public class LitematicaMixinMod implements ModInitializer {
 	public static final ConfigHotkey PRINTER_CLEAR_SNOW_LAYER_HOTKEY = new ConfigHotkey("printerClearSnowLayerToggleKey", "", "Printer clear snow layer will be toggled ON/OFF");
 	public static final ConfigHotkey PRINTER_CLEAR_FLUIDS_USE_COBBLESTONE_HOTKEY = new ConfigHotkey("printerClearFluidsUseCobblestoneToggleKey", "", "Printer clear fluids use cobblestone will be toggled ON/OFF");
 	public static final ConfigHotkey PRINTER_BEDROCK_BREAKING_HOTKEY = new ConfigHotkey("printerBedrockBreakingToggleKey", "", "Printer bedrock breaking will be toggled ON/OFF");
+	public static final ConfigBoolean PRINTER_AVOID_BLOCKING_BEACONS = new ConfigBoolean("printerAvoidBlockingBeacons", false, "Printer will avoid blocking beacons");
 
 	public static final ConfigBoolean PRINTER_IGNORE_NBT = new ConfigBoolean("printerIgnoreNBT", false, "Printer will ignore NBT data when placing blocks");
 
 	public static ImmutableList<ConfigHotkey> getHotkeyList() {
 		ImmutableList.Builder<ConfigHotkey> hotkeyList = new ImmutableList.Builder<ConfigHotkey>().addAll(Hotkeys.HOTKEY_LIST);
-		hotkeyList.addAll(ImmutableList.of(
+		hotkeyList.addAll(List.of(
 				PRINTER_OFF_HOTKEY,
 				PRINTER_ALLOW_INVENTORY_OPERATIONS_HOTKEY,
 				PRINTER_BREAK_BLOCKS_HOTKEY,
@@ -92,7 +98,7 @@ public class LitematicaMixinMod implements ModInitializer {
 		);
 		return hotkeyList.build();
 	}
-	public static final ImmutableList<IConfigBase> betterList = originalList.addAll(ImmutableList.of(
+	public static final ImmutableList<IConfigBase> betterList = originalList.addAll(List.of(
 		VERIFY_INVENTORY,
 		PRINTER_SHOULD_SWING_HAND,
 		PRINTER_PRINT_DIRT_VARIANTS,
@@ -148,7 +154,8 @@ public class LitematicaMixinMod implements ModInitializer {
 		PRINTER_FAKE_ROTATION,
 		PRINTER_FAKE_ROTATION_DELAY,
 		PRINTER_FAKE_ROTATION_LIMIT_PER_TICKS,
-		PRINTER_IGNORE_NBT)
+		PRINTER_IGNORE_NBT,
+		PRINTER_AVOID_BLOCKING_BEACONS)
 	).build();
 
 	@Override
@@ -160,7 +167,7 @@ public class LitematicaMixinMod implements ModInitializer {
 		PRINTER_CLEAR_SNOW_LAYER_HOTKEY.getKeybind().setCallback(new KeyCallbackToggleBooleanConfigWithMessage(PRINTER_CLEAR_SNOW_LAYER));
 		PRINTER_CLEAR_FLUIDS_USE_COBBLESTONE_HOTKEY.getKeybind().setCallback(new KeyCallbackToggleBooleanConfigWithMessage(PRINTER_CLEAR_FLUIDS_USE_COBBLESTONE));
 		PRINTER_BEDROCK_BREAKING_HOTKEY.getKeybind().setCallback(new KeyCallbackToggleBooleanConfigWithMessage(PRINTER_BEDROCK_BREAKING));
-		System.out.println("[Printer] : YeeFuckinHaw");
+		LoggerFactory.getLogger("Printer").info("YeeFuckinHaw");
 	}
 }
 
