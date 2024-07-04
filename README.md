@@ -4,6 +4,9 @@
 [Modrinth Link ](https://modrinth.com/mod/litematica-printer-easyplace-extension/versions)
 
 ## Redstone-Aware Fast Block Auto Placement
+
+README：*English* | [中文](README_cn.md)
+
 ## Setup
 
 This mod requires **Fabric with Litematica, Malilib, Fabric API. Install MultiMC and Fabric API**, for previous versions, use **MultiConnect**.
@@ -63,28 +66,28 @@ Now Settings have names with printer.
 `printerAllowInventoryOperations`  - Printer will match and input required stacks for hopper / dropper / chest / etc, mostly for filter setups.
 
   >`inventoryCloseScreenAfterDone`  - Printer will close screen when filling is complete / or can't fill screen.
-  
+
   >`printerInventoryScreenWait`  - Printer will wait for this time(ms) after screen is open, to sync with server.
-  
+
   >`printerInventoryOperationRetry` - Printer will retry clicking to fill slots for this amount : recommended - 3-20
-  
+
   >`printerInventoryOperationAllowAllNamed` - Printer will allow other named items with same stack size, being used as filter items.
-  
+
 `printerBreakBlocks` - Printer will break ALL Extra or Wrong blocks within schematic. Can perform while placement, but not recommended.
 
 > `printerBedrockBreaking` - Printer will break bedrock with HASTE 2, EFFICIENCY 5 , requires redstone torch, pistons.
- 
+
 > >`printerBedrockBreakingUseSlimeblock` - Printer will allow slime block placement, to find valid locations to break bedrock.
- 
+
 `printerFlippincactus` - Printer will flip blocks with cactus if enabled.
 
 `printerClearFluids` - Printer will do Clearing actions , at default, Lava / Water (Cobblestone / Sponge).
 
   >`printerClearFluidsUseCobblestone` - Printer will use cobblestone for water, instead of sponge.
-  
+
   >`printerClearSnowLayer` - Printer will use String to clear Snow layers.
-  
-  
+
+
 **Main Features**:
 
 `printerAccurateBlockPlacement` - Printer will use AccurateBlockPlacement Protocol, which is handled via carpet extra.
@@ -144,7 +147,7 @@ Now Settings have names with printer.
 
 `CarpetExtraFixedVersion` - Use Fake rotations instead, until general protocol is implemented.
 
- 
+
 ## Support
 If you have any issues with this mod **DO NOT** contact and bother masa with it. Please message me in discord, I am usually in Scicraft, TMA, Masa's discord, etc...
 
