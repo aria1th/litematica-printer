@@ -1,13 +1,13 @@
 // common.gradle is a file that called separately by each module.
 plugins {
-    id 'fabric-loom' version '1.6-SNAPSHOT'
+    id 'fabric-loom' version '1.7-SNAPSHOT'
     id 'com.replaymod.preprocess' version '6989e16efc'
 }
 
 int mcVersion = 1
 
 preprocess {
-    mcVersion = vars.get()["MC"]
+    mcVersion = vars.get()["MC"] as Integer
     tabIndentation = true
 }
 
