@@ -185,7 +185,12 @@ public class FakeAccurateBlockPlacement {
 			//#endif
 				fakeYaw,
 				fakePitch,
+			//#if MC>=12102
+			//$$ playerEntity.isOnGround(),
+			//$$ false
+			//#else
 				playerEntity.isOnGround()
+			//#endif
 			)
 		);
 		//System.out.print(fakeYaw);

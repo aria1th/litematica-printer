@@ -123,7 +123,11 @@ public class Printer {
 		if (!stack.isEmpty() && stack.getItem() != Items.AIR) {
 			PlayerInventory inv = getInventory(mc.player);
 			if (!isCreative(mc.player)) {
+				//#if MC>=12102
+				//$$ if (stack.getItem() instanceof MiningToolItem || stack.getItem() instanceof FlintAndSteelItem) {
+				//#else
 				if (stack.getItem() instanceof ToolItem || stack.getItem() instanceof FlintAndSteelItem) {
+				//#endif
 					// manually search through inventories
 					int slot = io.github.eatmyvenom.litematicin.utils.InventoryUtils.getSlotWithItem(inv, stack);
 					if (slot == -1) {
@@ -1457,7 +1461,11 @@ public class Printer {
 	 * @return true if the block is blocking a beacon
 	 */
 	private static boolean isBlockingBeacon(BlockState stateSchematic, BlockPos pos, ClientWorld world) {
+		//#if MC>=12102
+		//$$ if(stateSchematic.isTransparent()) {
+		//#else
 		if(stateSchematic.isTransparent(world, pos)) {
+		//#endif
 			return false;
 		}
 		int minY = world.getBottomY();
@@ -1501,7 +1509,11 @@ public class Printer {
 			return true;
 		}
 		// if block behind is powerable block in client world, we have to check recursively
+		//#if MC>=12102
+		//$$ if(!behindStateClient.isTransparent()) {
+		//#else
 		if (!behindStateClient.isTransparent(world, behindPos)) {
+		//#endif
 			return false;
 		}
 		// if block behind-down is QCable, we have to check recursively

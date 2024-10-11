@@ -48,7 +48,9 @@ public abstract class ClientPlayerEntityMixin extends PlayerEntity {
 		// if FakeAccurateBlockPlacement is active, then return false
 		return !shouldModifyValues();
 	}
-	//#if MC>=11904
+
+	//#if MC>=12102
+	//#elseif MC>=11904
 	@Redirect(method = "sendMovementPackets", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/ClientPlayNetworkHandler;sendPacket(Lnet/minecraft/network/packet/Packet;)V", ordinal = 1), require = 0)
 	//#else
 	//$$@Redirect(method = "sendMovementPackets", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/ClientPlayNetworkHandler;sendPacket(Lnet/minecraft/network/Packet;)V", ordinal = 2), require = 0)
@@ -63,11 +65,18 @@ public abstract class ClientPlayerEntityMixin extends PlayerEntity {
 			this.getX(), this.hasVehicle()? -999.0D : this.getY(), this.getZ(),
 			FakeAccurateBlockPlacement.fakeYaw,
 			FakeAccurateBlockPlacement.fakePitch,
+			//#if MC>=12102
+			//$$ this.isOnGround(),
+			//$$ false
+			//#else
 			this.isOnGround()
+			//#endif
 		));
 	}
 
-	//#if MC>=11904
+	//#if MC>=12102
+	//$$ @Redirect(method = "sendMovementPackets", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/ClientPlayNetworkHandler;sendPacket(Lnet/minecraft/network/packet/Packet;)V", ordinal = 0), require = 0)
+	//#elseif MC>=11904
 	@Redirect(method = "sendMovementPackets", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/ClientPlayNetworkHandler;sendPacket(Lnet/minecraft/network/packet/Packet;)V", ordinal = 2), require = 0)
 	//#else
 	//$$@Redirect(method = "sendMovementPackets", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/ClientPlayNetworkHandler;sendPacket(Lnet/minecraft/network/Packet;)V", ordinal = 3), require = 0)
@@ -81,11 +90,18 @@ public abstract class ClientPlayerEntityMixin extends PlayerEntity {
 			this.getX(), this.hasVehicle()? -999.0D : this.getY(), this.getZ(),
 			FakeAccurateBlockPlacement.fakeYaw,
 			FakeAccurateBlockPlacement.fakePitch,
+			//#if MC>=12102
+			//$$ this.isOnGround(),
+			//$$ false
+			//#else
 			this.isOnGround()
+			//#endif
 		));
 	}
 
-	//#if MC>=11904
+	//#if MC>=12102
+	//$$ @Redirect(method = "sendMovementPackets", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/ClientPlayNetworkHandler;sendPacket(Lnet/minecraft/network/packet/Packet;)V", ordinal = 2), require = 0)
+	//#elseif MC>=11904
 	@Redirect(method = "sendMovementPackets", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/ClientPlayNetworkHandler;sendPacket(Lnet/minecraft/network/packet/Packet;)V", ordinal = 4), require = 0)
 	//#else
 	//$$@Redirect(method = "sendMovementPackets", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/ClientPlayNetworkHandler;sendPacket(Lnet/minecraft/network/Packet;)V", ordinal = 5), require = 0)
@@ -99,7 +115,12 @@ public abstract class ClientPlayerEntityMixin extends PlayerEntity {
 			new PlayerMoveC2SPacket.LookAndOnGround(
 				FakeAccurateBlockPlacement.fakeYaw,
 				FakeAccurateBlockPlacement.fakePitch,
+				//#if MC>=12102
+				//$$ this.isOnGround(),
+				//$$ false
+				//#else
 				this.isOnGround()
+				//#endif
 			)
 		);
 	}

@@ -158,7 +158,11 @@ public class InventoryUtils {
 
 	public static boolean isToolLikeItem(Item item) {
 		// ToolItem or FlintAndSteelItem or ShearsItem
+		//#if MC>=12102
+		//$$ return item instanceof MiningToolItem || item instanceof FlintAndSteelItem || item instanceof ShearsItem;
+		//#else
 		return item instanceof ToolItem || item instanceof FlintAndSteelItem || item instanceof ShearsItem;
+		//#endif
 	}
 
 	public static void decrementCount(boolean isCreative) {
@@ -297,7 +301,11 @@ public class InventoryUtils {
 		if (isToolLikeItem(a.getItem()) || isToolLikeItem(b.getItem())) {
 			return a.getItem() == b.getItem();
 		}
+		//#if MC>=12102
+		//$$ else if (a.getItem() instanceof MiningToolItem || b.getItem() instanceof MiningToolItem) {
+		//#else
 		else if (a.getItem() instanceof ToolItem || b.getItem() instanceof ToolItem) {
+		//#endif
 			return false; // safety
 		}
 		//#if MC >= 12006
@@ -339,7 +347,11 @@ public class InventoryUtils {
 		Inventory inv = getInventory(player);
 		for (int i = 0; i < inv.size(); i++) {
 			ItemStack stack = inv.getStack(i);
+			//#if MC>=12102
+			//$$ if (stack.getItem() instanceof MiningToolItem && predicate.test(stack)) {
+			//#else
 			if (stack.getItem() instanceof ToolItem && predicate.test(stack)) {
+			//#endif
 				return true;
 			}
 		}
@@ -421,7 +433,11 @@ public class InventoryUtils {
 		Inventory inv = getInventory(player);
 		for (int i = 0; i < inv.size(); i++) {
 			ItemStack stack = inv.getStack(i);
+			//#if MC>=12102
+			//$$ if (stack.getItem() instanceof MiningToolItem && predicate.test(stack)) {
+			//#else
 			if (stack.getItem() instanceof ToolItem && predicate.test(stack)) {
+			//#endif
 				return stack;
 			}
 		}
@@ -435,7 +451,11 @@ public class InventoryUtils {
 
 	public static int getSlotWithStack(ClientPlayerEntity player, ItemStack stack) {
 		PlayerInventory inv = getInventory(player);
+		//#if MC>=12102
+		//$$ return stack.getItem() instanceof MiningToolItem || isToolLikeItem(stack.getItem()) ? getSlotWithItem(inv, stack) :getSlotWIthStackIgnoreNbt(getInventory(player), stack);
+		//#else
 		return stack.getItem() instanceof ToolItem || isToolLikeItem(stack.getItem()) ? getSlotWithItem(inv, stack) :getSlotWIthStackIgnoreNbt(getInventory(player), stack);
+		//#endif
 	}
 
 	public static void printAllItems(PlayerInventory inv, ItemStack stack) {
@@ -472,7 +492,11 @@ public class InventoryUtils {
 
 	public static int getSlotWithStack(PlayerInventory inv, ItemStack stack) {
 		int findingStack = getSlotWIthStackIgnoreNbt(inv, stack);
+		//#if MC>=12102
+		//$$ return stack.getItem() instanceof MiningToolItem || isToolLikeItem(stack.getItem()) ? getSlotWithItem(inv, stack) :findingStack;
+		//#else
 		return stack.getItem() instanceof ToolItem || isToolLikeItem(stack.getItem()) ? getSlotWithItem(inv, stack) :findingStack;
+		//#endif
 	}
 
 	@SuppressWarnings("ConstantConditions")

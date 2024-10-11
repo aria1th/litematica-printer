@@ -50,7 +50,9 @@ public class WorldUtilsMixin {
 				//in case of NPE, print log instead
 				MessageHolder.sendMessageUncheckedUnique(mc.player, e.getMessage());
 				if (!hasSent && mc.player != null) {
-					//#if MC>=11900
+					//#if MC>=12102
+					//$$ mc.player.sendMessage(Text.of("Null pointer exception has occured, please upload log at https://github.com/aria1th/litematica-printer/issues"), false);
+					//#elseif MC>=11900
 					mc.player.sendMessage(Text.of("Null pointer exception has occured, please upload log at https://github.com/aria1th/litematica-printer/issues"));
 					//#else
 					//$$mc.player.sendMessage(new LiteralText("Null pointer exception has occured, please upload log at https://github.com/aria1th/litematica-printer/issues"), false);

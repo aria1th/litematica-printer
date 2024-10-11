@@ -298,7 +298,11 @@ public class BedrockBreaker {
 		//#else
 		//$$ ActionResult result =  mc.interactionManager.interactBlock(mc.player, mc.player.clientWorld, Hand.MAIN_HAND, hitResult);
 		//#endif
+		//#if MC>=12102
+		//$$ if (PRINTER_SHOULD_SWING_HAND.getBooleanValue() && result.isAccepted() && result.equals(ActionResult.SUCCESS)) {
+		//#else
 		if (PRINTER_SHOULD_SWING_HAND.getBooleanValue() && result.isAccepted() && result.shouldSwingHand()) {
+		//#endif
 			mc.player.swingHand(Hand.MAIN_HAND);
 		}
 		return result;
@@ -339,6 +343,24 @@ public class BedrockBreaker {
 		float OriginPitch = mc.player.getPitch();
 		float OriginYaw = mc.player.getYaw();
 		//#endif
+		//#if MC>=12102
+		//$$ if (facing == Direction.DOWN) {
+			//$$ mc.getNetworkHandler().sendPacket(new PlayerMoveC2SPacket.LookAndOnGround(OriginYaw, -90.0f, mc.player.isOnGround(), false));
+		//$$ } else if (facing == Direction.UP) {
+			//$$ mc.getNetworkHandler().sendPacket(new PlayerMoveC2SPacket.LookAndOnGround(OriginYaw, 90.0f, mc.player.isOnGround(), false));
+		//$$ } else if (facing == Direction.EAST) {
+			//$$ mc.getNetworkHandler().sendPacket(new PlayerMoveC2SPacket.LookAndOnGround(90.0f, OriginPitch, mc.player.isOnGround(), false));
+		//$$ } else if (facing == Direction.WEST) {
+			//$$ mc.getNetworkHandler().sendPacket(new PlayerMoveC2SPacket.LookAndOnGround(-90.0f, OriginPitch, mc.player.isOnGround(), false));
+		//$$ } else if (facing == Direction.NORTH) {
+			//$$ mc.getNetworkHandler().sendPacket(new PlayerMoveC2SPacket.LookAndOnGround(0.0f, OriginPitch, mc.player.isOnGround(), false));
+		//$$ } else if (facing == Direction.SOUTH) {
+			//$$ mc.getNetworkHandler().sendPacket(new PlayerMoveC2SPacket.LookAndOnGround(180.0f, OriginPitch, mc.player.isOnGround(), false));
+		//$$ }
+		//$$ BlockHitResult hitResult = new BlockHitResult(hitPos, facing, npos, false);
+		//$$ handleTweakPlacementPacket(mc, hitResult);
+		//$$ mc.getNetworkHandler().sendPacket(new PlayerMoveC2SPacket.LookAndOnGround(OriginYaw, OriginPitch, mc.player.isOnGround(), false));
+		//#else
 		if (facing == Direction.DOWN) {
 			mc.getNetworkHandler().sendPacket(new PlayerMoveC2SPacket.LookAndOnGround(OriginYaw, -90.0f, mc.player.isOnGround()));
 		} else if (facing == Direction.UP) {
@@ -355,6 +377,7 @@ public class BedrockBreaker {
 		BlockHitResult hitResult = new BlockHitResult(hitPos, facing, npos, false);
 		handleTweakPlacementPacket(mc, hitResult);
 		mc.getNetworkHandler().sendPacket(new PlayerMoveC2SPacket.LookAndOnGround(OriginYaw, OriginPitch, mc.player.isOnGround()));
+		//#endif
 	}
 
 	public static void handleTweakPlacementPacket(MinecraftClient mc, BlockHitResult hitResult) {

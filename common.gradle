@@ -1,37 +1,28 @@
-// common.gradle is a file that called separately by each module.
-plugins {
-    id 'fabric-loom' version '1.7-SNAPSHOT'
-    id 'com.replaymod.preprocess' version '6989e16efc'
-}
+apply plugin: 'maven-publish'
+apply plugin: 'fabric-loom'
+apply plugin: 'com.replaymod.preprocess'
+apply plugin: 'me.fallenbreath.yamlang'
 
-int mcVersion = 1
+int mcVersion = project.mcVersion
 
 preprocess {
     mcVersion = vars.get()["MC"] as Integer
     tabIndentation = true
 }
 
+String MIXIN_CONFIG_PATH = 'litematica-printer.mixins.json'
+String LANG_DIR = 'assets/litematica-printer/lang'
+JavaVersion JAVA_COMPATIBILITY
 if (mcVersion >= 12005) {
-	sourceCompatibility = JavaVersion.VERSION_21
-	targetCompatibility = JavaVersion.VERSION_21
+    JAVA_COMPATIBILITY = JavaVersion.VERSION_21
+} else if (mcVersion >= 11800) {
+    JAVA_COMPATIBILITY = JavaVersion.VERSION_17
+} else if (mcVersion >= 11700) {
+    JAVA_COMPATIBILITY = JavaVersion.VERSION_16
+} else {
+    JAVA_COMPATIBILITY = JavaVersion.VERSION_1_8
 }
-else if (mcVersion >= 11800) {
-	sourceCompatibility = JavaVersion.VERSION_17
-	targetCompatibility = JavaVersion.VERSION_17
-}
-else if (mcVersion >= 11700) {
-	sourceCompatibility = JavaVersion.VERSION_16
-	targetCompatibility = JavaVersion.VERSION_16
-}
-else {
-	sourceCompatibility = JavaVersion.VERSION_1_8
-	targetCompatibility = JavaVersion.VERSION_1_8
-}
-
-
-archivesBaseName = "${project.archives_base_name}-mc${project.minecraft_version}"
-version = project.mod_version
-group = project.maven_group
+JavaVersion MIXIN_COMPATIBILITY_LEVEL = JAVA_COMPATIBILITY
 
 repositories {
     mavenCentral()
@@ -44,6 +35,11 @@ repositories {
 	maven {
 		url "https://pkgs.dev.azure.com/djtheredstoner/DevAuth/_packaging/public/maven/v1"
 	}
+}
+
+// https://github.com/FabricMC/fabric-loader/issues/783
+configurations {
+    modRuntimeOnly.exclude group: 'net.fabricmc', module: 'fabric-loader'
 }
 
 dependencies {
@@ -84,51 +80,146 @@ dependencies {
         }
         //modImplementation "fi.dy.masa.litematica:litematica-fabric-${project.minecraft_version_out}:${project.litematica_version}"
     }
-	annotationProcessor "com.github.LlamaLad7:MixinExtras:0.1.1"
+
+    //	// [FEATURE] MIXIN_AUDITOR
+//	modRuntimeOnly 'me.fallenbreath:mixin-auditor:0.1.0'
+
+    // dependencies
+//	include(modImplementation(fabricApi.module("fabric-resource-loader-v0", project.fabric_api_version)))
+//	include(modImplementation("me.fallenbreath:conditional-mixin-fabric:${project.conditionalmixin_version}"))
+	include(annotationProcessor(implementation("io.github.llamalad7:mixinextras-fabric:${project.mixinextras_version}")))
 }
 
+loom {
+    def commonVmArgs = ['-Dmixin.debug.export=true', '-Dmixin.debug.countInjections=true']
+    runConfigs.configureEach {
+        // to make sure it generates all "Minecraft Client (:subproject_name)" applications
+        ideConfigGenerated = true
+        runDir '../../run'
+        vmArgs commonVmArgs
+    }
+//	// [FEATURE] MIXIN_AUDITOR
+//	runs {
+//		def auditVmArgs = [*commonVmArgs, '-DmixinAuditor.audit=true']
+//		serverMixinAudit {
+//			server()
+//			vmArgs auditVmArgs
+//			ideConfigGenerated false
+//		}
+//	}
+}
+
+remapJar {
+    remapperIsolation = true
+}
+
+String modVersionSuffix = ''
+String artifactVersion = project.mod_version
+String artifactVersionSuffix = ''
+// detect github action environment variables
+// https://docs.github.com/en/actions/learn-github-actions/environment-variables#default-environment-variables
+if (System.getenv("BUILD_RELEASE") != "true") {
+    String buildNumber = System.getenv("BUILD_ID")
+    modVersionSuffix += buildNumber != null ? ('+build.' + buildNumber) : '-SNAPSHOT'
+    artifactVersionSuffix = '-SNAPSHOT'  // A non-release artifact is always a SNAPSHOT artifact
+}
+String fullModVersion = project.mod_version + modVersionSuffix
+String fullProjectVersion, fullArtifactVersion
+
+group = project.maven_group
+if (System.getenv("JITPACK") == "true") {
+    // move mc version into archivesBaseName, so jitpack will be able to organize archives from multiple subprojects correctly
+    base.archivesName = project.archives_base_name + '-mc' + project.minecraft_version
+    fullProjectVersion = 'v' + project.mod_version + modVersionSuffix
+    fullArtifactVersion = artifactVersion + artifactVersionSuffix
+} else {
+    base.archivesName = project.archives_base_name
+    fullProjectVersion = 'v' + project.mod_version + '-mc' + project.minecraft_version + modVersionSuffix
+    fullArtifactVersion = artifactVersion + '-mc' + project.minecraft_version + artifactVersionSuffix
+}
+version = fullProjectVersion
+
+// See https://youtrack.jetbrains.com/issue/IDEA-296490
+// if IDEA complains about "Cannot resolve resource filtering of MatchingCopyAction" and you want to know why
 processResources {
-	inputs.property "version", project.mod_version
-    // {$argument} exists in src/main/resources/fabric.mod.json, then it will be replaced with the value of the argument.
-	filesMatching("fabric.mod.json") {
-        def map = [
-            "version": version,
-            "minecraft_dependency": project.minecraft_version_out
+    inputs.property "id", project.mod_id
+    inputs.property "name", project.mod_name
+    inputs.property "version", fullModVersion
+    inputs.property "minecraft_dependency", project.minecraft_dependency
+
+    filesMatching("fabric.mod.json") {
+        def valueMap = [
+                "id": project.mod_id,
+                "name": project.mod_name,
+                "version": fullModVersion,
+                "minecraft_dependency": project.minecraft_dependency,
         ]
-        expand map
-	}
+        expand valueMap
+    }
+
+    filesMatching(MIXIN_CONFIG_PATH) {
+        filter { s -> s.replace('{{COMPATIBILITY_LEVEL}}', "JAVA_${MIXIN_COMPATIBILITY_LEVEL.ordinal() + 1}") }
+    }
 }
 
-tasks.withType(JavaCompile).configureEach {
-	// ensure that the encoding is set to UTF-8, no matter what the system default is
-	// this fixes some edge cases with special characters not displaying correctly
-	// see http://yodaconditions.net/blog/fix-for-java-file-encoding-problems-with-gradle.html
-	// If Javadoc is generated, this must be specified in that task too.
-	it.options.encoding = "UTF-8"
+// https://github.com/Fallen-Breath/yamlang
+yamlang {
+    targetSourceSets = [sourceSets.main]
+    inputDir = LANG_DIR
+}
 
-    if (mcVersion >= 12005) {
-        it.options.release = 21
-    }
-    else if (mcVersion >= 11800) {
-        it.options.release = 17
-    }
-    else if (mcVersion >= 11700) {
-        it.options.release = 16
-    }
-    else {
-        it.options.release = 8
+// ensure that the encoding is set to UTF-8, no matter what the system default is
+// this fixes some edge cases with special characters not displaying correctly
+// see http://yodaconditions.net/blog/fix-for-java-file-encoding-problems-with-gradle.html
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = "UTF-8"
+    options.compilerArgs << "-Xlint:deprecation" << "-Xlint:unchecked"
+    if (JAVA_COMPATIBILITY <= JavaVersion.VERSION_1_8) {
+        // suppressed "source/target value 8 is obsolete and will be removed in a future release"
+        options.compilerArgs << '-Xlint:-options'
     }
 }
 
 java {
-	// Loom will automatically attach sourcesJar to a RemapSourcesJar task and to the "build" task
-	// if it is present.
-	// If you remove this line, sources will not be generated.
-	withSourcesJar()
+    sourceCompatibility = JAVA_COMPATIBILITY
+    targetCompatibility = JAVA_COMPATIBILITY
+
+    // Loom will automatically attach sourcesJar to a RemapSourcesJar task and to the "build" task
+    // if it is present.
+    // If you remove this line, sources will not be generated.
+    withSourcesJar()
 }
 
 jar {
-	from("LICENSE") {
-		rename { "${it}_${project.archivesBaseName}"}
-	}
+    from(rootProject.file('LICENSE')) {
+        rename { "${it}_${project.archives_base_name}" }
+    }
+}
+
+// configure the maven publication
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            artifactId base.archivesName.get()
+            from components.java
+            version = fullArtifactVersion
+        }
+    }
+
+    // select the repositories you want to publish to
+    repositories {
+        // mavenLocal()
+
+//		// [FEATURE] FALLENS_MAVEN
+//		maven {
+//			url = fullArtifactVersion.endsWith("SNAPSHOT") ? "https://maven.fallenbreath.me/snapshots" : "https://maven.fallenbreath.me/releases"
+//			credentials(PasswordCredentials) {
+//				username = 'fallen'
+//				password = System.getenv("FALLENS_MAVEN_TOKEN")
+//			}
+//			authentication {
+//				basic(BasicAuthentication)
+//			}
+//		}
+    }
 }

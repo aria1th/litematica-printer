@@ -28,7 +28,9 @@ public class MessageHolder {
 
 	private static void send(String string) {
 		final ClientPlayerEntity player = MinecraftClient.getInstance().player;
-		//#if MC>=11900
+		//#if MC>=12102
+		//$$ player.sendMessage(Text.of(string), false);
+		//#elseif MC>=11900
 		player.sendMessage(Text.of(string));
 		//#else
 		//$$player.sendMessage(new LiteralText(string), false);
