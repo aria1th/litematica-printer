@@ -6,7 +6,6 @@ int mcVersion = project.mcVersion
 
 preprocess {
     mcVersion = vars.get()["MC"] as Integer
-    tabIndentation = true
 }
 
 String MIXIN_CONFIG_PATH = 'litematica-printer.mixins.json'
