@@ -101,7 +101,11 @@ public class Breaker implements IClientTickHandler {
 		}
 		float f = InventoryUtils.getInventory(mc.player).main.get(slotId).getMiningSpeedMultiplier(block);
 		if (f > 1.0F) {
-			//#if MC >= 12100
+			//#if MC>=12102
+			//$$ ItemStack itemStack = mc.player.getInventory().getMainHandStack();
+			//$$ Optional<RegistryEntry.Reference<Enchantment>> optional = mc.world.getRegistryManager().getOptionalEntry(Enchantments.EFFICIENCY);
+			//$$ int i =  optional.map(enchantmentReference -> EnchantmentHelper.getLevel(enchantmentReference, itemStack)).orElse(0);
+			//#elseif MC >= 12100
 			//$$ ItemStack itemStack = mc.player.getInventory().getMainHandStack();
 			//$$ Optional<RegistryEntry.Reference<Enchantment>> optional = mc.world.getRegistryManager().get(RegistryKeys.ENCHANTMENT).getEntry(Enchantments.EFFICIENCY);
 			//$$ int i =  optional.map(enchantmentReference -> EnchantmentHelper.getLevel(enchantmentReference, itemStack)).orElse(0);

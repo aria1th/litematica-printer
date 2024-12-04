@@ -1,3 +1,5 @@
+import groovy.json.JsonSlurper
+
 pluginManagement {
 	repositories {
 		maven {
@@ -9,7 +11,8 @@ pluginManagement {
 			url = "https://jitpack.io"
 		}
 		maven {
-			url "https://masa.dy.fi/maven"
+			name = 'Masa'
+			url = "https://masa.dy.fi/maven"
 		}
 		mavenCentral()
 		gradlePluginPortal()
@@ -19,28 +22,15 @@ pluginManagement {
 			switch (requested.id.id) {
 				case "com.replaymod.preprocess": {
 					useModule("com.github.Fallen-Breath:preprocessor:${requested.version}")
+					break
 				}
 			}
 		}
 	}
 }
-def versions = Arrays.asList(
-        //"1.16.5",
-        //"1.17.1",
-        //"1.18.2",
-        //"1.19.0",
-        //"1.19.2",
-        //"1.19.3",
-        "1.19.4",
-        "1.20.1",
-        "1.20.2",
-        "1.20.4",
-		"1.20.6",
-		"1.21.0",
-		"1.21.1"
-)
 
-for (String version : versions) {
+def settings = new JsonSlurper().parseText(file('settings.json').text)
+for (String version : settings.versions) {
 	include(":$version")
 
 	def proj = project(":$version")

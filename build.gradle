@@ -1,9 +1,13 @@
 plugins {
-	id 'com.replaymod.preprocess' version '6989e16efc'
-	id 'fabric-loom' version '1.7-SNAPSHOT' apply false
+	id 'fabric-loom' version '1.9-SNAPSHOT' apply false
+	// https://github.com/ReplayMod/preprocessor
+	// https://github.com/Fallen-Breath/preprocessor
+	id 'com.replaymod.preprocess' version '9d21b334a7'
 }
 
 preprocess {
+	strictExtraMappings = false
+
 	//def mc1165 = createNode('1.16.5', 1_16_05, 'yarn')
 	//def mc1171 = createNode('1.17.1', 1_17_01, 'yarn')
 	//def mc1182 = createNode('1.18.2', 1_18_02, 'yarn')
@@ -17,6 +21,8 @@ preprocess {
 	def mc1206 = createNode('1.20.6', 1_20_06, 'yarn')
 	def mc1210 = createNode('1.21.0', 1_21_00, 'yarn')
 	def mc1211 = createNode('1.21.1', 1_21_01, 'yarn')
+	def mc1213 = createNode('1.21.3', 1_21_03, 'yarn')
+	def mc1214 = createNode('1.21.4', 1_21_04, 'yarn')
 
 	// mapping difference map
 	// base 1194 -> 1193 -> 1192 ->1190-> 118 -> 117 -> 116
@@ -26,6 +32,8 @@ preprocess {
 	mc1206.link(mc1204, file('versions/mapping-1.20.6-1.20.4.txt'))
 	mc1210.link(mc1206, file('versions/mapping-1.21.0-1.20.6.txt'))
 	mc1211.link(mc1210, file('versions/mapping-1.21.1-1.21.0.txt'))
+	mc1213.link(mc1211, file('versions/mapping-1.21.3-1.21.1.txt'))
+	mc1214.link(mc1213, file('versions/mapping-1.21.4-1.21.3.txt'))
 	//mc1194.link(mc1193, file('versions/mapping-1.19.4-1.19.3.txt'))
 	//mc1193.link(mc1192, file('versions/mapping-1.19.3-1.19.2.txt'))
 	//mc1192.link(mc1190, file('versions/mapping-1.19.2-1.19.0.txt'))
@@ -42,19 +50,24 @@ preprocess {
 // gradlew :1.16.5:setCoreVersion -> set coremod version to 1.16.5
 tasks.register('buildAndGather') {
 	subprojects {
-		dependsOn project.name + ':build'
+		dependsOn project.tasks.named('build').get()
 	}
 	doFirst {
-		println 'Building and gathering all subprojects'
-		copy {
-			subprojects {
-				def libDir = project.projectDir.toPath().resolve('build/libs')
-				from(libDir) {
+		println 'Gathering builds'
+		def buildLibs = {
+			p -> p.buildDir.toPath().resolve('libs')
+		}
+		delete fileTree(buildLibs(rootProject)) {
+			include '*'
+		}
+		subprojects {
+			copy {
+				from(buildLibs(project)) {
 					include '*.jar'
-					exclude '*-sources.jar', '*-dev.jar'
+					exclude '*-dev.jar', '*-sources.jar', '*-shadow.jar'
 				}
-				into 'build/libs/'
-				duplicatesStrategy = DuplicatesStrategy.INCLUDE
+				into buildLibs(rootProject)
+				duplicatesStrategy DuplicatesStrategy.INCLUDE
 			}
 		}
 	}
