@@ -1,25 +1,11 @@
-apply plugin: 'maven-publish'
 apply plugin: 'fabric-loom'
 apply plugin: 'com.replaymod.preprocess'
 
 int mcVersion = project.mcVersion
 
-preprocess {
-    mcVersion = vars.get()["MC"] as Integer
-}
-
-String MIXIN_CONFIG_PATH = 'litematica-printer.mixins.json'
-JavaVersion JAVA_COMPATIBILITY
-if (mcVersion >= 12005) {
-    JAVA_COMPATIBILITY = JavaVersion.VERSION_21
-} else if (mcVersion >= 11800) {
-    JAVA_COMPATIBILITY = JavaVersion.VERSION_17
-} else if (mcVersion >= 11700) {
-    JAVA_COMPATIBILITY = JavaVersion.VERSION_16
-} else {
-    JAVA_COMPATIBILITY = JavaVersion.VERSION_1_8
-}
-JavaVersion MIXIN_COMPATIBILITY_LEVEL = JAVA_COMPATIBILITY
+//preprocess {
+    //mcVersion = vars.get()["MC"] as Integer
+//}
 
 repositories {
     mavenCentral()
@@ -32,6 +18,7 @@ repositories {
 	maven {
 		url "https://pkgs.dev.azure.com/djtheredstoner/DevAuth/_packaging/public/maven/v1"
 	}
+    //maven { url 'https://maven.fallenbreath.me/releases' }
 }
 
 // https://github.com/FabricMC/fabric-loader/issues/783
@@ -78,11 +65,24 @@ dependencies {
         //modImplementation "fi.dy.masa.litematica:litematica-fabric-${project.minecraft_version_out}:${project.litematica_version}"
     }
 
-    //	// [FEATURE] MIXIN_AUDITOR
+    // [FEATURE] MIXIN_AUDITOR
     //modRuntimeOnly 'me.fallenbreath:mixin-auditor:0.1.0'
 	//include(modImplementation("me.fallenbreath:conditional-mixin-fabric:${project.conditionalmixin_version}"))
-	include(annotationProcessor(implementation("io.github.llamalad7:mixinextras-fabric:${project.mixinextras_version}")))
+	//include(annotationProcessor(implementation("io.github.llamalad7:mixinextras-fabric:${project.mixinextras_version}")))
 }
+
+String MIXIN_CONFIG_PATH = 'litematica-printer.mixins.json'
+JavaVersion JAVA_COMPATIBILITY
+if (mcVersion >= 12005) {
+    JAVA_COMPATIBILITY = JavaVersion.VERSION_21
+} else if (mcVersion >= 11800) {
+    JAVA_COMPATIBILITY = JavaVersion.VERSION_17
+} else if (mcVersion >= 11700) {
+    JAVA_COMPATIBILITY = JavaVersion.VERSION_16
+} else {
+    JAVA_COMPATIBILITY = JavaVersion.VERSION_1_8
+}
+JavaVersion MIXIN_COMPATIBILITY_LEVEL = JAVA_COMPATIBILITY
 
 loom {
     def commonVmArgs = ['-Dmixin.debug.export=true', '-Dmixin.debug.countInjections=true']
@@ -92,20 +92,16 @@ loom {
         runDir '../../run'
         vmArgs commonVmArgs
     }
-//	// [FEATURE] MIXIN_AUDITOR
-//	runs {
-//		def auditVmArgs = [*commonVmArgs, '-DmixinAuditor.audit=true']
-//		serverMixinAudit {
-//			server()
-//			vmArgs auditVmArgs
-//			ideConfigGenerated false
-//		}
-//	}
+	// [FEATURE] MIXIN_AUDITOR
+	//runs {
+		//def auditVmArgs = [*commonVmArgs, '-DmixinAuditor.audit=true']
+		//serverMixinAudit {
+			//server()
+			//vmArgs auditVmArgs
+			//ideConfigGenerated false
+		//}
+	//}
 }
-
-//remapJar {
-    //remapperIsolation = true
-//}
 
 String modVersionSuffix = ''
 String artifactVersion = project.mod_version
@@ -169,7 +165,7 @@ tasks.withType(JavaCompile).configureEach {
 java {
     sourceCompatibility = JAVA_COMPATIBILITY
     targetCompatibility = JAVA_COMPATIBILITY
-    withSourcesJar()
+    //withSourcesJar()
 }
 
 jar {
