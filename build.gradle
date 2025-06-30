@@ -24,7 +24,7 @@ preprocess {
 	def mc1213 = createNode('1.21.3', 1_21_03, 'yarn')
 	def mc1214 = createNode('1.21.4', 1_21_04, 'yarn')
 	def mc1215 = createNode('1.21.5', 1_21_05, 'yarn')
-	def mc1216 = createNode('1.21.6', 1_21_06, 'yarn')
+	def mc1217 = createNode('1.21.7', 1_21_07, 'yarn')
 
 	// mapping difference map
 	// base 1194 -> 1193 -> 1192 ->1190-> 118 -> 117 -> 116
@@ -37,7 +37,7 @@ preprocess {
 	mc1213.link(mc1211, null)
 	mc1214.link(mc1213, null)
 	mc1215.link(mc1214, null)
-	mc1216.link(mc1215, null)
+	mc1217.link(mc1215, null)
 	//mc1194.link(mc1193, file('versions/mapping-1.19.4-1.19.3.txt'))
 	//mc1193.link(mc1192, file('versions/mapping-1.19.3-1.19.2.txt'))
 	//mc1192.link(mc1190, file('versions/mapping-1.19.2-1.19.0.txt'))
