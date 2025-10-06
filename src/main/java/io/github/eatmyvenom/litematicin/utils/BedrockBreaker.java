@@ -504,7 +504,11 @@ public class BedrockBreaker {
 		//positionStorage.refresh(mc.world);
 		int ret = 0;
 		switchTool(mc);
+		//#if MC >= 12109
+		//$$ ArrayList<BlockPos> attackList = positionStorage.getFalseMarkedHasBlockPosInAttackRange(mc.world, mc.player.getEntityPos(), MaxReach);
+		//#else
 		ArrayList<BlockPos> attackList = positionStorage.getFalseMarkedHasBlockPosInAttackRange(mc.world, mc.player.getPos(), MaxReach);
+		//#endif
 		for (BlockPos position : attackList) {
 			if (ret >= maxInteract) {
 				return ret;

@@ -62,7 +62,9 @@ dependencies {
     // [FEATURE] MIXIN_AUDITOR
 //    modRuntimeOnly 'me.fallenbreath:mixin-auditor:0.1.0'
 	//include(modImplementation("me.fallenbreath:conditional-mixin-fabric:${project.conditionalmixin_version}"))
-	//include(annotationProcessor(implementation("io.github.llamalad7:mixinextras-fabric:${project.mixinextras_version}")))
+//	if (mcVersion < 12005) {
+//		include("io.github.llamalad7:mixinextras-fabric:${project.mixinextras_version}")
+//	}
 }
 
 String MIXIN_CONFIG_PATH = 'litematica-printer.mixins.json'

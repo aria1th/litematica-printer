@@ -35,7 +35,7 @@ public class Breaker implements IClientTickHandler {
 	public boolean startBreakingBlock(BlockPos pos, MinecraftClient mc) {
 		this.breakingBlock = true;
 		this.pos = pos;
-		if (mc.world == null || mc.player == null)
+		if (mc.world == null || mc.player == null || mc.interactionManager == null)
 		{
 			return false;
 		}
@@ -52,7 +52,9 @@ public class Breaker implements IClientTickHandler {
 		}
 		// Start breaking
 		BlockState blockState = mc.world.getBlockState(pos);
-		//#if MC>=11800
+		//#if MC > 12109
+		//$$ if (blockState.calcBlockBreakingDelta(mc.player, mc.player.getEntityWorld(), pos) >= 1.0F) {
+		//#elseif MC >= 11800
 		if (blockState.calcBlockBreakingDelta(mc.player, mc.player.getWorld(), pos) >= 1.0F) {
 		//#else
 		//$$ if (blockState.calcBlockBreakingDelta(mc.player, mc.player.world, pos) >= 1.0F) {
@@ -134,7 +136,7 @@ public class Breaker implements IClientTickHandler {
 
 	@Override
 	public void onClientTick(MinecraftClient mc) {
-		if (!isBreakingBlock() || mc.player == null) {
+		if (!isBreakingBlock() || mc.player == null || mc.world == null || mc.interactionManager == null) {
 			this.breakingBlock = false;
 			return;
 		}
@@ -142,7 +144,11 @@ public class Breaker implements IClientTickHandler {
 		if (Hotkeys.EASY_PLACE_ACTIVATION.getKeybind().isKeybindHeld()) { // Only continue mining while the correct keys are pressed
 			Direction side = Direction.values()[0];
 			if (mc.interactionManager.updateBlockBreakingProgress(pos, side)) {
+				//#if MC >= 12109
+				//$$ mc.world.spawnBlockBreakingParticle(pos, side);
+				//#else
 				mc.particleManager.addBlockBreakingParticles(pos, side);
+				//#endif
 				mc.player.swingHand(Hand.MAIN_HAND);
 			}
 		}

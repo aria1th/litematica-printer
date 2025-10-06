@@ -2089,7 +2089,11 @@ public class Printer {
 	// returns should call continue in loop
 	@SuppressWarnings({"ConstantConditions"})
 	private static boolean placeCart(BlockState state, MinecraftClient client, BlockPos pos) {
+	//#if MC >= 12109
+		//$$ if (state.isOf(Blocks.DETECTOR_RAIL) && state.get(DetectorRailBlock.POWERED) != client.world.getBlockState(pos).get(DetectorRailBlock.POWERED) && canPickItem(client, Items.MINECART.getDefaultStack()) && client.player.getEntityPos().distanceTo(Vec3d.of(pos)) < 4.5) {
+	//#else
 		if (state.isOf(Blocks.DETECTOR_RAIL) && state.get(DetectorRailBlock.POWERED) != client.world.getBlockState(pos).get(DetectorRailBlock.POWERED) && canPickItem(client, Items.MINECART.getDefaultStack()) && client.player.getPos().distanceTo(Vec3d.of(pos)) < 4.5) {
+	//#endif
 			Vec3d clickPos = Vec3d.of(pos).add(0.5, 0.125, 0.5);
 			if (!FakeAccurateBlockPlacement.canHandleOther(Items.MINECART)) {
 				return false;
