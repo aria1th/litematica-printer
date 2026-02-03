@@ -26,27 +26,22 @@ preprocess {
 	def mc12105 = createNode('1.21.5', 1_21_05, 'yarn')
 	def mc12108 = createNode('1.21.8', 1_21_08, 'yarn')
     def mc12110 = createNode('1.21.10', 1_21_10, 'yarn')
+	def mc12111 = createNode('1.21.11', 1_21_11, 'yarn')
 
-	// mapping difference map
+	// mapping difference map (Why is it backwards?)
 	// base 1194 -> 1193 -> 1192 ->1190-> 118 -> 117 -> 116
     mc1202.link(mc1201, file('versions/mapping-1.20.2-1.20.1.txt'))
     mc1201.link(mc1194, file('versions/mapping-1.20.1-1.19.4.txt'))
     mc1204.link(mc1202, file('versions/mapping-1.20.4-1.20.2.txt'))
 	mc1206.link(mc1204, file('versions/mapping-1.20.6-1.20.4.txt'))
-	mc12100.link(mc1206, null)
-	mc12101.link(mc12100, null)
-	mc12103.link(mc12101, null)
-	mc12104.link(mc12103, null)
-	mc12105.link(mc12104, null)
-	mc12108.link(mc12105, null)
-    mc12110.link(mc12108, null)
-
-	//mc1194.link(mc1193, file('versions/mapping-1.19.4-1.19.3.txt'))
-	//mc1193.link(mc1192, file('versions/mapping-1.19.3-1.19.2.txt'))
-	//mc1192.link(mc1190, file('versions/mapping-1.19.2-1.19.0.txt'))
-	//mc1190.link(mc1182, file('versions/mapping-1.19.0-1.18.2.txt'))
-	//mc1182.link(mc1171, file('versions/mapping-1.18.2-1.17.1.txt'))
-	//mc1171.link(mc1165, file('versions/mapping-1.17.1-1.16.5.txt'))
+	mc1206.link(mc12100, null)
+	mc12100.link(mc12101, null)
+	mc12101.link(mc12103, null)
+	mc12103.link(mc12104, null)
+	mc12104.link(mc12105, null)
+	mc12105.link(mc12108, null)
+	mc12108.link(mc12110, null)
+	mc12110.link(mc12111, null)
 }
 // commands
 // gradlew build -> build all subprojects

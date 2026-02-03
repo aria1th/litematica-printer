@@ -36,7 +36,14 @@ configurations {
 dependencies {
 	//to change the versions see the gradle.properties file
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
-	mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
+    mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
+//    mappings loom.layered() {
+//        officialMojangMappings()
+//        if (project.parchment_version.size() > 0) {
+//            parchment("org.parchmentmc.data:parchment-${project.minecraft_version}:${project.parchment_version}@zip")
+//        }
+//    }
+
 	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
 	modCompileOnly files("../../external/${project.essentialclient_filename}") // shared external files.
