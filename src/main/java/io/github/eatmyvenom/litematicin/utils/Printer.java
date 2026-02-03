@@ -117,7 +117,7 @@ public class Printer {
 	@Nullable
 	public static Direction getSimplifiedFirstPropertyFacingValue(BlockState stateIn)
 	{
-		//#if MC>=12105
+		//#if MC >= 12100
 		//$$ return fi.dy.masa.malilib.util.game.BlockUtils.getFirstPropertyFacingValue(stateIn).orElse(null);
 		//#else
 		return fi.dy.masa.malilib.util.BlockUtils.getFirstPropertyFacingValue(stateIn);
@@ -411,6 +411,7 @@ public class Printer {
 		return isPositionWithinBox(Printer.CURRENT_BOX, pos);
 	}
 
+	@SuppressWarnings("deprecation")
 	@Environment(EnvType.CLIENT)
 	synchronized public static ActionResult doPrinterAction(MinecraftClient mc) {
 		io.github.eatmyvenom.litematicin.utils.InventoryUtils.itemChangeCount = 0;
@@ -1538,6 +1539,7 @@ public class Printer {
 		return true;
 	}
 
+	@SuppressWarnings("deprecation")
 	private static boolean willFall(BlockState stateSchematic, World clientWorld, BlockPos pos) {
 		if (stateSchematic.getBlock() instanceof ScaffoldingBlock) {
 			//#if MC >= 12006
