@@ -12,35 +12,29 @@ on:
         type: string
         required: false
         default: ''
-      # [FEATURE] MIXIN_AUDITOR
-      mixin_audit:
-        description: run mixin audit for Minecraft after build
-        type: boolean
-        required: false
-        default: false
+#      # [FEATURE] MIXIN_AUDITOR
+#      mixin_audit:
+#        description: run mixin audit for Minecraft after build
+#        type: boolean
+#        required: false
+#        default: false
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
-      - name: Set up JDK 21
-        uses: actions/setup-java@v4
+      - uses: actions/checkout@v6
+      - name: Set up JDK 25
+        uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
-          java-version: 21
+          java-version: 25
 
-      - name: Cache gradle files
-        uses: actions/cache@v4
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v5
         with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-            ./.gradle/loom-cache
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle', '**/gradle.properties', '**/*.accesswidener', 'settings.json') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
+          cache-read-only: ${{ github.ref != 'refs/heads/main' && github.ref != 'refs/heads/master' && github.ref != 'refs/heads/dev' }}
 
       - name: Build with gradle
         run: |
@@ -57,7 +51,7 @@ jobs:
           BUILD_ID: ${{ github.run_number }}
           BUILD_RELEASE: ${{ inputs.release }}
 
-      # [FEATURE] MIXIN_AUDITOR
+#      # [FEATURE] MIXIN_AUDITOR
 #      - name: Run mixin audit check for Minecraft client
 #        if: ${{ inputs.mixin_audit }}
 #        timeout-minutes: 10
@@ -67,7 +61,7 @@ jobs:
 #          ./gradlew runClientMixinAudit
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: build-artifacts
           path: versions/*/build/libs/
@@ -83,15 +77,19 @@ jobs:
 
       # This is the artifact recommended for users to download
       - name: Upload mod jars
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: mod-jars
           path: mod-jars/*.jar
 
 #      # [FEATURE] FALLENS_MAVEN
 #      - name: Publish with gradle
-#        if: inputs.release || github.ref == 'refs/heads/dev'
+#        if: ${{ inputs.release || github.ref == 'refs/heads/dev' }}
 #        run: |
+#          if [ -z "$FALLENS_MAVEN_TOKEN" ]; then
+#              echo "No token found, skipping publish"
+#              exit 0
+#          fi
 #          if [ -z "${{ inputs.target_subproject }}" ]; then
 #              echo "Publishing all subprojects"
 #              ./gradlew publish
@@ -111,13 +109,25 @@ jobs:
       - build
 
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
-          python-version: 3.12
+          python-version: 3.14
+
+      - name: List artifacts
+        uses: actions/github-script@v8
+        id: artifacts
+        with:
+          script: |
+            const result = await github.rest.actions.listWorkflowRunArtifacts({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id: context.runId,
+            })
+            return result.data
 
       - name: Download build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: build-artifacts
           path: build-artifacts
@@ -128,3 +138,4 @@ jobs:
           python .github/workflows/scripts/summary.py
         env:
           TARGET_SUBPROJECT: ${{ inputs.target_subproject }}
+          WORKFLOW_ARTIFACTS: ${{ steps.artifacts.outputs.result }}

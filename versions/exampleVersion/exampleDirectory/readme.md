@@ -1,1 +1,0 @@
-The files or directories inside exampleVersion, such as `src/main/java/mysource/something`, will be copied when preprocessing happens.

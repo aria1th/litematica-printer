@@ -117,7 +117,7 @@ public class Printer {
 	@Nullable
 	public static Direction getSimplifiedFirstPropertyFacingValue(BlockState stateIn)
 	{
-		//#if MC>=12105
+		//#if MC >= 12100
 		//$$ return fi.dy.masa.malilib.util.game.BlockUtils.getFirstPropertyFacingValue(stateIn).orElse(null);
 		//#else
 		return fi.dy.masa.malilib.util.BlockUtils.getFirstPropertyFacingValue(stateIn);
@@ -411,6 +411,7 @@ public class Printer {
 		return isPositionWithinBox(Printer.CURRENT_BOX, pos);
 	}
 
+	@SuppressWarnings("deprecation")
 	@Environment(EnvType.CLIENT)
 	synchronized public static ActionResult doPrinterAction(MinecraftClient mc) {
 		io.github.eatmyvenom.litematicin.utils.InventoryUtils.itemChangeCount = 0;
@@ -1538,6 +1539,7 @@ public class Printer {
 		return true;
 	}
 
+	@SuppressWarnings("deprecation")
 	private static boolean willFall(BlockState stateSchematic, World clientWorld, BlockPos pos) {
 		if (stateSchematic.getBlock() instanceof ScaffoldingBlock) {
 			//#if MC >= 12006
@@ -2089,7 +2091,11 @@ public class Printer {
 	// returns should call continue in loop
 	@SuppressWarnings({"ConstantConditions"})
 	private static boolean placeCart(BlockState state, MinecraftClient client, BlockPos pos) {
+	//#if MC >= 12109
+		//$$ if (state.isOf(Blocks.DETECTOR_RAIL) && state.get(DetectorRailBlock.POWERED) != client.world.getBlockState(pos).get(DetectorRailBlock.POWERED) && canPickItem(client, Items.MINECART.getDefaultStack()) && client.player.getEntityPos().distanceTo(Vec3d.of(pos)) < 4.5) {
+	//#else
 		if (state.isOf(Blocks.DETECTOR_RAIL) && state.get(DetectorRailBlock.POWERED) != client.world.getBlockState(pos).get(DetectorRailBlock.POWERED) && canPickItem(client, Items.MINECART.getDefaultStack()) && client.player.getPos().distanceTo(Vec3d.of(pos)) < 4.5) {
+	//#endif
 			Vec3d clickPos = Vec3d.of(pos).add(0.5, 0.125, 0.5);
 			if (!FakeAccurateBlockPlacement.canHandleOther(Items.MINECART)) {
 				return false;
