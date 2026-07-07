@@ -1,8 +1,8 @@
 plugins {
-	id 'fabric-loom' version '1.14-SNAPSHOT' apply false
+	id 'fabric-loom' version '1.16-SNAPSHOT' apply false
 	// https://github.com/ReplayMod/preprocessor
 	// https://github.com/Fallen-Breath/preprocessor
-	id 'com.replaymod.preprocess' version 'd452ef7612'
+	id 'com.replaymod.preprocess' version 'c5abb4fb12'
 }
 
 preprocess {
